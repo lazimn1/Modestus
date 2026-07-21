@@ -1,82 +1,108 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+
+const heroImages = [
+  { src: "/hero-1.png", extraClasses: "" },
+  { src: "/hero-2-cropped.png", extraClasses: "" },
+  { src: "/hero-3.png", extraClasses: "" },
+];
 
 export default function Hero() {
-  const customEase = [0.76, 0, 0.24, 1] as const;
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % heroImages.length);
+    }, 2500); // switch every 4 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   return (
-    <section className="relative w-full min-h-[100dvh] bg-[#F9F9F9] flex flex-col items-center justify-center py-12 px-4">
+    <section className="relative w-full h-120 md:h-[95vh] bg-white pt-14 flex flex-col justify-between overflow-hidden">
       
-      {/* Top Typography */}
-      <motion.h1
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: customEase }}
-        className="relative z-10 text-[20vw] sm:text-[18vw] md:text-[14vw] leading-none font-display font-semibold text-[#D4D4D4] uppercase tracking-tighter shrink-0"
-      >
-        MODEST
-      </motion.h1>
+      {/* Huge Background Text */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 pt-1 md:pt-0 overflow-hidden">
+        <h1 
+          className="text-[30vw] font-league uppercase tracking-normal leading-none select-none whitespace-nowrap text-black"
+          style={{
+            textShadow: `
+              1px 1px 0 rgba(0,0,0,0.15),
+              2px 2px 0 rgba(0,0,0,0.14),
+              3px 3px 0 rgba(0,0,0,0.13),
+              4px 4px 0 rgba(0,0,0,0.12),
+              5px 5px 0 rgba(0,0,0,0.11),
+              6px 6px 0 rgba(0,0,0,0.10),
+              7px 7px 0 rgba(0,0,0,0.09),
+              8px 8px 0 rgba(0,0,0,0.08),
+              9px 9px 0 rgba(0,0,0,0.07),
+              10px 10px 0 rgba(0,0,0,0.06),
+              12px 12px 4px rgba(0,0,0,0.05),
+              15px 15px 8px rgba(0,0,0,0.04),
+              20px 20px 15px rgba(0,0,0,0.03)
+            `
+          }}
+        >
+          MODESTUS
+        </h1>
+      </div>
 
-      {/* Central Media Portal */}
-      <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 1, ease: customEase, delay: 0.2 }}
-        className="relative z-20 w-[95%] sm:w-[90%] max-w-[800px] h-[45dvh] sm:h-[50dvh] md:h-[60dvh] overflow-hidden rounded-lg sm:rounded-xl shadow-2xl -my-3 sm:-my-5 md:-my-8 shrink-0"
-      >
-        <Image
-          src="https://lh3.googleusercontent.com/aida/AP1WRLtBRltqBLp2TSOia_v1osQzUl3PSlugnrVUt1jaHtEEtSJB24oOHb6PtyDuK60Umt3i4BJASJdpO8OjzqmFYO3QWcHp2gZLMDfyY6oemlXS2n82hgZMeAPa1jKYVVFZ_Rcpv5TheQ_CxmKOqFYA-c47TnH5a7n0ZZFexNfypSJUtzn8XIDbbl5vQjjwN44xwBC1Y0TzxaWWy-Ghx5FCMjpJc1rsVHtYNBx6Z5oaJ6VDkXSbbJI-GqTWPG0"
-          alt="Modest fashion editorial main"
-          fill
-          className="object-cover"
-          priority
-          unoptimized={true}
-        />
-        
-        {/* Overlay gradient for text readability */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent pointer-events-none" />
-
-        {/* Text inside image */}
-        <div className="absolute bottom-0 left-0 p-4 sm:p-6 md:p-8 flex flex-col items-start gap-1 sm:gap-1.5 md:gap-2">
-          <span className="text-[#DEB887] text-[9px] sm:text-[10px] md:text-[11px] font-mono uppercase tracking-[0.2em] font-medium">
-            The Essence of Elegance
-          </span>
-          <h2 className="text-white text-2xl sm:text-3xl md:text-5xl font-display font-bold tracking-tight">
-            Timeless Modesty
-          </h2>
-          <button className="mt-1.5 sm:mt-2 md:mt-3 flex items-center gap-2 text-white text-[11px] sm:text-xs md:text-sm font-mono font-medium hover:text-white/70 transition-colors active:scale-95 text-left">
-            <span>Explore Collection</span>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </button>
+      {/* Model Images - Slide Slideshow */}
+      <div className="absolute bottom-0 mb-15 left-1/2 -translate-x-1/2 w-[60%] sm:w-[75%] md:w-[48%] max-w-[650px] h-[80%] sm:h-[75%] md:h-[88%] z-20 pointer-events-none">
+        <div className="relative w-full h-full">
+          <AnimatePresence initial={false}>
+            <motion.div
+              key={activeIndex}
+              initial={{ x: "100vw" }}
+              animate={{ x: 0 }}
+              exit={{ x: "-100vw" }}
+              transition={{ duration: 1.2, ease: "easeInOut" }}
+              className="absolute inset-0"
+            >
+              <Image
+                src={heroImages[activeIndex].src}
+                alt={`Modest fashion model ${activeIndex + 1}`}
+                fill
+                className={`object-contain object-bottom ${heroImages[activeIndex].extraClasses}`}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                priority={activeIndex === 0}
+              />
+            </motion.div>
+          </AnimatePresence>
         </div>
-      </motion.div>
+      </div>
 
-      {/* Bottom Typography */}
-      <motion.h1
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: customEase, delay: 0.1 }}
-        className="relative z-10 text-[20vw] sm:text-[18vw] md:text-[14vw] leading-none font-display font-semibold text-[#D4D4D4] uppercase tracking-tighter shrink-0"
-      >
-        US
-      </motion.h1>
+      {/* Realistic Ground Shadow - wide soft ambient shadow beneath model */}
+      <div className="absolute bottom-[6rem] left-1/2 -translate-x-1/2 w-[30%] sm:w-[38%] md:w-[28%] h-[10px] sm:h-[14px] md:h-[18px] bg-pureblack/25 rounded-[100%] blur-[12px] sm:blur-[18px] md:blur-[24px] z-19 pointer-events-none" />
 
-      {/* Scroll indicator */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 1, delay: 1 }}
-        className="absolute bottom-6 flex flex-col items-center gap-1 z-20 text-[#111]"
-      >
-        <span className="text-[10px] uppercase tracking-[0.2em] font-medium">Scroll</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="m6 9 6 6 6-6"/>
-        </svg>
-      </motion.div>
+      {/* Top Content Row */}
+        <h2 className="text-pureblack font-bold px-4 sm:px-8 md:px-12 lg:px-16 uppercase tracking-[0.2em] text-[10px] sm:text-xs md:text-sm leading-[1.8] md:leading-[1.8] max-w-[150px] md:max-w-[200px]">
+          Fashion <br />
+          that moves <br />
+          with you.
+        </h2>
+
+
+    
+
+      {/* Bottom Content Row */}
+      <div className="relative z-30 w-full max-w-7xl mx-auto px-2 pb-4 md:pb-16 flex flex-row justify-between items-end">
+        
+        {/* Left Side Buttons */}
+        <div className="flex flex-col sm:flex-row items-center mt-8 sm:items-start w-auto gap-4 sm:gap-6">
+          <Link
+            href="/shop"
+            className="w-auto bg-pureblack text-purewhite text-[9px] md:text-[10px] font-bold uppercase tracking-[0.15em] px-6 py-2.5 md:px-7 md:py-3 text-center hover:bg-pureblack/80 transition-colors shadow-md rounded-xs"
+          >
+            Shop Now
+          </Link>
+        </div>
+
+
+      </div>
 
     </section>
   );

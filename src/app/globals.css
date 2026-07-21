@@ -1,12 +1,14 @@
 @import "tailwindcss";
 
 @theme {
-  --color-alabaster: #F9F9F7;
-  --color-obsidian: #111111;
-  --color-sand: #D5CDBD;
+  --color-lightgray: #e6e6e4;
+  --color-pureblack: #000000;
+  --color-purewhite: #ffffff;
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-montserrat: "Montserrat", sans-serif;
+  --font-league: "League Gothic", sans-serif;
 }
 
 @layer base {
@@ -14,5 +16,9 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+  }
+
+  body {
+    overflow-x: hidden;
   }
 }
