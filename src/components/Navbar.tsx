@@ -37,9 +37,10 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="font-montserrat text-xl md:text-2xl xl:text-3xl font-black tracking-[0.05em] text-pureblack uppercase whitespace-nowrap"
+              className="text-xl md:text-2xl xl:text-3xl text-pureblack whitespace-nowrap"
+              style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
             >
-              MODESTUS
+              modestus
             </Link>
           </div>
 
@@ -135,9 +136,10 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="font-montserrat text-xl font-black tracking-[0.05em] text-pureblack uppercase"
+                  className="text-xl text-pureblack"
+                  style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
                 >
-                  MODESTUS
+                  modestus
                 </Link>
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)} 

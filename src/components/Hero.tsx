@@ -36,7 +36,7 @@ export default function Hero() {
           </h2>
         </div>
 
-        <h1 className="text-[20vw] uppercase tracking-normal leading-none select-none whitespace-nowrap text-black"
+        <h1 className="text-[24vw] tracking-normal leading-none select-none whitespace-nowrap text-black"
           style={{
             fontFamily: 'var(--font-cerkiymo), sans-serif',
             textShadow: `
@@ -56,7 +56,7 @@ export default function Hero() {
             `
           }}
         >
-          MODESTUS
+          modestus
         </h1>
       </div>
 
