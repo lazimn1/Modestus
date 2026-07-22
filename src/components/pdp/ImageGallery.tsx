@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronLeft, ChevronRight, ZoomIn } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ImageGalleryProps {
   images: string[];
@@ -12,21 +12,11 @@ interface ImageGalleryProps {
 
 export default function ImageGallery({ images, title }: ImageGalleryProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const [isZoomed, setIsZoomed] = useState(false);
-  const [mousePos, setMousePos] = useState({ x: 50, y: 50 });
   const mainRef = useRef<HTMLDivElement>(null);
 
   // Touch swipe state
   const touchStartX = useRef<number>(0);
   const touchEndX = useRef<number>(0);
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!mainRef.current) return;
-    const rect = mainRef.current.getBoundingClientRect();
-    const x = ((e.clientX - rect.left) / rect.width) * 100;
-    const y = ((e.clientY - rect.top) / rect.height) * 100;
-    setMousePos({ x, y });
-  };
 
   const goTo = (idx: number) => {
     setActiveIndex(Math.max(0, Math.min(images.length - 1, idx)));
@@ -45,14 +35,11 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
   };
 
   return (
-    <div className="flex flex-col gap-3 md:sticky md:top-24">
+    <div className="flex flex-col gap-3 sm:gap-4 md:sticky md:top-32">
       {/* Main Image */}
       <div
         ref={mainRef}
-        className="relative w-full aspect-[3/4] overflow-hidden bg-[#f5f3f0] rounded-sm cursor-zoom-in"
-        onMouseMove={handleMouseMove}
-        onMouseEnter={() => setIsZoomed(true)}
-        onMouseLeave={() => setIsZoomed(false)}
+        className="relative w-full aspect-[3/4] overflow-hidden bg-[#e8e2d5] border border-[#dad2c2]/50 rounded-xl sm:rounded-2xl shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -72,25 +59,9 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
               priority={activeIndex === 0}
               sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover transition-transform duration-300 ease-out"
-              style={
-                isZoomed
-                  ? {
-                      transformOrigin: `${mousePos.x}% ${mousePos.y}%`,
-                      transform: "scale(1.6)",
-                    }
-                  : {}
-              }
             />
           </motion.div>
         </AnimatePresence>
-
-        {/* Zoom Hint */}
-        {!isZoomed && (
-          <div className="absolute bottom-3 right-3 flex items-center gap-1 bg-purewhite/80 backdrop-blur-sm text-pureblack/60 text-[9px] font-bold uppercase tracking-widest px-2 py-1">
-            <ZoomIn className="w-3 h-3" />
-            Hover to zoom
-          </div>
-        )}
 
         {/* Nav Arrows (mobile) */}
         {images.length > 1 && (
@@ -98,32 +69,32 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
             <button
               onClick={() => goTo(activeIndex - 1)}
               disabled={activeIndex === 0}
-              className="md:hidden absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-purewhite/80 rounded-full flex items-center justify-center disabled:opacity-30"
+              className="md:hidden absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-[#fcfaf7]/90 border border-[#dad2c2]/50 rounded-full flex items-center justify-center disabled:opacity-30 backdrop-blur-sm"
               aria-label="Previous image"
             >
-              <ChevronLeft className="w-4 h-4 text-pureblack" />
+              <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-[#2a2621]" />
             </button>
             <button
               onClick={() => goTo(activeIndex + 1)}
               disabled={activeIndex === images.length - 1}
-              className="md:hidden absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-purewhite/80 rounded-full flex items-center justify-center disabled:opacity-30"
+              className="md:hidden absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-[#fcfaf7]/90 border border-[#dad2c2]/50 rounded-full flex items-center justify-center disabled:opacity-30 backdrop-blur-sm"
               aria-label="Next image"
             >
-              <ChevronRight className="w-4 h-4 text-pureblack" />
+              <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-[#2a2621]" />
             </button>
           </>
         )}
 
         {/* Dot indicators (mobile) */}
         {images.length > 1 && (
-          <div className="md:hidden absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="md:hidden absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
             {images.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
                 aria-label={`View image ${i + 1}`}
                 className={`rounded-full transition-all duration-300 ${
-                  i === activeIndex ? "w-5 h-1.5 bg-pureblack" : "w-1.5 h-1.5 bg-pureblack/30"
+                  i === activeIndex ? "w-4 h-1 sm:w-5 sm:h-1.5 bg-[#2a2621]" : "w-1 h-1 sm:w-1.5 sm:h-1.5 bg-[#2a2621]/30"
                 }`}
               />
             ))}
@@ -133,23 +104,23 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
 
       {/* Thumbnails (desktop) */}
       {images.length > 1 && (
-        <div className="hidden md:flex gap-2 overflow-x-auto pb-1">
+        <div className="hidden md:flex gap-3 overflow-x-auto pb-1">
           {images.map((src, i) => (
             <button
               key={i}
               onClick={() => setActiveIndex(i)}
               aria-label={`Select image ${i + 1}`}
-              className={`relative w-16 h-20 shrink-0 overflow-hidden rounded-sm transition-all duration-300 ${
+              className={`relative w-20 h-24 shrink-0 overflow-hidden rounded-lg sm:rounded-xl border transition-all duration-300 bg-[#e8e2d5] ${
                 i === activeIndex
-                  ? "ring-2 ring-pureblack ring-offset-1"
-                  : "opacity-50 hover:opacity-80"
+                  ? "border-[#2a2621] opacity-100 shadow-md"
+                  : "border-[#dad2c2]/50 opacity-60 hover:opacity-100"
               }`}
             >
               <Image
                 src={src}
                 alt={`${title} thumbnail ${i + 1}`}
                 fill
-                sizes="64px"
+                sizes="80px"
                 className="object-cover"
               />
             </button>

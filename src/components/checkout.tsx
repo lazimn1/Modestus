@@ -5,7 +5,8 @@ import { useForm } from "react-hook-form";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { products, formatINR } from "@/lib/products";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
+import { useCommerce } from "@/lib/commerce";
 
 type ShippingData = {
   fullName: string;
@@ -32,6 +33,20 @@ function CheckoutContent() {
   const subtotal = product.price;
   const shipping = 0;
   const total = subtotal + shipping;
+
+  const router = useRouter();
+  const { createOrder } = useCommerce();
+
+  const handlePlaceOrder = () => {
+    const order = createOrder([{
+      productId: product.id,
+      quantity: 1,
+      size: "One Size",
+      color: "Signature",
+      addedAt: new Date().toISOString()
+    }], paymentMethod);
+    router.push(`/orders?order=${order.id}`);
+  };
 
   return (
     <div className="flex flex-col lg:grid lg:grid-cols-12 gap-10 lg:gap-16 items-start">
@@ -232,6 +247,7 @@ function CheckoutContent() {
           <motion.button
             whileHover={{ scale: 0.98 }}
             whileTap={{ scale: 0.95 }}
+            onClick={handlePlaceOrder}
             className="w-full bg-pureblack text-purewhite text-sm font-semibold py-4 mt-2 rounded-full transition-colors duration-300 hover:bg-pureblack/80"
           >
             {paymentMethod === "online" ? "Pay Now" : "Place Order"}

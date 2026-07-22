@@ -116,7 +116,7 @@ export default function ReviewSection() {
               </div>
               
               <p className="font-sans italic text-base sm:text-lg md:text-xl text-pureblack/80 leading-relaxed mb-6 md:mb-8 flex-grow">
-                "{review.quote}"
+                &ldquo;{review.quote}&rdquo;
               </p>
               
               <div className="w-full h-px bg-pureblack/10 mb-5 md:mb-6"></div>

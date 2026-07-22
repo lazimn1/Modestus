@@ -18,7 +18,7 @@ function StarRating({ rating }: { rating: number }) {
         <Star
           key={star}
           className={`w-3.5 h-3.5 ${
-            star <= rating ? "fill-pureblack text-pureblack" : "fill-transparent text-pureblack/20"
+            star <= rating ? "fill-[#2a2621] text-[#2a2621]" : "fill-transparent text-[#dad2c2]"
           }`}
         />
       ))}
@@ -29,19 +29,19 @@ function StarRating({ rating }: { rating: number }) {
 function RatingBar({ stars, count, total }: { stars: number; count: number; total: number }) {
   const pct = total > 0 ? (count / total) * 100 : 0;
   return (
-    <div className="flex items-center gap-2.5">
-      <span className="text-xs text-pureblack/50 w-4 shrink-0">{stars}</span>
-      <Star className="w-3 h-3 fill-pureblack/30 text-pureblack/30 shrink-0" />
-      <div className="flex-1 h-1.5 bg-pureblack/10 rounded-full overflow-hidden">
+    <div className="flex items-center gap-2 sm:gap-2.5">
+      <span className="text-[10px] sm:text-xs text-[#78716c] w-4 shrink-0 font-medium">{stars}</span>
+      <Star className="w-2.5 h-2.5 sm:w-3 sm:h-3 fill-[#78716c]/50 text-[#78716c]/50 shrink-0" />
+      <div className="flex-1 h-1 sm:h-1.5 bg-[#e7e1d4] rounded-full overflow-hidden">
         <motion.div
-          className="h-full bg-pureblack rounded-full"
+          className="h-full bg-[#2a2621] rounded-full"
           initial={{ width: 0 }}
           whileInView={{ width: `${pct}%` }}
           viewport={{ once: true }}
           transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 * (5 - stars) }}
         />
       </div>
-      <span className="text-[10px] text-pureblack/40 w-4 text-right shrink-0">{count}</span>
+      <span className="text-[9px] sm:text-[10px] text-[#78716c] w-4 text-right shrink-0 font-medium">{count}</span>
     </div>
   );
 }
@@ -50,7 +50,6 @@ export default function ReviewsSection({
   reviews,
   rating,
   reviewCount,
-  productTitle,
 }: ReviewsSectionProps) {
   // Approximate distribution for the bar chart
   const dist = [
@@ -62,71 +61,71 @@ export default function ReviewsSection({
   ];
 
   return (
-    <section id="reviews" className="w-full bg-lightgray py-16 md:py-24 px-6 md:px-12">
+    <section id="reviews" className="w-full bg-[#faf7f2] py-12 md:py-24 px-4 sm:px-6 md:px-12 border-t border-[#e7e1d4]">
       <div className="max-w-7xl mx-auto">
         {/* Section Header */}
         <motion.div
-          className="mb-12"
+          className="mb-8 md:mb-12"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6 }}
         >
-          <p className="text-[10px] font-bold uppercase tracking-[0.25em] text-pureblack/40 mb-2">
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#78716c] mb-1 sm:mb-2">
             Customer Reviews
           </p>
-          <h2 className="text-3xl md:text-4xl font-display font-bold text-pureblack">
+          <h2 className="font-serif text-3xl sm:text-4xl text-[#2a2621] font-normal tracking-tight">
             What Customers Say
           </h2>
         </motion.div>
 
-        <div className="grid md:grid-cols-[280px_1fr] gap-12">
+        <div className="grid md:grid-cols-[280px_1fr] lg:grid-cols-[320px_1fr] gap-8 md:gap-12 lg:gap-16">
           {/* Rating Summary */}
           <motion.div
-            className="flex flex-col gap-5"
+            className="flex flex-col gap-5 sm:gap-6"
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
           >
-            <div className="flex flex-col items-start gap-1">
-              <span className="text-6xl font-display font-black text-pureblack leading-none">
+            <div className="flex flex-col items-start gap-1.5">
+              <span className="font-serif text-5xl sm:text-6xl text-[#2a2621] leading-none tracking-tighter">
                 {rating}
               </span>
-              <div className="flex gap-1">
+              <div className="flex gap-0.5 mt-1">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className={`w-5 h-5 ${
+                    className={`w-4 h-4 sm:w-5 sm:h-5 ${
                       star <= Math.round(rating)
-                        ? "fill-pureblack text-pureblack"
-                        : "fill-transparent text-pureblack/20"
+                        ? "fill-[#2a2621] text-[#2a2621]"
+                        : "fill-transparent text-[#dad2c2]"
                     }`}
                   />
                 ))}
               </div>
-              <p className="text-xs text-pureblack/40">Based on {reviewCount} reviews</p>
+              <p className="text-[10px] sm:text-xs text-[#78716c] font-medium mt-1">Based on {reviewCount} reviews</p>
             </div>
 
             {/* Rating Bars */}
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2.5">
               {dist.map(({ stars, count }) => (
                 <RatingBar key={stars} stars={stars} count={count} total={reviewCount} />
               ))}
             </div>
 
             {/* Write Review CTA */}
-            <button className="mt-2 w-full py-3 border border-pureblack text-pureblack text-[10px] font-bold uppercase tracking-[0.15em] hover:bg-pureblack hover:text-purewhite transition-all duration-300">
+            <button className="mt-2 w-full py-3 sm:py-3.5 rounded-full border border-[#2a2621] text-[#2a2621] text-[10px] font-bold uppercase tracking-widest hover:bg-[#2a2621] hover:text-[#faf7f2] transition-colors">
               Write a Review
             </button>
           </motion.div>
 
           {/* Review Cards */}
-          <div className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4 sm:gap-5">
             {reviews.map((review, i) => (
               <motion.div
                 key={review.id}
-                className="bg-purewhite rounded-xl p-6 md:p-7 border border-pureblack/5 shadow-sm"
+                className="bg-[#fcfaf7] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-[#e7e1d4] shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
@@ -135,35 +134,35 @@ export default function ReviewsSection({
                 <div className="flex items-start justify-between mb-4 gap-3">
                   <div className="flex items-center gap-3">
                     <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${review.avatarColor}`}
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm shrink-0 ${review.avatarColor}`}
                     >
                       {review.initials}
                     </div>
                     <div>
-                      <p className="text-sm font-bold text-pureblack leading-tight">{review.author}</p>
-                      <p className="text-[10px] text-pureblack/40 mt-0.5">{review.location}</p>
+                      <p className="text-xs sm:text-sm font-bold text-[#2a2621] leading-tight">{review.author}</p>
+                      <p className="text-[9px] sm:text-[10px] text-[#78716c] mt-0.5">{review.location}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-1 shrink-0">
+                  <div className="flex flex-col items-end gap-1.5 shrink-0">
                     <StarRating rating={review.rating} />
-                    <p className="text-[10px] text-pureblack/30">{review.date}</p>
+                    <p className="text-[9px] sm:text-[10px] text-[#78716c] font-medium">{review.date}</p>
                   </div>
                 </div>
 
-                <div className="w-full h-px bg-pureblack/8 mb-4" />
+                <div className="w-full h-px bg-[#e7e1d4] mb-4" />
 
-                <p className="text-sm text-pureblack/70 leading-relaxed italic">
+                <p className="text-xs sm:text-sm text-[#2a2621] leading-relaxed italic opacity-90">
                   &ldquo;{review.text}&rdquo;
                 </p>
 
                 {/* Verified badge */}
-                <div className="flex items-center gap-1.5 mt-4">
-                  <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center">
+                <div className="flex items-center gap-1.5 mt-4 sm:mt-5">
+                  <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 rounded-full bg-emerald-600 flex items-center justify-center">
                     <svg viewBox="0 0 12 12" fill="none" className="w-2 h-2">
                       <path d="M2 6l3 3 5-5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   </div>
-                  <span className="text-[9px] text-pureblack/40 font-medium uppercase tracking-wide">
+                  <span className="text-[8px] sm:text-[9px] text-[#78716c] font-bold uppercase tracking-widest">
                     Verified Purchase
                   </span>
                 </div>
@@ -173,7 +172,7 @@ export default function ReviewsSection({
             {/* Load More */}
             {reviewCount > reviews.length && (
               <motion.button
-                className="w-full py-3.5 border border-pureblack/20 text-pureblack/50 text-[10px] font-bold uppercase tracking-[0.15em] hover:border-pureblack hover:text-pureblack transition-all duration-300"
+                className="w-full py-3.5 sm:py-4 rounded-full border border-[#dad2c2] text-[#78716c] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:border-[#2a2621] hover:text-[#2a2621] transition-colors"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}

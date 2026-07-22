@@ -17,6 +17,14 @@ const Twitter = ({ className }: { className?: string }) => (
 );
 
 export default function Footer() {
+  const exploreLinks = [
+    { label: "Shop", href: "/shop" },
+    { label: "Wishlist", href: "/wishlist" },
+    { label: "Cart", href: "/cart" },
+    { label: "Orders", href: "/orders" },
+    { label: "Our Story", href: "/about" },
+  ];
+
   return (
     <footer className="w-full bg-pureblack text-purewhite py-10 md:py-16 px-6 md:px-12 border-t border-purewhite/10">
       <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-12 md:gap-8">
@@ -38,13 +46,13 @@ export default function Footer() {
             <h4 className="text-[8px] md:text-xs font-bold uppercase tracking-[0.2em] text-purewhite/50 mb-2">
               Explore
             </h4>
-            {["Shop", "Collections", "Our Story", "Contact"].map((link) => (
+            {exploreLinks.map((link) => (
               <Link 
-                key={link} 
-                href={`/${link.toLowerCase().replace(" ", "-")}`}
+                key={link.label} 
+                href={link.href}
                 className="text-xs md:text-base text-purewhite transition-colors w-fit"
               >
-                {link}
+                {link.label}
               </Link>
             ))}
           </div>

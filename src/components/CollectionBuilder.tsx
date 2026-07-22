@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 
 export default function CollectionBuilder() {
   const collectionItems = [
@@ -60,10 +61,10 @@ export default function CollectionBuilder() {
 
         {/* View More Button */}
         <div className="mt-2 md:mt-12 flex justify-end px-4 md:px-0">
-          <button className="text-purewhite bg-transparent border-none font-bold uppercase tracking-[0.12em] text-[8px] md:text-xs pr-0 pl-6 py-2 md:py-3 hover:text-purewhite/70 transition-colors flex items-center gap-2">
+          <Link href="/shop" className="text-purewhite bg-transparent border-none font-bold uppercase tracking-[0.12em] text-[8px] md:text-xs pr-0 pl-6 py-2 md:py-3 hover:text-purewhite/70 transition-colors flex items-center gap-2">
             <span>View More</span>
             <span className="text-sm leading-none">&rarr;</span>
-          </button>
+          </Link>
         </div>
       </div>
     </section>

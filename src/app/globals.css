@@ -7,6 +7,7 @@
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-serif), ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-montserrat: "Montserrat", sans-serif;
   --font-league: "League Gothic", sans-serif;
 }

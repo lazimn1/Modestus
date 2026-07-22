@@ -24,11 +24,22 @@ export default function Hero() {
   return (
     <section className="relative w-full h-120 md:h-[95vh] bg-white pt-14 flex flex-col justify-between overflow-hidden">
       
-      {/* Huge Background Text */}
-      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-0 pt-1 md:pt-0 overflow-hidden">
+      {/* Huge Background Text & Tagline */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 pt-1 md:pt-0 overflow-hidden">
+        
+        {/* Desktop Tagline (Sits right above the huge text with a fine gap) */}
+        <div className="hidden md:block w-full px-12 lg:px-16 mb-2 z-10 pointer-events-auto">
+          <h2 className="text-pureblack font-bold uppercase tracking-[0.2em] text-xs lg:text-sm leading-[1.8] max-w-[200px]">
+            Fashion <br />
+            that moves <br />
+            with you.
+          </h2>
+        </div>
+
         <h1 
-          className="text-[30vw] font-league uppercase tracking-normal leading-none select-none whitespace-nowrap text-black"
+          className="text-[16vw] uppercase tracking-normal leading-none select-none whitespace-nowrap text-black"
           style={{
+            fontFamily: '"Wagon Serif", "Wagon", serif',
             textShadow: `
               1px 1px 0 rgba(0,0,0,0.15),
               2px 2px 0 rgba(0,0,0,0.14),
@@ -78,18 +89,20 @@ export default function Hero() {
       {/* Realistic Ground Shadow - wide soft ambient shadow beneath model */}
       <div className="absolute bottom-[6rem] left-1/2 -translate-x-1/2 w-[30%] sm:w-[38%] md:w-[28%] h-[10px] sm:h-[14px] md:h-[18px] bg-pureblack/25 rounded-[100%] blur-[12px] sm:blur-[18px] md:blur-[24px] z-19 pointer-events-none" />
 
-      {/* Top Content Row */}
-        <h2 className="text-pureblack font-bold px-4 sm:px-8 md:px-12 lg:px-16 uppercase tracking-[0.2em] text-[10px] sm:text-xs md:text-sm leading-[1.8] md:leading-[1.8] max-w-[150px] md:max-w-[200px]">
+      {/* Top Content Row (Mobile Only) */}
+      <div className="md:hidden">
+        <h2 className="text-pureblack font-bold px-4 sm:px-8 uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-[1.8] max-w-[150px]">
           Fashion <br />
           that moves <br />
           with you.
         </h2>
+      </div>
 
 
     
 
       {/* Bottom Content Row */}
-      <div className="relative z-30 w-full max-w-7xl mx-auto px-2 pb-4 md:pb-16 flex flex-row justify-between items-end">
+      <div className="relative z-30 w-full max-w-7xl mx-auto px-2 pb-4 md:pb-16 flex flex-row justify-between items-end mt-auto">
         
         {/* Left Side Buttons */}
         <div className="flex flex-col sm:flex-row items-center mt-8 sm:items-start w-auto gap-4 sm:gap-6">

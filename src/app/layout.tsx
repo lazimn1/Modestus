@@ -1,5 +1,4 @@
-import type { Metadata } from "next";
-import { Inter, Outfit, Montserrat } from "next/font/google";
+import { Inter, Outfit, Montserrat, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
@@ -17,6 +16,11 @@ const montserrat = Montserrat({
   subsets: ["latin"],
   weight: ["900"],
   variable: "--font-montserrat",
+});
+
+const playfair = Playfair_Display({
+  subsets: ["latin"],
+  variable: "--font-serif",
 });
 
 export const metadata: Metadata = {
@@ -37,7 +41,7 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} font-sans bg-lightgray text-pureblack antialiased`}>
+      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} font-sans bg-lightgray text-pureblack antialiased`}>
         <Navbar />
         {children}
       </body>
