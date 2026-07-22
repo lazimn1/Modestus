@@ -1,4 +1,5 @@
 import { Inter, Outfit, Montserrat, Playfair_Display } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 
