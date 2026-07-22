@@ -1,4 +1,4 @@
-import { Inter, Outfit, Montserrat, Playfair_Display } from "next/font/google";
+import { Inter, Outfit, Montserrat, Playfair_Display, Courgette } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -24,6 +24,12 @@ const playfair = Playfair_Display({
   variable: "--font-serif",
 });
 
+const courgette = Courgette({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-courgette",
+});
+
 export const metadata: Metadata = {
   title: {
     template: "%s | Modestus",
@@ -42,7 +48,7 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} font-sans bg-lightgray text-pureblack antialiased`}>
+      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} font-sans bg-lightgray text-pureblack antialiased`}>
         <Navbar />
         {children}
       </body>

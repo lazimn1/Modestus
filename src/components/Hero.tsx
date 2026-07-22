@@ -39,7 +39,7 @@ export default function Hero() {
         <h1 
           className="text-[16vw] uppercase tracking-normal leading-none select-none whitespace-nowrap text-black"
           style={{
-            fontFamily: '"Wagon Serif", "Wagon", serif',
+            fontFamily: 'var(--font-courgette), cursive',
             textShadow: `
               1px 1px 0 rgba(0,0,0,0.15),
               2px 2px 0 rgba(0,0,0,0.14),
