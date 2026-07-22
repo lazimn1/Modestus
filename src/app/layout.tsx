@@ -1,4 +1,5 @@
 import { Inter, Outfit, Montserrat, Playfair_Display, Courgette, Luckiest_Guy } from "next/font/google";
+import localFont from "next/font/local";
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -36,6 +37,11 @@ const luckiestGuy = Luckiest_Guy({
   variable: "--font-luckiest-guy",
 });
 
+const cerkiymo = localFont({
+  src: "./fonts/cerkiymo.otf",
+  variable: "--font-cerkiymo",
+});
+
 export const metadata: Metadata = {
   title: {
     template: "%s | Modestus",
@@ -54,7 +60,7 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} ${luckiestGuy.variable} font-sans bg-lightgray text-pureblack antialiased`}>
+      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} ${luckiestGuy.variable} ${cerkiymo.variable} font-sans bg-lightgray text-pureblack antialiased`}>
         <Navbar />
         <main className="pt-[72px] flex flex-col min-h-screen">
           {children}
