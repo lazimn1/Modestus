@@ -125,11 +125,11 @@ export default function Navbar() {
             />
 
             <motion.div
-              initial={{ x: "100%" }}
+              initial={{ x: "-100%" }}
               animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              exit={{ x: "-100%" }}
               transition={{ duration: 0.4, ease: [0.76, 0, 0.24, 1] }}
-              className="fixed top-0 right-0 bottom-0 w-[85%] max-w-sm bg-purewhite z-[80] flex flex-col shadow-2xl"
+              className="fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-purewhite z-[80] flex flex-col shadow-2xl"
             >
               <div className="flex items-center justify-between px-6 py-4 border-b border-pureblack/10 min-h-[72px]">
                 <Link

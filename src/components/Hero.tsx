@@ -37,7 +37,7 @@ export default function Hero() {
         </div>
 
         <h1 
-          className="text-[20vw] uppercase tracking-normal leading-none select-none whitespace-nowrap text-black"
+          className="text-[20vw] uppercase tracking-normal leading-none select-none whitespace-nowrap text-orange-800"
           style={{
             fontFamily: 'var(--font-luckiest-guy), "Luckiest Guy", cursive',
             textShadow: `
