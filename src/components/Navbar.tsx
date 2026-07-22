@@ -139,8 +139,12 @@ export default function Navbar() {
                 >
                   MODESTUS
                 </Link>
-                <button onClick={() => setIsMobileMenuOpen(false)} aria-label="Close menu" className="p-1 hover:opacity-70 transition-opacity">
-                  <X className="w-6 h-6 text-pureblack" />
+                <button 
+                  onClick={() => setIsMobileMenuOpen(false)} 
+                  aria-label="Close menu" 
+                  className="flex items-center justify-center w-9 h-9 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors"
+                >
+                  <X className="w-5 h-5 text-pureblack" />
                 </button>
               </div>
 

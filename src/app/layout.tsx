@@ -56,7 +56,9 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} ${luckiestGuy.variable} font-sans bg-lightgray text-pureblack antialiased`}>
         <Navbar />
-        {children}
+        <main className="pt-[72px] flex flex-col min-h-screen">
+          {children}
+        </main>
       </body>
     </html>
   );
