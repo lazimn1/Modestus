@@ -14,17 +14,17 @@ export default function Navbar() {
     <>
       <header className="w-full fixed top-0 left-0 right-0 z-[60]">
         {/* Main Navbar */}
-        <div className="w-full bg-white/80 backdrop-blur-3xl px-4 md:px-8 lg:px-12 py-4 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
+        <div className="w-full bg-pureblack/80 backdrop-blur-3xl px-4 md:px-8 lg:px-12 py-4 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
           {/* Left Navigation */}
           <div className="flex-1 flex items-center justify-start gap-4">
             <button
               aria-label="Menu"
-              className="md:hidden p-1 -ml-1 text-pureblack focus:outline-none"
+              className="md:hidden p-1 -ml-1 text-purewhite focus:outline-none"
               onClick={() => setIsMobileMenuOpen(true)}
             >
-              <Menu className="w-6 h-6 text-pureblack" />
+              <Menu className="w-6 h-6 text-purewhite" />
             </button>
-            <nav className="hidden md:flex items-center gap-3.5 lg:gap-6 xl:gap-8 text-sm font-normal tracking-wide lg:tracking-[0.15em] text-pureblack whitespace-nowrap">
+            <nav className="hidden md:flex items-center gap-3.5 lg:gap-6 xl:gap-8 text-sm font-normal tracking-wide lg:tracking-[0.15em] text-purewhite whitespace-nowrap">
               <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
               <Link href="/shop" className="hover:opacity-70 transition-opacity">Shop</Link>
               <Link href="/collections" className="hover:opacity-70 transition-opacity">Collections</Link>
@@ -37,7 +37,7 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-xl md:text-2xl xl:text-3xl text-pureblack whitespace-nowrap"
+              className="text-4xl md:text-6xl xl:text-7xl text-purewhite whitespace-nowrap"
               style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
             >
               modestus
@@ -45,34 +45,34 @@ export default function Navbar() {
           </div>
 
           {/* Right Icons */}
-          <div className="flex-1 flex items-center justify-end gap-3 text-pureblack">
+          <div className="flex-1 flex items-center justify-end gap-3 text-purewhite">
             {/* Desktop Icons */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3">
-              <Link href="/login" aria-label="Login" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors">
+              <Link href="/login" aria-label="Login" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <User className="w-4 h-4" />
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-pureblack text-purewhite text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
                   Login
                 </span>
               </Link>
-              <Link href="/wishlist" aria-label="Wishlist" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors">
+              <Link href="/wishlist" aria-label="Wishlist" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <Heart className="w-4 h-4" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-purewhite text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
                     {wishlistCount}
                   </span>
                 )}
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-pureblack text-purewhite text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
                   Wishlist
                 </span>
               </Link>
-              <Link href="/cart" aria-label="Cart" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors">
+              <Link href="/cart" aria-label="Cart" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-purewhite text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
                     {cartCount}
                   </span>
                 )}
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-pureblack text-purewhite text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
                   Cart
                 </span>
               </Link>
@@ -80,29 +80,29 @@ export default function Navbar() {
               <button
                 aria-label="Menu"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors"
+                className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
               >
                 <Menu className="w-4 h-4" />
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-pureblack text-purewhite text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
                   Menu
                 </span>
               </button>
             </div>
 
             {/* Mobile Right Icons */}
-            <div className="flex md:hidden items-center gap-2 text-pureblack">
-              <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center justify-center w-9 h-9 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors">
+            <div className="flex md:hidden items-center gap-2 text-purewhite">
+              <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center justify-center w-9 h-9 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <Heart className="w-4 h-4" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-purewhite text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
-              <Link href="/cart" aria-label="Cart" className="relative flex items-center justify-center w-9 h-9 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors">
+              <Link href="/cart" aria-label="Cart" className="relative flex items-center justify-center w-9 h-9 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-purewhite text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
                     {cartCount}
                   </span>
                 )}
@@ -130,13 +130,13 @@ export default function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "-100%" }}
               transition={{ duration: 0.4, ease: [0.76, 0, 0.24, 1] }}
-              className="fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-purewhite z-[80] flex flex-col shadow-2xl"
+              className="fixed top-0 left-0 bottom-0 w-[85%] max-w-sm bg-pureblack z-[80] flex flex-col shadow-2xl"
             >
-              <div className="flex items-center justify-between px-6 py-4 border-b border-pureblack/10 min-h-[72px]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-purewhite/10 min-h-[72px]">
                 <Link
                   href="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-xl text-pureblack"
+                  className="text-xl text-purewhite"
                   style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
                 >
                   modestus
@@ -144,9 +144,9 @@ export default function Navbar() {
                 <button 
                   onClick={() => setIsMobileMenuOpen(false)} 
                   aria-label="Close menu" 
-                  className="flex items-center justify-center w-9 h-9 rounded-full border border-pureblack/20 hover:bg-pureblack/5 transition-colors"
+                  className="flex items-center justify-center w-9 h-9 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
                 >
-                  <X className="w-5 h-5 text-pureblack" />
+                  <X className="w-5 h-5 text-purewhite" />
                 </button>
               </div>
 
@@ -166,7 +166,7 @@ export default function Navbar() {
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-6 py-4 text-pureblack font-normal text-base tracking-widest hover:bg-pureblack/5 transition-colors border-b border-pureblack/10"
+                    className="px-6 py-4 text-purewhite font-normal text-base tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
                   >
                     {link.name}
                   </Link>

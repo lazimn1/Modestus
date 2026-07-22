@@ -42,6 +42,11 @@ const cerkiymo = localFont({
   variable: "--font-cerkiymo",
 });
 
+const comfortaa = localFont({
+  src: "./fonts/comfortaa.ttf",
+  variable: "--font-comfortaa",
+});
+
 export const metadata: Metadata = {
   title: {
     template: "%s | Modestus",
@@ -60,7 +65,7 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} ${luckiestGuy.variable} ${cerkiymo.variable} font-sans bg-lightgray text-pureblack antialiased`}>
+      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} ${luckiestGuy.variable} ${cerkiymo.variable} ${comfortaa.variable} font-sans bg-lightgray text-pureblack antialiased`}>
         <Navbar />
         <main className="pt-[72px] flex flex-col min-h-screen">
           {children}
