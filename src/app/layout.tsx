@@ -1,4 +1,4 @@
-import { Inter, Outfit, Montserrat, Playfair_Display, Courgette } from "next/font/google";
+import { Inter, Outfit, Montserrat, Playfair_Display, Courgette, Luckiest_Guy } from "next/font/google";
 import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
@@ -30,6 +30,12 @@ const courgette = Courgette({
   variable: "--font-courgette",
 });
 
+const luckiestGuy = Luckiest_Guy({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-luckiest-guy",
+});
+
 export const metadata: Metadata = {
   title: {
     template: "%s | Modestus",
@@ -48,7 +54,7 @@ export default function RootLayout({
       <head>
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
-      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} font-sans bg-lightgray text-pureblack antialiased`}>
+      <body className={`${inter.variable} ${outfit.variable} ${montserrat.variable} ${playfair.variable} ${courgette.variable} ${luckiestGuy.variable} font-sans bg-lightgray text-pureblack antialiased`}>
         <Navbar />
         {children}
       </body>
