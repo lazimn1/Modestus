@@ -3,10 +3,10 @@ import Link from "next/link";
 
 export default function CollectionBuilder() {
   const collectionItems = [
-    { id: 1, name: "Draped Silk", label: "HIJAB / SCARF", image: "/collection-1.png" },
-    { id: 2, name: "Structured Noir", label: "ABAYA / OUTERWEAR", image: "/collection-2.png" },
-    { id: 3, name: "Textured Linen", label: "INNER LAYER", image: "/collection-3.png" },
-    { id: 4, name: "Modest Essentials", label: "ACCESSORY", image: "/collection-4.png" },
+    { id: 1, name: "Draped Silk", label: "HIJAB / SCARF", image: "/collection-1.webp" },
+    { id: 2, name: "Structured Noir", label: "ABAYA / OUTERWEAR", image: "/collection-2.webp" },
+    { id: 3, name: "Textured Linen", label: "INNER LAYER", image: "/collection-3.webp" },
+    { id: 4, name: "Modest Essentials", label: "ACCESSORY", image: "/collection-4.webp" },
   ];
 
   return (

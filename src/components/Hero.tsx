@@ -6,9 +6,9 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const heroImages = [
-  { src: "/hero-1.png", extraClasses: "" },
-  { src: "/hero-2-cropped.png", extraClasses: "" },
-  { src: "/hero-3.png", extraClasses: "" },
+  { src: "/hero-1.webp", extraClasses: "" },
+  { src: "/hero-2-cropped.webp", extraClasses: "" },
+  { src: "/hero-3.webp", extraClasses: "" },
 ];
 
 export default function Hero() {

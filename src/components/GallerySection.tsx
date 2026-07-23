@@ -47,7 +47,7 @@ export default function GallerySection() {
             className="relative col-span-2 row-span-2 md:col-span-2 md:row-span-2 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-1.png"
+              src="/gallery-img-1.webp"
               alt="Editorial Shot 1"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -64,7 +64,7 @@ export default function GallerySection() {
             className="relative col-span-1 row-span-1 md:col-span-1 md:row-span-2 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-2.png"
+              src="/gallery-img-2.webp"
               alt="Editorial Shot 2"
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
@@ -81,7 +81,7 @@ export default function GallerySection() {
             className="relative col-span-1 row-span-1 md:col-span-1 md:row-span-1 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-3.png"
+              src="/gallery-img-3.webp"
               alt="Editorial Shot 3"
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
@@ -98,7 +98,7 @@ export default function GallerySection() {
             className="relative col-span-2 row-span-1 md:col-span-1 md:row-span-1 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-4.png"
+              src="/gallery-img-4.webp"
               alt="Editorial Shot 4"
               fill
               sizes="(max-width: 768px) 100vw, 25vw"

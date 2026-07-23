@@ -11,21 +11,21 @@ export default function CategorySection() {
       description: "Elegant and modest daily wear.",
       linkText: "SHOP ABAYAS",
       linkUrl: "/abayas",
-      imageUrl: "/images/category-1.png",
+      imageUrl: "/images/category-1.webp",
     },
     {
       title: "HIJABS",
       description: "Premium quality for every style.",
       linkText: "SHOP HIJABS",
       linkUrl: "/hijabs",
-      imageUrl: "/images/category-2.png",
+      imageUrl: "/images/category-2.webp",
     },
     {
       title: "DRESSES",
       description: "Beautifully crafted modest dresses.",
       linkText: "SHOP DRESSES",
       linkUrl: "/dresses",
-      imageUrl: "/images/category-3.png",
+      imageUrl: "/images/category-3.webp",
     },
   ];
 

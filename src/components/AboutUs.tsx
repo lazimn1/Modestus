@@ -16,7 +16,7 @@ export default function AboutUs() {
       {/* Hero Section */}
       <section className="relative w-full h-[70vh] md:h-[90vh] flex items-center justify-center">
         <Image
-          src="/about-hero.png"
+          src="/about-hero.webp"
           alt="Modestus Ethos"
           fill
           className="object-cover opacity-50"
