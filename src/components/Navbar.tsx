@@ -14,7 +14,7 @@ export default function Navbar() {
     <>
       <header className="w-full fixed top-0 left-0 right-0 z-[60]">
         {/* Main Navbar */}
-        <div className="w-full bg-pureblack/80 backdrop-blur-3xl px-4 md:px-8 lg:px-12 py-4 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
+        <div className="w-full bg-pureblack/85 backdrop-blur-xl px-4 md:px-8 lg:px-12 py-1 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
           {/* Left Navigation */}
           <div className="flex-1 flex items-center justify-start gap-4">
             <button
@@ -22,7 +22,7 @@ export default function Navbar() {
               className="md:hidden p-1 -ml-1 text-purewhite focus:outline-none"
               onClick={() => setIsMobileMenuOpen(true)}
             >
-              <Menu className="w-6 h-6 text-purewhite" />
+              <Menu className="w-5 h-5 text-purewhite" />
             </button>
             <nav className="hidden md:flex items-center gap-3.5 lg:gap-6 xl:gap-8 text-sm font-normal tracking-wide lg:tracking-[0.15em] text-purewhite whitespace-nowrap">
               <Link href="/" className="hover:opacity-70 transition-opacity">Home</Link>
@@ -91,16 +91,16 @@ export default function Navbar() {
 
             {/* Mobile Right Icons */}
             <div className="flex md:hidden items-center gap-2 text-purewhite">
-              <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center justify-center w-9 h-9 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
-                <Heart className="w-4 h-4" />
+              <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center justify-center w-8 h-8 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
+                <Heart className="w-3.5 h-3.5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 rounded-full bg-red-600 text-pureblack text-[8px] font-bold flex items-center justify-center px-1">
                     {wishlistCount}
                   </span>
                 )}
               </Link>
-              <Link href="/cart" aria-label="Cart" className="relative flex items-center justify-center w-9 h-9 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
-                <ShoppingBag className="w-4 h-4" />
+              <Link href="/cart" aria-label="Cart" className="relative flex items-center justify-center w-8 h-8 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
+                <ShoppingBag className="w-3.5 h-3.5" />
                 {cartCount > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
                     {cartCount}
