@@ -26,9 +26,12 @@ export default function FeaturesBanner() {
 
   return (
     <section className="w-full bg-slate-100 py-4 md:py-12">
-      <div className="max-w-7xl mx-auto px-2 sm:px-6 md:px-12 grid grid-cols-4 gap-2 md:gap-6">
+      <div className="max-w-7xl mx-auto px-2 sm:px-6 md:px-12 grid grid-cols-3 md:grid-cols-4 gap-2 md:gap-6">
         {features.map((feature) => (
-          <div key={feature.title} className="flex flex-col items-center md:items-start text-center md:text-left gap-2 md:flex-row md:gap-4">
+          <div 
+            key={feature.title} 
+            className={`${feature.title === 'SECURE PAYMENT' ? 'hidden md:flex' : 'flex'} flex-col items-center md:items-start text-center md:text-left gap-2 md:flex-row md:gap-4`}
+          >
             <div className="shrink-0">{feature.icon}</div>
             <div className="flex flex-col">
               <h4 className="text-pureblack font-bold text-[6px] sm:text-xs md:text-[12px] lg:text-[14px] uppercase tracking-[0.12em] mb-0.5">
