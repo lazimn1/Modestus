@@ -14,7 +14,7 @@ export default function Navbar() {
     <>
       <header className="w-full fixed top-0 left-0 right-0 z-[60]">
         {/* Main Navbar */}
-        <div className="w-full bg-pureblack/85 backdrop-blur-xl px-4 md:px-8 lg:px-12 py-1 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
+        <div className="w-full bg-pureblack/85 backdrop-blur-xl px-4 md:px-8 lg:px-12 py-2 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
           {/* Left Navigation */}
           <div className="flex-1 flex items-center justify-start gap-4">
             <button
