@@ -168,6 +168,20 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
     setSaving(true);
     try {
       const dbPayload = mapProductToDb(formState);
+      
+      // Ensure slug is present
+      if (!dbPayload.slug && dbPayload.title) {
+        dbPayload.slug = dbPayload.title
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") || `product-${Date.now()}`;
+      }
+
+      // Ensure images array is not empty
+      if (!dbPayload.images || !Array.isArray(dbPayload.images) || dbPayload.images.length === 0) {
+        dbPayload.images = ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"];
+      }
+
       if (formState.id) {
         // Update
         const { error } = await supabase
@@ -177,7 +191,17 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
         if (error) throw error;
         showToast("Product updated successfully!");
       } else {
-        // Create
+        // Create - prevent slug collision
+        const { data: existing } = await supabase
+          .from("products")
+          .select("id")
+          .eq("slug", dbPayload.slug)
+          .maybeSingle();
+
+        if (existing) {
+          dbPayload.slug = `${dbPayload.slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+        }
+
         const { error } = await supabase.from("products").insert([dbPayload]);
         if (error) throw error;
         showToast("New product published to catalog!");
@@ -185,7 +209,9 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
       setIsModalOpen(false);
       await refreshProducts();
     } catch (err: any) {
-      showToast(err.message || "Failed to save product", "error");
+      console.error("Failed to save product:", err);
+      const errorMsg = err?.message || err?.details || err?.hint || (typeof err === "string" ? err : "Failed to save product");
+      showToast(errorMsg, "error");
     } finally {
       setSaving(false);
     }
