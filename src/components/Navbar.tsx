@@ -7,6 +7,14 @@ import { useState } from "react";
 import { useCommerce } from "@/lib/commerce";
 import { useAuth } from "@/context/AuthContext";
 
+function formatDisplayName(email?: string) {
+  if (!email) return "User";
+  const username = email.split("@")[0];
+  return username
+    .replace(/[._-]+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount, wishlistCount } = useCommerce();
@@ -68,7 +76,7 @@ export default function Navbar() {
               <Link href="/wishlist" aria-label="Wishlist" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <Heart className="w-4 h-4" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center px-1">
                     {wishlistCount}
                   </span>
                 )}
@@ -79,7 +87,7 @@ export default function Navbar() {
               <Link href="/cart" aria-label="Cart" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <ShoppingBag className="w-4 h-4" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center px-1">
                     {cartCount}
                   </span>
                 )}
@@ -105,7 +113,7 @@ export default function Navbar() {
               <Link href="/wishlist" aria-label="Wishlist" className="relative flex items-center justify-center w-8 h-8 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <Heart className="w-3.5 h-3.5" />
                 {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 rounded-full bg-red-600 text-pureblack text-[8px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 rounded-full bg-red-600 text-white text-[8px] font-bold flex items-center justify-center px-1">
                     {wishlistCount}
                   </span>
                 )}
@@ -113,7 +121,7 @@ export default function Navbar() {
               <Link href="/cart" aria-label="Cart" className="relative flex items-center justify-center w-8 h-8 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <ShoppingBag className="w-3.5 h-3.5" />
                 {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-pureblack text-[9px] font-bold flex items-center justify-center px-1">
+                  <span className="absolute -top-1 -right-1 min-w-4 h-4 rounded-full bg-red-600 text-white text-[9px] font-bold flex items-center justify-center px-1">
                     {cartCount}
                   </span>
                 )}
@@ -162,6 +170,23 @@ export default function Navbar() {
               </div>
 
               <div className="flex flex-col overflow-y-auto py-2">
+                {/* User Profile Header in Menu */}
+                {user && (
+                  <div className="mx-4 mt-3 mb-2 p-3.5 bg-purewhite/[0.07] rounded-2xl border border-purewhite/15 flex items-center gap-3.5 shadow-lg">
+                    <div className="w-11 h-11 rounded-full bg-[#00897b] flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md">
+                      {user.email ? user.email[0].toUpperCase() : "U"}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-purewhite font-bold text-sm tracking-wide truncate leading-tight">
+                        {formatDisplayName(user.email)}
+                      </p>
+                      <p className="text-purewhite/60 text-xs truncate mt-0.5 font-sans">
+                        {user.email}
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Admin Panel Button in Mobile Menu */}
                 {isAdmin && (
                   <Link
