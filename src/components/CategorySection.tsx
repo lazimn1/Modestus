@@ -3,9 +3,20 @@
 import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function CategorySection() {
-  const categories = [
+  const content = useSiteContent<{
+    items?: {
+      title: string;
+      description: string;
+      linkText: string;
+      linkUrl: string;
+      imageUrl: string;
+    }[];
+  }>("categories");
+
+  const categories = content.items || [
     {
       title: "ABAYAS",
       description: "Elegant and modest daily wear.",

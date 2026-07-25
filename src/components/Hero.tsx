@@ -4,22 +4,22 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-const heroImages = [
-  { src: "/hero-1.webp", extraClasses: "" },
-  { src: "/hero-2-cropped.webp", extraClasses: "" },
-  { src: "/hero-3.webp", extraClasses: "" },
-];
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function Hero() {
+  const content = useSiteContent<{ tagline: string; images: string[] }>("hero");
+  const heroImages = (content.images || ["/hero-1.webp", "/hero-2-cropped.webp", "/hero-3.webp"]).map((src) => ({
+    src,
+    extraClasses: "",
+  }));
   const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % heroImages.length);
-    }, 2500); // switch every 4 seconds
+    }, 2500); // switch every 2.5 seconds
     return () => clearInterval(interval);
-  }, []);
+  }, [heroImages.length]);
 
   return (
     <section className="relative w-full h-120 md:h-[95vh] bg-purewhite pt-14 flex flex-col justify-between overflow-hidden">
@@ -29,10 +29,8 @@ export default function Hero() {
         
         {/* Desktop Tagline (Sits right above the huge text with a fine gap) */}
         <div className="hidden md:block w-full px-12 lg:px-16 mb-2 z-10 pointer-events-auto">
-          <h2 className="text-pureblack font-bold uppercase tracking-[0.2em] text-xs lg:text-sm leading-[1.8] max-w-[200px]">
-            Fashion <br />
-            that moves <br />
-            with you.
+          <h2 className="text-pureblack font-bold uppercase tracking-[0.2em] text-xs lg:text-sm leading-[1.8] max-w-[200px] whitespace-pre-line">
+            {content.tagline || "Fashion\nthat moves\nwith you."}
           </h2>
         </div>
 
@@ -90,10 +88,8 @@ export default function Hero() {
 
       {/* Top Content Row (Mobile Only) */}
       <div className="md:hidden">
-        <h2 className="text-pureblack font-bold px-4 sm:px-8 uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-[1.8] max-w-[150px]">
-          Fashion <br />
-          that moves <br />
-          with you.
+        <h2 className="text-pureblack font-bold px-4 sm:px-8 uppercase tracking-[0.2em] text-[10px] sm:text-xs leading-[1.8] max-w-[150px] whitespace-pre-line">
+          {content.tagline || "Fashion\nthat moves\nwith you."}
         </h2>
       </div>
 

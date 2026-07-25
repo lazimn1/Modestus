@@ -1,28 +1,29 @@
+"use client";
+
 import { Truck, RotateCcw, ShieldCheck, Lock } from "lucide-react";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function FeaturesBanner() {
-  const features = [
-    {
-      icon: <Truck className="w-7 h-7 text-pureblack stroke-[1.2]" />,
-      title: "FAST DELIVERY",
-      desc: "Quick & wide delivery",
-    },
-    {
-      icon: <RotateCcw className="w-7 h-7 text-pureblack stroke-[1.2]" />,
-      title: "EASY RETURNS",
-      desc: "Within 15 days",
-    },
-    {
-      icon: <ShieldCheck className="w-7 h-7 text-pureblack stroke-[1.2]" />,
-      title: "QUALITY ASSURED",
-      desc: "Best fashion, best quality",
-    },
-    {
-      icon: <Lock className="w-7 h-7 text-pureblack stroke-[1.2]" />,
-      title: "SECURE PAYMENT",
-      desc: "100% secure checkout",
-    },
+  const content = useSiteContent<{ items: { title: string; desc: string }[] }>("features_banner");
+  const items = content.items || [
+    { title: "FAST DELIVERY", desc: "Quick & wide delivery" },
+    { title: "EASY RETURNS", desc: "Within 15 days" },
+    { title: "QUALITY ASSURED", desc: "Best fashion, best quality" },
+    { title: "SECURE PAYMENT", desc: "100% secure checkout" },
   ];
+
+  const icons = [
+    <Truck key="0" className="w-7 h-7 text-pureblack stroke-[1.2]" />,
+    <RotateCcw key="1" className="w-7 h-7 text-pureblack stroke-[1.2]" />,
+    <ShieldCheck key="2" className="w-7 h-7 text-pureblack stroke-[1.2]" />,
+    <Lock key="3" className="w-7 h-7 text-pureblack stroke-[1.2]" />,
+  ];
+
+  const features = items.map((item, idx) => ({
+    icon: icons[idx] || icons[0],
+    title: item.title,
+    desc: item.desc,
+  }));
 
   return (
     <section className="w-full bg-slate-100 py-4 md:py-12">

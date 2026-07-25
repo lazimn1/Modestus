@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 const Instagram = ({ className }: { className?: string }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
@@ -17,6 +18,12 @@ const Twitter = ({ className }: { className?: string }) => (
 );
 
 export default function Footer() {
+  const content = useSiteContent<{
+    description?: string;
+    instagram?: string;
+    twitter?: string;
+  }>("footer");
+
   const exploreLinks = [
     { label: "Shop", href: "/shop" },
     { label: "Wishlist", href: "/wishlist" },
@@ -34,8 +41,9 @@ export default function Footer() {
           <h2 className="text-xl md:text-3xl font-display font-bold tracking-widest uppercase">
             Modestus
           </h2>
-          <p className="text-purewhite/70 text-xs md:text-base max-w-sm">
-            Join our community to receive exclusive updates on new collections and minimal modest fashion insights.
+          <p className="text-purewhite/70 text-xs md:text-base max-w-sm whitespace-pre-line">
+            {content.description ||
+              "Join our community to receive exclusive updates on new collections and minimal modest fashion insights."}
           </p>
         </div>
 
@@ -63,12 +71,12 @@ export default function Footer() {
               Connect
             </h4>
             <div className="flex gap-4 md:gap-5">
-              <a href="#" aria-label="Instagram">
+              <a href={content.instagram || "#"} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
                 <div className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-purewhite/20 flex items-center justify-center transition-all duration-300">
                   <Instagram className="w-3 h-3 md:w-4 md:h-4" />
                 </div>
               </a>
-              <a href="#" aria-label="Twitter">
+              <a href={content.twitter || "#"} target="_blank" rel="noopener noreferrer" aria-label="Twitter">
                 <div className="w-7 h-7 md:w-10 md:h-10 rounded-full border border-purewhite/20 flex items-center justify-center transition-all duration-300">
                   <Twitter className="w-3 h-3 md:w-4 md:h-4 fill-current" />
                 </div>

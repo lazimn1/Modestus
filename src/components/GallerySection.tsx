@@ -2,8 +2,17 @@
 
 import Image from "next/image";
 import { motion, Variants } from "framer-motion";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function GallerySection() {
+  const content = useSiteContent<{ heading?: string; subtext?: string; images?: string[] }>("editorial");
+  const images = content.images || [
+    "/gallery-img-1.webp",
+    "/gallery-img-2.webp",
+    "/gallery-img-3.webp",
+    "/gallery-img-4.webp",
+  ];
+
   const fadeUp: Variants = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
@@ -21,8 +30,8 @@ export default function GallerySection() {
               viewport={{ once: true, margin: "-50px" }}
               variants={fadeUp}
               className="text-3xl md:text-5xl lg:text-6xl font-montserrat font-black uppercase tracking-tighter text-pureblack"
-            >
-              Editorial
+                        >
+              {content.heading || "Editorial"}
             </motion.h2>
           </div>
           <motion.p 
@@ -30,9 +39,9 @@ export default function GallerySection() {
             whileInView="visible"
             viewport={{ once: true, margin: "-50px" }}
             variants={fadeUp}
-            className="text-[10px] md:text-xs text-pureblack/60 max-w-xs md:text-right font-bold uppercase tracking-[0.1em]"
+            className="text-[10px] md:text-xs text-pureblack/60 max-w-xs md:text-right font-bold uppercase tracking-[0.1em] whitespace-pre-line"
           >
-            A visual exploration of structure, drape, and modern modesty.
+            {content.subtext || "A visual exploration of structure, drape, and modern modesty."}
           </motion.p>
         </div>
 
@@ -47,7 +56,7 @@ export default function GallerySection() {
             className="relative col-span-2 row-span-2 md:col-span-2 md:row-span-2 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-1.webp"
+              src={images[0] || "/gallery-img-1.webp"}
               alt="Editorial Shot 1"
               fill
               sizes="(max-width: 768px) 100vw, 50vw"
@@ -64,7 +73,7 @@ export default function GallerySection() {
             className="relative col-span-1 row-span-1 md:col-span-1 md:row-span-2 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-2.webp"
+              src={images[1] || "/gallery-img-2.webp"}
               alt="Editorial Shot 2"
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
@@ -81,7 +90,7 @@ export default function GallerySection() {
             className="relative col-span-1 row-span-1 md:col-span-1 md:row-span-1 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-3.webp"
+              src={images[2] || "/gallery-img-3.webp"}
               alt="Editorial Shot 3"
               fill
               sizes="(max-width: 768px) 50vw, 25vw"
@@ -98,7 +107,7 @@ export default function GallerySection() {
             className="relative col-span-2 row-span-1 md:col-span-1 md:row-span-1 overflow-hidden group bg-pureblack"
           >
             <Image 
-              src="/gallery-img-4.webp"
+              src={images[3] || "/gallery-img-4.webp"}
               alt="Editorial Shot 4"
               fill
               sizes="(max-width: 768px) 100vw, 25vw"

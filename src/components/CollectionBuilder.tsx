@@ -1,13 +1,22 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function CollectionBuilder() {
-  const collectionItems = [
-    { id: 1, name: "Draped Silk", label: "HIJAB / SCARF", image: "/collection-1.webp" },
-    { id: 2, name: "Structured Noir", label: "ABAYA / OUTERWEAR", image: "/collection-2.webp" },
-    { id: 3, name: "Textured Linen", label: "INNER LAYER", image: "/collection-3.webp" },
-    { id: 4, name: "Modest Essentials", label: "ACCESSORY", image: "/collection-4.webp" },
-  ];
+  const content = useSiteContent<{
+    heading?: string;
+    subtext?: string;
+    items?: { name: string; label: string; image: string }[];
+  }>("collections");
+
+  const collectionItems = (content.items || [
+    { name: "Draped Silk", label: "HIJAB / SCARF", image: "/collection-1.webp" },
+    { name: "Structured Noir", label: "ABAYA / OUTERWEAR", image: "/collection-2.webp" },
+    { name: "Textured Linen", label: "INNER LAYER", image: "/collection-3.webp" },
+    { name: "Modest Essentials", label: "ACCESSORY", image: "/collection-4.webp" },
+  ]).map((item, idx) => ({ ...item, id: idx + 1 }));
 
   return (
     <section className="w-full bg-pureblack text-purewhite py-10 md:py-24 px-4 md:px-12 border-t border-purewhite/10 overflow-hidden">
@@ -16,10 +25,11 @@ export default function CollectionBuilder() {
         <div className="flex flex-col md:flex-row md:items-start justify-between mb-16 gap-8">
           <div className="max-w-xl">
             <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-display font-black uppercase tracking-tighter mb-4">
-              OUR COLLECTIONS
+              {content.heading || "OUR COLLECTIONS"}
             </h2>
             <p className="text-purewhite/60 text-xs md:text-base leading-relaxed max-w-md">
-              Construct your silhouette. Select layers to preview the structural interplay of modest high fashion.
+              {content.subtext ||
+                "Construct your silhouette. Select layers to preview the structural interplay of modest high fashion."}
             </p>
           </div>
         </div>

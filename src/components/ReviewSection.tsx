@@ -2,9 +2,22 @@
 
 import { useRef, useState, useEffect } from "react";
 import { Star } from "lucide-react";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function ReviewSection() {
-  const reviews = [
+  const content = useSiteContent<{
+    heading?: string;
+    subtitle?: string;
+    items?: {
+      quote: string;
+      initials: string;
+      name: string;
+      info: string;
+      avatarColor: string;
+    }[];
+  }>("reviews");
+
+  const reviews = content.items || [
     {
       quote: "Wore the Burgundy Festive Set to my sister's wedding and received so many compliments. The embroidery detail is exquisite. Worth every rupee.",
       initials: "RS",
@@ -88,10 +101,10 @@ export default function ReviewSection() {
       
       <div className="text-center mb-8 md:mb-12 px-6">
         <h4 className="text-[10px] md:text-xs font-bold uppercase tracking-[0.2em] text-pureblack/60 mb-2 md:mb-3">
-          LOVE LETTERS
+          {content.subtitle || "LOVE LETTERS"}
         </h4>
         <h2 className="text-2xl sm:text-3xl md:text-5xl font-display text-pureblack">
-          What Our Community Says
+          {content.heading || "What Our Community Says"}
         </h2>
       </div>
 

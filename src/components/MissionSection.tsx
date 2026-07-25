@@ -1,8 +1,10 @@
 "use client";
 
 import { motion, Variants } from "framer-motion";
+import { useSiteContent } from "@/lib/useSiteContent";
 
 export default function MissionSection() {
+  const content = useSiteContent<{ heading?: string; body?: string }>("mission");
   const fadeUp: Variants = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: "easeOut" } }
@@ -18,16 +20,17 @@ export default function MissionSection() {
           variants={fadeUp}
           className="text-2xl md:text-4xl lg:text-5xl font-display font-black uppercase tracking-tighter mb-8 md:mb-12"
         >
-          About Us
+          {content.heading || "About Us"}
         </motion.h2>
         <motion.p
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true, margin: "-100px" }}
           variants={fadeUp}
-          className="text-sm md:text-base text-pureblack/70 leading-relaxed max-w-2xl mx-auto"
+          className="text-sm md:text-base text-pureblack/70 leading-relaxed max-w-2xl mx-auto whitespace-pre-line"
         >
-          We believe that modesty is not a limitation, but a canvas for architectural elegance. Every piece is constructed to empower the wearer, blending uncompromising coverage with high-fashion structural design.
+          {content.body ||
+            "We believe that modesty is not a limitation, but a canvas for architectural elegance. Every piece is constructed to empower the wearer, blending uncompromising coverage with high-fashion structural design."}
         </motion.p>
       </div>
     </section>
