@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 interface User {
   email: string;
   id: string;
+  name?: string;
 }
 
 interface AuthContextType {
@@ -36,7 +37,11 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       if (session?.user) {
-        setUser({ email: session.user.email ?? "", id: session.user.id });
+        setUser({
+          email: session.user.email ?? "",
+          id: session.user.id,
+          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || "",
+        });
         
         // If they just logged in or session changed, we re-check admin status
         // Alternatively, this can be handled via server refresh, but it's okay to do it here

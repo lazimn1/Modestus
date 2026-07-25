@@ -39,7 +39,13 @@ export default async function RootLayout({
     initialIsAdmin = !!data;
   }
 
-  const initialUser = user ? { email: user.email ?? "", id: user.id } : null;
+  const initialUser = user
+    ? {
+        email: user.email ?? "",
+        id: user.id,
+        name: user.user_metadata?.full_name || user.user_metadata?.name || "",
+      }
+    : null;
 
   return (
     <html lang="en">

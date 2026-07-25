@@ -4,10 +4,11 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
-import { Eye, EyeOff, Lock, Mail, ArrowRight, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ArrowRight, ArrowLeft, User } from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -25,6 +26,11 @@ export default function SignupPage() {
     const { data, error: authError } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          full_name: name.trim(),
+        },
+      },
     });
 
     if (authError) {
@@ -104,6 +110,24 @@ export default function SignupPage() {
             </div>
           ) : (
             <form onSubmit={handleSignup} className="space-y-5">
+              {/* Name */}
+              <div className="space-y-2">
+                <label className="text-white/60 text-xs font-semibold uppercase tracking-wider">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g. Lazim Khader"
+                    required
+                    className="w-full pl-11 pr-4 py-3.5 bg-white/[0.06] border border-white/[0.1] rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all"
+                  />
+                </div>
+              </div>
+
               {/* Email */}
               <div className="space-y-2">
                 <label className="text-white/60 text-xs font-semibold uppercase tracking-wider">

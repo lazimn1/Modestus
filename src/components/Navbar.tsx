@@ -174,11 +174,11 @@ export default function Navbar() {
                 {user && (
                   <div className="mx-4 mt-3 mb-2 p-3.5 bg-purewhite/[0.07] rounded-2xl border border-purewhite/15 flex items-center gap-3.5 shadow-lg">
                     <div className="w-11 h-11 rounded-full bg-[#00897b] flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md">
-                      {user.email ? user.email[0].toUpperCase() : "U"}
+                      {(user.name ? user.name[0] : (user.email ? user.email[0] : "U")).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className="text-purewhite font-bold text-sm tracking-wide truncate leading-tight">
-                        {formatDisplayName(user.email)}
+                        {user.name || formatDisplayName(user.email)}
                       </p>
                       <p className="text-purewhite/60 text-xs truncate mt-0.5 font-sans">
                         {user.email}
