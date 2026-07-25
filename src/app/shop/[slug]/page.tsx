@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getProductBySlug, products, formatINR, Product } from "@/lib/products";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
+import { createClient } from "@/utils/supabase/client";
 import { mapDbToProduct } from "@/lib/useProducts";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
@@ -17,8 +16,7 @@ export function generateStaticParams() {
 
 async function fetchProduct(slug: string): Promise<Product | undefined> {
   try {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
+    const supabase = createClient();
     const { data } = await supabase.from("products").select("*").eq("slug", slug).single();
     if (data) return mapDbToProduct(data);
   } catch {}
