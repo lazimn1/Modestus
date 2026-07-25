@@ -1,11 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { products } from "@/lib/products";
+import { useProducts } from "@/lib/useProducts";
 import ProductCard from "./ProductCard";
 import { SlidersHorizontal } from "lucide-react";
 
 export default function ProductGrid() {
+  const { products, loading } = useProducts();
   return (
     <section className="w-full bg-[#faf7f2] min-h-screen pt-20 md:pt-28 font-sans">
       {/* Page Header */}

@@ -1,6 +1,9 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, products, formatINR } from "@/lib/products";
+import { getProductBySlug, products, formatINR, Product } from "@/lib/products";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
+import { mapDbToProduct } from "@/lib/useProducts";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
 import ReviewsSection from "@/components/pdp/ReviewsSection";
@@ -12,13 +15,23 @@ export function generateStaticParams() {
   return products.map((p) => ({ slug: p.slug }));
 }
 
+async function fetchProduct(slug: string): Promise<Product | undefined> {
+  try {
+    const cookieStore = await cookies();
+    const supabase = createClient(cookieStore);
+    const { data } = await supabase.from("products").select("*").eq("slug", slug).single();
+    if (data) return mapDbToProduct(data);
+  } catch {}
+  return getProductBySlug(slug);
+}
+
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await fetchProduct(slug);
   if (!product) return { title: "Product Not Found" };
   return {
     title: product.title,
@@ -32,7 +45,7 @@ export default async function ProductDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const product = getProductBySlug(slug);
+  const product = await fetchProduct(slug);
 
   if (!product) notFound();
 
