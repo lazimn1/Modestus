@@ -5,6 +5,7 @@ import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { Product } from "@/lib/products";
 import { mapDbToProduct, mapProductToDb } from "@/lib/useProducts";
+import ImageUploadWebP from "@/components/admin/ImageUploadWebP";
 import {
   Plus,
   Search,
@@ -849,41 +850,14 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
                       ))}
                     </div>
 
-                    {/* Add Image URL Input */}
-                    <div className="flex gap-2 mb-6">
-                      <input
-                        type="text"
-                        value={newImageUrl}
-                        onChange={(e) => setNewImageUrl(e.target.value)}
-                        placeholder="Paste image URL (e.g. https://images.unsplash.com/...)"
-                        className="flex-1 px-4 py-2 bg-white border border-stone-300 rounded-xl text-xs font-mono text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      />
-                      <button
-                        onClick={() => addImage(newImageUrl)}
-                        className="bg-stone-900 hover:bg-stone-800 text-white px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
-                      >
-                        <Plus className="w-4 h-4" /> Add URL
-                      </button>
-                    </div>
-
-                    {/* Quick Preset Sample Images */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-stone-500 mb-2">
-                        Quick Luxury Fashion Presets (Click to attach):
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {QUICK_IMAGE_PRESETS.map((preset, idx) => (
-                          <button
-                            key={idx}
-                            onClick={() => addImage(preset)}
-                            className="h-12 w-10 relative rounded-md overflow-hidden border border-stone-300 hover:border-stone-900 transition-all transform hover:scale-105 shadow-xs"
-                            title="Click to add sample image"
-                          >
-                            <Image src={preset} alt="Sample" fill className="object-cover" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                    {/* WebP Auto-Converting Uploader */}
+                    <ImageUploadWebP
+                      onUpload={(url) => addImage(url)}
+                      multiple={true}
+                      label="Upload Gallery Photos (Auto-converts PNG, JPG, GIF to WebP)"
+                      buttonText="Drop or Select Product Images"
+                      className="mt-2"
+                    />
                   </div>
 
                   {/* Colors Management */}

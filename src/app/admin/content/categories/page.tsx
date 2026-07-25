@@ -3,9 +3,9 @@
 import ContentEditorShell, {
   FieldLabel,
   FieldInput,
-  ImagePreview,
 } from "@/components/admin/ContentEditorShell";
 import { Trash2, Plus } from "lucide-react";
+import ImageUploadWebP from "@/components/admin/ImageUploadWebP";
 
 export default function CategoriesEditor() {
   return (
@@ -19,23 +19,23 @@ export default function CategoriesEditor() {
           {data.items.map((item: any, i: number) => (
             <div
               key={i}
-              className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3"
+              className="p-5 bg-stone-50 rounded-xl border border-stone-200 space-y-4 shadow-xs"
             >
               <div className="flex items-center justify-between">
-                <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Category {i + 1}
+                <p className="text-xs font-bold text-stone-700 uppercase tracking-wider">
+                  Category #{i + 1}
                 </p>
                 <button
                   onClick={() => {
                     const next = data.items.filter((_: any, j: number) => j !== i);
                     setData({ ...data, items: next });
                   }}
-                  className="p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                  className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                 >
-                  <Trash2 className="w-3.5 h-3.5" />
+                  <Trash2 className="w-4 h-4" />
                 </button>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <FieldLabel>Title</FieldLabel>
                   <FieldInput
@@ -59,7 +59,7 @@ export default function CategoriesEditor() {
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <FieldLabel>Button Text</FieldLabel>
                   <FieldInput
@@ -83,17 +83,28 @@ export default function CategoriesEditor() {
                   />
                 </div>
               </div>
+
               <div>
-                <FieldLabel>Image URL</FieldLabel>
-                <FieldInput
-                  value={item.imageUrl}
-                  onChange={(v) => {
-                    const next = [...data.items];
-                    next[i] = { ...next[i], imageUrl: v };
-                    setData({ ...data, items: next });
-                  }}
-                />
-                <ImagePreview src={item.imageUrl} />
+                <FieldLabel>Category Photo</FieldLabel>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                  {item.imageUrl && (
+                    <div className="h-28 w-full relative rounded-xl overflow-hidden border border-stone-300 shadow-xs bg-white">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={item.imageUrl} alt="Category" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className={item.imageUrl ? "sm:col-span-2" : "sm:col-span-3"}>
+                    <ImageUploadWebP
+                      onUpload={(url) => {
+                        const next = [...data.items];
+                        next[i] = { ...next[i], imageUrl: url };
+                        setData({ ...data, items: next });
+                      }}
+                      label="Upload Category Photo (Auto-converts to WebP)"
+                      buttonText="Select Category Image"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           ))}
@@ -103,11 +114,11 @@ export default function CategoriesEditor() {
                 ...data,
                 items: [
                   ...data.items,
-                  { title: "", description: "", linkText: "", linkUrl: "", imageUrl: "" },
+                  { title: "New Category", description: "Discover collection", linkText: "Shop Now", linkUrl: "/shop", imageUrl: "" },
                 ],
               })
             }
-            className="flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-800 transition-colors"
+            className="flex items-center gap-2 text-sm text-stone-900 bg-white border border-stone-300 px-4 py-2.5 rounded-xl font-semibold hover:bg-stone-50 transition-all shadow-xs"
           >
             <Plus className="w-4 h-4" /> Add Category
           </button>

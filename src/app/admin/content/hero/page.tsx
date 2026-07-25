@@ -2,11 +2,10 @@
 
 import ContentEditorShell, {
   FieldLabel,
-  FieldInput,
   FieldTextarea,
-  ImagePreview,
 } from "@/components/admin/ContentEditorShell";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2 } from "lucide-react";
+import ImageUploadWebP from "@/components/admin/ImageUploadWebP";
 
 export default function HeroEditor() {
   return (
@@ -31,39 +30,33 @@ export default function HeroEditor() {
           {/* Images */}
           <div>
             <FieldLabel>Slideshow Images</FieldLabel>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               {data.images.map((img: string, i: number) => (
-                <div key={i} className="flex items-start gap-3">
-                  <div className="flex-1">
-                    <FieldInput
-                      value={img}
-                      onChange={(v) => {
-                        const next = [...data.images];
-                        next[i] = v;
-                        setData({ ...data, images: next });
-                      }}
-                      placeholder="Image URL"
-                    />
-                    <ImagePreview src={img} />
-                  </div>
+                <div key={i} className="relative group border border-stone-200 rounded-xl overflow-hidden bg-stone-50 h-32 shadow-xs">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={img} alt="Hero slide" className="w-full h-full object-cover" />
                   <button
                     onClick={() => {
                       const next = data.images.filter((_: string, j: number) => j !== i);
                       setData({ ...data, images: next });
                     }}
-                    className="mt-2 p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    className="absolute top-2 right-2 p-1.5 bg-red-600/90 hover:bg-red-700 text-white rounded-lg shadow transition-all opacity-90 hover:opacity-100"
+                    title="Remove image"
                   >
                     <Trash2 className="w-4 h-4" />
                   </button>
+                  <div className="absolute bottom-1 left-1 bg-black/60 backdrop-blur-xs text-white text-[10px] font-bold px-2 py-0.5 rounded">
+                    #{i + 1}
+                  </div>
                 </div>
               ))}
-              <button
-                onClick={() => setData({ ...data, images: [...data.images, ""] })}
-                className="flex items-center gap-2 text-sm text-indigo-600 font-medium hover:text-indigo-800 transition-colors"
-              >
-                <Plus className="w-4 h-4" /> Add Image
-              </button>
             </div>
+            <ImageUploadWebP
+              onUpload={(url) => setData({ ...data, images: [...data.images, url] })}
+              multiple={true}
+              label="Upload Slideshow Photos (Auto-converts PNG, JPG, etc. to WebP)"
+              buttonText="Drop or Select Slideshow Images"
+            />
           </div>
         </>
       )}
