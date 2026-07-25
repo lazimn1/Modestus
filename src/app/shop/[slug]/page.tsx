@@ -9,28 +9,25 @@ import ReviewsSection from "@/components/pdp/ReviewsSection";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-// Ensure Next.js always revalidates dynamic product slugs on demand with zero caching delay
-export const dynamicParams = true;
+// Force Next.js and Vercel to dynamically render this page on every request with ZERO caching
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const fetchCache = "force-no-store";
 
 function getSupabase() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
   const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "placeholder";
-  return createSupabaseClient(url, key);
-}
-
-// Pre-render known product slugs at build time
-export async function generateStaticParams() {
-  try {
-    const supabase = getSupabase();
-    const { data } = await supabase.from("products").select("slug");
-    if (data && data.length > 0) {
-      return data.filter(p => p.slug).map((p) => ({ slug: p.slug }));
-    }
-  } catch (e) {
-    console.error("Failed to generate static params from Supabase:", e);
-  }
-  return defaultProducts.map((p) => ({ slug: p.slug }));
+  return createSupabaseClient(url, key, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      fetch: (url, options) => {
+        return fetch(url, { ...options, cache: "no-store", next: { revalidate: 0 } });
+      },
+    },
+  });
 }
 
 async function fetchProduct(slug: string): Promise<Product | undefined> {
