@@ -1,7 +1,5 @@
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
-
 /* ─── Default Content (hardcoded fallbacks) ─── */
+
 
 export const DEFAULTS: Record<string, any> = {
   hero: {
@@ -142,21 +140,3 @@ export const DEFAULTS: Record<string, any> = {
     cta_text: "Explore Collections",
   },
 };
-
-/* ─── Server-side fetcher ─── */
-
-export async function getSiteContent<T = any>(key: string): Promise<T> {
-  try {
-    const cookieStore = await cookies();
-    const supabase = createClient(cookieStore);
-    const { data } = await supabase
-      .from("site_content")
-      .select("value")
-      .eq("key", key)
-      .single();
-    if (data?.value) return data.value as T;
-  } catch {
-    // fall through to default
-  }
-  return DEFAULTS[key] as T;
-}
