@@ -216,16 +216,18 @@ export function useCommerce() {
 
     const syncCloudData = async () => {
       try {
+        const syncKey = `modestus_synced_${user.id}`;
+        const hasSyncedGuest = typeof window !== "undefined" && window.sessionStorage.getItem(syncKey);
+
         // 1. Sync wishlist
         const { data: cloudWishlist } = await supabase
           .from("wishlist_items")
           .select("*")
           .eq("user_id", user.id);
 
-        const localWishlist = getWishlist();
-        if (cloudWishlist) {
+        if (!hasSyncedGuest && cloudWishlist) {
           const cloudProductIds = new Set(cloudWishlist.map((i: any) => i.product_id));
-          for (const item of localWishlist) {
+          for (const item of getWishlist()) {
             if (!cloudProductIds.has(item.productId)) {
               await supabase.from("wishlist_items").insert({
                 user_id: user.id,
@@ -255,12 +257,11 @@ export function useCommerce() {
           .select("*")
           .eq("user_id", user.id);
 
-        const localCart = getCart();
-        if (cloudCart) {
+        if (!hasSyncedGuest && cloudCart) {
           const cloudKeys = new Set(
             cloudCart.map((i: any) => `${i.product_id}:${i.size}:${i.color}`)
           );
-          for (const item of localCart) {
+          for (const item of getCart()) {
             const key = `${item.productId}:${item.size}:${item.color}`;
             if (!cloudKeys.has(key)) {
               await supabase.from("cart_items").insert({
@@ -310,6 +311,10 @@ export function useCommerce() {
             placedAt: i.placed_at,
           }));
           writeJson(ORDERS_KEY, formattedOrders);
+        }
+
+        if (typeof window !== "undefined" && !hasSyncedGuest) {
+          window.sessionStorage.setItem(syncKey, "true");
         }
       } catch (e) {
         console.error("Cloud sync error:", e);
@@ -370,7 +375,7 @@ export function useCommerce() {
   );
 
   const handleRemoveFromCart = useCallback(
-    (target: Pick<CartItem, "productId" | "size" | "color">) => {
+    (target: Pick<CartItem, "productId" | "size" | "color">, quantity?: number) => {
       const next = removeCartItem(target);
       if (user?.id) {
         supabase
@@ -396,7 +401,7 @@ export function useCommerce() {
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
-      const exists = wishlist.some((item) => item.productId === productId);
+      const exists = getWishlist().some((item) => item.productId === productId);
       const next = toggleWishlistItem(productId);
       if (user?.id) {
         if (exists) {
@@ -416,12 +421,12 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, wishlist, supabase]
+    [user?.id, supabase]
   );
 
   const handleAddToWishlist = useCallback(
     (productId: number) => {
-      const exists = wishlist.some((item) => item.productId === productId);
+      const exists = getWishlist().some((item) => item.productId === productId);
       const next = addWishlistItem(productId);
       if (user?.id && !exists) {
         supabase.from("wishlist_items").insert({
@@ -432,7 +437,7 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, wishlist, supabase]
+    [user?.id, supabase]
   );
 
   const handleRemoveFromWishlist = useCallback(
