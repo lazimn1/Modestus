@@ -11,6 +11,7 @@ interface ImageGalleryProps {
 }
 
 export default function ImageGallery({ images, title }: ImageGalleryProps) {
+  const safeImages = (images && images.length > 0) ? images : ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"];
   const [activeIndex, setActiveIndex] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
 
@@ -19,7 +20,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
   const touchEndX = useRef<number>(0);
 
   const goTo = (idx: number) => {
-    setActiveIndex(Math.max(0, Math.min(images.length - 1, idx)));
+    setActiveIndex(Math.max(0, Math.min(safeImages.length - 1, idx)));
   };
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -53,7 +54,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
             transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
           >
             <Image
-              src={images[activeIndex]}
+              src={safeImages[activeIndex]}
               alt={`${title} — view ${activeIndex + 1}`}
               fill
               priority={activeIndex === 0}
@@ -64,7 +65,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
         </AnimatePresence>
 
         {/* Nav Arrows (mobile) */}
-        {images.length > 1 && (
+        {safeImages.length > 1 && (
           <>
             <button
               onClick={() => goTo(activeIndex - 1)}
@@ -76,7 +77,7 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
             </button>
             <button
               onClick={() => goTo(activeIndex + 1)}
-              disabled={activeIndex === images.length - 1}
+              disabled={activeIndex === safeImages.length - 1}
               className="md:hidden absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-8 h-8 sm:w-10 sm:h-10 bg-[#fcfaf7]/90 border border-[#dad2c2]/50 rounded-full flex items-center justify-center disabled:opacity-30 backdrop-blur-sm"
               aria-label="Next image"
             >
@@ -86,9 +87,9 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
         )}
 
         {/* Dot indicators (mobile) */}
-        {images.length > 1 && (
+        {safeImages.length > 1 && (
           <div className="md:hidden absolute bottom-3 sm:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 sm:gap-2">
-            {images.map((_, i) => (
+            {safeImages.map((_, i) => (
               <button
                 key={i}
                 onClick={() => setActiveIndex(i)}
@@ -103,9 +104,9 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
       </div>
 
       {/* Thumbnails (desktop) */}
-      {images.length > 1 && (
+      {safeImages.length > 1 && (
         <div className="hidden md:flex gap-3 overflow-x-auto pb-1">
-          {images.map((src, i) => (
+          {safeImages.map((src, i) => (
             <button
               key={i}
               onClick={() => setActiveIndex(i)}

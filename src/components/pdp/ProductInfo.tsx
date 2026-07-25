@@ -72,11 +72,11 @@ function AccordionItem({
 }
 
 export default function ProductInfo({ product }: ProductInfoProps) {
-  const [selectedColor, setSelectedColor] = useState(product.colors[0].name);
+  const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || "Standard Black");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCommerce();
-  const checkoutSize = selectedSize ?? product.sizes[0] ?? "One Size";
+  const checkoutSize = selectedSize ?? product.sizes?.[0] ?? "One Size";
 
   const handleAddToCart = () => {
     if (!selectedSize && product.sizes.length > 1) {

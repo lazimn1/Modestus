@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, products, formatINR, Product } from "@/lib/products";
-import { createClient } from "@/utils/supabase/client";
+import { getProductBySlug, products as defaultProducts, formatINR, Product } from "@/lib/products";
+import { createClient as createSupabaseClient } from "@supabase/supabase-js";
 import { mapDbToProduct } from "@/lib/useProducts";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
@@ -9,18 +9,63 @@ import ReviewsSection from "@/components/pdp/ReviewsSection";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-// Pre-render all known product slugs at build time
-export function generateStaticParams() {
-  return products.map((p) => ({ slug: p.slug }));
+// Ensure Next.js always revalidates dynamic product slugs on demand with zero caching delay
+export const dynamicParams = true;
+export const revalidate = 0;
+
+function getSupabase() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "placeholder";
+  return createSupabaseClient(url, key);
+}
+
+// Pre-render known product slugs at build time
+export async function generateStaticParams() {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase.from("products").select("slug");
+    if (data && data.length > 0) {
+      return data.filter(p => p.slug).map((p) => ({ slug: p.slug }));
+    }
+  } catch (e) {
+    console.error("Failed to generate static params from Supabase:", e);
+  }
+  return defaultProducts.map((p) => ({ slug: p.slug }));
 }
 
 async function fetchProduct(slug: string): Promise<Product | undefined> {
   try {
-    const supabase = createClient();
-    const { data } = await supabase.from("products").select("*").eq("slug", slug).single();
-    if (data) return mapDbToProduct(data);
-  } catch {}
+    const supabase = getSupabase();
+    // Check by slug first
+    let { data, error } = await supabase.from("products").select("*").eq("slug", slug).maybeSingle();
+    
+    // If not found by slug and slug is a number, try by ID
+    if (!data && !isNaN(Number(slug))) {
+      const res = await supabase.from("products").select("*").eq("id", Number(slug)).maybeSingle();
+      data = res.data;
+    }
+
+    if (error) {
+      console.error("Supabase PDP error for slug:", slug, error);
+    }
+    if (data) {
+      return mapDbToProduct(data);
+    }
+  } catch (err) {
+    console.error("fetchProduct exception:", err);
+  }
   return getProductBySlug(slug);
+}
+
+async function fetchAllProducts(): Promise<Product[]> {
+  try {
+    const supabase = getSupabase();
+    const { data } = await supabase.from("products").select("*").order("id", { ascending: true });
+    if (data && data.length > 0) {
+      return data.map(mapDbToProduct);
+    }
+  } catch {}
+  return defaultProducts;
 }
 
 export async function generateMetadata({
@@ -44,6 +89,7 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
   const product = await fetchProduct(slug);
+  const allProducts = await fetchAllProducts();
 
   if (!product) notFound();
 
@@ -110,8 +156,8 @@ export default async function ProductDetailPage({
             </Link>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
-            {products
-              .filter((p) => p.slug !== slug)
+            {allProducts
+              .filter((p) => p.slug !== slug && p.id !== product.id)
               .slice(0, 4)
               .map((related) => (
                 <Link key={related.id} href={`/shop/${related.slug}`} className="group block bg-[#fcfaf7] border border-[#e7e1d4] rounded-xl sm:rounded-2xl p-2 sm:p-3 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
