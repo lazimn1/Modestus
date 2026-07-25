@@ -22,7 +22,7 @@ export default function Hero() {
   }, []);
 
   return (
-    <section className="relative w-full h-120 md:h-[95vh] bg-white pt-14 flex flex-col justify-between overflow-hidden">
+    <section className="relative w-full h-120 md:h-[95vh] bg-purewhite pt-14 flex flex-col justify-between overflow-hidden">
       
       {/* Huge Background Text & Tagline */}
       <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-0 pt-1 md:pt-0 overflow-hidden">

@@ -1,20 +1,27 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Heart, ShoppingBag, Menu, X } from "lucide-react";
+import { User, Heart, ShoppingBag, Menu, X, Shield, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useCommerce } from "@/lib/commerce";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount, wishlistCount } = useCommerce();
+  const { user, isAdmin, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    setIsMobileMenuOpen(false);
+  };
 
   return (
     <>
       <header className="w-full fixed top-0 left-0 right-0 z-[60]">
         {/* Main Navbar */}
-        <div className="w-full bg-pureblack/85 backdrop-blur-xl px-4 md:px-8 lg:px-12 py-2 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
+        <div className="w-full bg-pureblack/85 backdrop-blur-xl px-2 md:px-8 lg:px-12 py-1 flex items-center justify-between transition-colors duration-300 shadow-sm relative">
           {/* Left Navigation */}
           <div className="flex-1 flex items-center justify-start gap-4">
             <button
@@ -37,7 +44,7 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-4xl md:text-6xl xl:text-7xl text-purewhite whitespace-nowrap"
+              className="text-4xl md:text-5xl lg:text-6xl text-purewhite whitespace-nowrap"
               style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
             >
               modestus
@@ -48,12 +55,16 @@ export default function Navbar() {
           <div className="flex-1 flex items-center justify-end gap-3 text-purewhite">
             {/* Desktop Icons */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3">
-              <Link href="/login" aria-label="Login" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
-                <User className="w-4 h-4" />
-                <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
-                  Login
-                </span>
-              </Link>
+
+              {!user && (
+                <Link href="/login" aria-label="Login" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
+                  <User className="w-4 h-4" />
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                    Login
+                  </span>
+                </Link>
+              )}
+
               <Link href="/wishlist" aria-label="Wishlist" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
                 <Heart className="w-4 h-4" />
                 {wishlistCount > 0 && (
@@ -151,6 +162,18 @@ export default function Navbar() {
               </div>
 
               <div className="flex flex-col overflow-y-auto py-2">
+                {/* Admin Panel Button in Mobile Menu */}
+                {isAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="mx-4 mt-3 mb-2 px-5 py-3 flex items-center gap-3 bg-purewhite rounded-xl text-pureblack font-bold text-sm tracking-widest uppercase hover:bg-purewhite/90 transition-colors"
+                  >
+                    <Shield className="w-4 h-4" />
+                    Admin Panel
+                  </Link>
+                )}
+
                 {[
                   { name: "Home", href: "/" },
                   { name: "Shop", href: "/shop" },
@@ -160,7 +183,6 @@ export default function Navbar() {
                   { name: "Orders", href: "/orders" },
                   { name: "About Us", href: "/about" },
                   { name: "Contact", href: "/contact" },
-                  { name: "Account / Login", href: "/login" },
                 ].map((link) => (
                   <Link
                     key={link.name}
@@ -171,6 +193,25 @@ export default function Navbar() {
                     {link.name}
                   </Link>
                 ))}
+
+                {/* Auth Link */}
+                {user ? (
+                  <button
+                    onClick={handleSignOut}
+                    className="px-6 py-4 text-left text-purewhite font-normal text-base tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-3"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="px-6 py-4 text-purewhite font-normal text-base tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
+                  >
+                    Log in
+                  </Link>
+                )}
               </div>
             </motion.div>
           </>
@@ -179,4 +220,3 @@ export default function Navbar() {
     </>
   );
 }
-

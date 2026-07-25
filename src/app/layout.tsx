@@ -1,7 +1,10 @@
 import localFont from "next/font/local";
 import type { Metadata } from "next";
 import "./globals.css";
-import Navbar from "@/components/Navbar";
+import LayoutShell from "@/components/LayoutShell";
+import { AuthProvider } from "@/context/AuthContext";
+import { createClient } from "@/utils/supabase/server";
+import { cookies } from "next/headers";
 
 const cerkiymo = localFont({
   src: "./fonts/cerkiymo.otf",
@@ -16,22 +19,41 @@ export const metadata: Metadata = {
   description: "Redefining modern modest wear with clean silhouettes and minimal aesthetics.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const supabase = createClient(cookieStore);
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  let initialIsAdmin = false;
+  if (user) {
+    const { data } = await supabase
+      .from("admin_users")
+      .select("id")
+      .eq("id", user.id)
+      .single();
+    initialIsAdmin = !!data;
+  }
+
+  const initialUser = user ? { email: user.email ?? "", id: user.id } : null;
+
   return (
     <html lang="en">
       <head>
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
       <body className={`${cerkiymo.variable} font-sans bg-lightgray text-pureblack antialiased`}>
-        <Navbar />
-        <main className="pt-[72px] flex flex-col min-h-screen">
-          {children}
-        </main>
+        <AuthProvider initialUser={initialUser} initialIsAdmin={initialIsAdmin}>
+          <LayoutShell>
+            {children}
+          </LayoutShell>
+        </AuthProvider>
       </body>
     </html>
   );
 }
+
