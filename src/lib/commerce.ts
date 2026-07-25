@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { products, type Product } from "@/lib/products";
+import { createClient } from "@/utils/supabase/client";
+import { useOptionalAuth } from "@/context/AuthContext";
 
 export type CartItem = {
   productId: number;
@@ -186,6 +188,10 @@ export function useCommerce() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
 
+  const auth = useOptionalAuth();
+  const user = auth?.user;
+  const supabase = createClient();
+
   const refresh = useCallback(() => {
     setCart(getCart());
     setWishlist(getWishlist());
@@ -204,6 +210,268 @@ export function useCommerce() {
       window.removeEventListener(CHANGE_EVENT, refresh);
     };
   }, [refresh]);
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const syncCloudData = async () => {
+      try {
+        // 1. Sync wishlist
+        const { data: cloudWishlist } = await supabase
+          .from("wishlist_items")
+          .select("*")
+          .eq("user_id", user.id);
+
+        const localWishlist = getWishlist();
+        if (cloudWishlist) {
+          const cloudProductIds = new Set(cloudWishlist.map((i: any) => i.product_id));
+          for (const item of localWishlist) {
+            if (!cloudProductIds.has(item.productId)) {
+              await supabase.from("wishlist_items").insert({
+                user_id: user.id,
+                product_id: item.productId,
+                created_at: item.addedAt || new Date().toISOString(),
+              });
+            }
+          }
+        }
+
+        const { data: updatedWishlist } = await supabase
+          .from("wishlist_items")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (updatedWishlist) {
+          const formatted: WishlistItem[] = updatedWishlist.map((i: any) => ({
+            productId: i.product_id,
+            addedAt: i.created_at,
+          }));
+          writeJson(WISHLIST_KEY, formatted);
+        }
+
+        // 2. Sync cart
+        const { data: cloudCart } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", user.id);
+
+        const localCart = getCart();
+        if (cloudCart) {
+          const cloudKeys = new Set(
+            cloudCart.map((i: any) => `${i.product_id}:${i.size}:${i.color}`)
+          );
+          for (const item of localCart) {
+            const key = `${item.productId}:${item.size}:${item.color}`;
+            if (!cloudKeys.has(key)) {
+              await supabase.from("cart_items").insert({
+                user_id: user.id,
+                product_id: item.productId,
+                quantity: item.quantity,
+                size: item.size,
+                color: item.color,
+                created_at: item.addedAt || new Date().toISOString(),
+              });
+            }
+          }
+        }
+
+        const { data: updatedCart } = await supabase
+          .from("cart_items")
+          .select("*")
+          .eq("user_id", user.id);
+
+        if (updatedCart) {
+          const formattedCart: CartItem[] = updatedCart.map((i: any) => ({
+            productId: i.product_id,
+            quantity: i.quantity,
+            size: i.size,
+            color: i.color,
+            addedAt: i.created_at,
+          }));
+          writeJson(CART_KEY, formattedCart);
+        }
+
+        // 3. Sync orders
+        const { data: cloudOrders } = await supabase
+          .from("orders")
+          .select("*")
+          .eq("user_id", user.id)
+          .order("placed_at", { ascending: false });
+
+        if (cloudOrders && cloudOrders.length > 0) {
+          const formattedOrders: Order[] = cloudOrders.map((i: any) => ({
+            id: i.id,
+            items: i.items,
+            subtotal: Number(i.subtotal),
+            shipping: Number(i.shipping),
+            total: Number(i.total),
+            paymentMethod: i.payment_method,
+            status: i.status,
+            placedAt: i.placed_at,
+          }));
+          writeJson(ORDERS_KEY, formattedOrders);
+        }
+      } catch (e) {
+        console.error("Cloud sync error:", e);
+      }
+    };
+
+    syncCloudData();
+  }, [user?.id, supabase]);
+
+  const handleAddToCart = useCallback(
+    (newItem: Omit<CartItem, "addedAt">) => {
+      const next = addCartItem(newItem);
+      if (user?.id) {
+        const item = next.find((i) => cartKey(i) === cartKey(newItem));
+        if (item) {
+          supabase.from("cart_items").upsert({
+            user_id: user.id,
+            product_id: item.productId,
+            quantity: item.quantity,
+            size: item.size,
+            color: item.color,
+            created_at: item.addedAt,
+          }).then();
+        }
+      }
+      return next;
+    },
+    [user?.id, supabase]
+  );
+
+  const handleUpdateQuantity = useCallback(
+    (target: Pick<CartItem, "productId" | "size" | "color">, quantity: number) => {
+      const next = updateCartItemQuantity(target, quantity);
+      if (user?.id) {
+        if (quantity <= 0) {
+          supabase
+            .from("cart_items")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("product_id", target.productId)
+            .eq("size", target.size)
+            .eq("color", target.color)
+            .then();
+        } else {
+          supabase
+            .from("cart_items")
+            .update({ quantity })
+            .eq("user_id", user.id)
+            .eq("product_id", target.productId)
+            .eq("size", target.size)
+            .eq("color", target.color)
+            .then();
+        }
+      }
+      return next;
+    },
+    [user?.id, supabase]
+  );
+
+  const handleRemoveFromCart = useCallback(
+    (target: Pick<CartItem, "productId" | "size" | "color">) => {
+      const next = removeCartItem(target);
+      if (user?.id) {
+        supabase
+          .from("cart_items")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", target.productId)
+          .eq("size", target.size)
+          .eq("color", target.color)
+          .then();
+      }
+      return next;
+    },
+    [user?.id, supabase]
+  );
+
+  const handleClearCart = useCallback(() => {
+    clearCart();
+    if (user?.id) {
+      supabase.from("cart_items").delete().eq("user_id", user.id).then();
+    }
+  }, [user?.id, supabase]);
+
+  const handleToggleWishlist = useCallback(
+    (productId: number) => {
+      const exists = wishlist.some((item) => item.productId === productId);
+      const next = toggleWishlistItem(productId);
+      if (user?.id) {
+        if (exists) {
+          supabase
+            .from("wishlist_items")
+            .delete()
+            .eq("user_id", user.id)
+            .eq("product_id", productId)
+            .then();
+        } else {
+          supabase.from("wishlist_items").insert({
+            user_id: user.id,
+            product_id: productId,
+            created_at: new Date().toISOString(),
+          }).then();
+        }
+      }
+      return next;
+    },
+    [user?.id, wishlist, supabase]
+  );
+
+  const handleAddToWishlist = useCallback(
+    (productId: number) => {
+      const exists = wishlist.some((item) => item.productId === productId);
+      const next = addWishlistItem(productId);
+      if (user?.id && !exists) {
+        supabase.from("wishlist_items").insert({
+          user_id: user.id,
+          product_id: productId,
+          created_at: new Date().toISOString(),
+        }).then();
+      }
+      return next;
+    },
+    [user?.id, wishlist, supabase]
+  );
+
+  const handleRemoveFromWishlist = useCallback(
+    (productId: number) => {
+      const next = removeWishlistItem(productId);
+      if (user?.id) {
+        supabase
+          .from("wishlist_items")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("product_id", productId)
+          .then();
+      }
+      return next;
+    },
+    [user?.id, supabase]
+  );
+
+  const handleCreateOrder = useCallback(
+    (items: CartItem[], paymentMethod: Order["paymentMethod"]) => {
+      const order = createOrder(items, paymentMethod);
+      if (user?.id) {
+        supabase.from("orders").insert({
+          id: order.id,
+          user_id: user.id,
+          items: order.items,
+          subtotal: order.subtotal,
+          shipping: order.shipping,
+          total: order.total,
+          payment_method: order.paymentMethod,
+          status: order.status,
+          placed_at: order.placedAt,
+        }).then();
+        supabase.from("cart_items").delete().eq("user_id", user.id).then();
+      }
+      return order;
+    },
+    [user?.id, supabase]
+  );
 
   const cartLines = useMemo(() => getCartLines(cart), [cart]);
   const wishlistProducts = useMemo(
@@ -234,13 +502,13 @@ export function useCommerce() {
     subtotal,
     shipping,
     total,
-    addToCart: addCartItem,
-    updateQuantity: updateCartItemQuantity,
-    removeFromCart: removeCartItem,
-    clearCart,
-    toggleWishlist: toggleWishlistItem,
-    addToWishlist: addWishlistItem,
-    removeFromWishlist: removeWishlistItem,
-    createOrder,
+    addToCart: handleAddToCart,
+    updateQuantity: handleUpdateQuantity,
+    removeFromCart: handleRemoveFromCart,
+    clearCart: handleClearCart,
+    toggleWishlist: handleToggleWishlist,
+    addToWishlist: handleAddToWishlist,
+    removeFromWishlist: handleRemoveFromWishlist,
+    createOrder: handleCreateOrder,
   };
 }
