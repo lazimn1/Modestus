@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Sparkles, Send, X, RefreshCw, Bot, Loader2, ArrowRight } from "lucide-react";
 
 interface Message {
@@ -18,6 +19,7 @@ const SUGGESTIONS = [
 ];
 
 export default function AiStylistWidget() {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -162,6 +164,10 @@ export default function AiStylistWidget() {
       );
     });
   };
+
+  if (pathname === "/chat" || pathname?.startsWith("/chat")) {
+    return null;
+  }
 
   return (
     <>

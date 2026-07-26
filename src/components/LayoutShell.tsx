@@ -7,8 +7,9 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
   const isAuthPage = pathname === "/login" || pathname === "/signup";
+  const isChatPage = pathname === "/chat" || pathname.startsWith("/chat");
 
-  if (isAdmin || isAuthPage) {
+  if (isAdmin || isAuthPage || isChatPage) {
     return <>{children}</>;
   }
 

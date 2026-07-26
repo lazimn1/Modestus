@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Send, Bot, RefreshCw, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Send, Bot, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 
 interface Message {
   id: string;
@@ -107,15 +107,6 @@ export default function MobileChatPage() {
     }
   };
 
-  const resetChat = () => {
-    setMessages([
-      {
-        id: "welcome",
-        sender: "ai",
-        text: "Welcome to M Chat. How may I assist you today?",
-      },
-    ]);
-  };
 
   const renderFormattedText = (text: string) => {
     const linkRegex = /(\[[^\]]+\]\([^)]+\))/g;
@@ -157,44 +148,20 @@ export default function MobileChatPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0a0a0f] text-white">
-      {/* Top Bar / Header */}
-      <header className="sticky top-0 z-40 p-4 bg-gradient-to-r from-indigo-950/80 via-purple-950/60 to-black/80 backdrop-blur-xl border-b border-white/10 flex items-center justify-between shadow-lg">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="p-2 text-white/70 hover:text-white bg-white/5 rounded-full transition-colors flex items-center justify-center"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-          <div className="w-10 h-10 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 shadow-inner">
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-bold tracking-wide text-white">M Chat</h1>
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
-              </span>
-            </div>
-            <p className="text-[11px] text-white/50">Luxury AI Shopping Assistant</p>
-          </div>
-        </div>
-
+    <div className="fixed inset-0 z-50 bg-[#0a0a0f] text-white flex flex-col overflow-hidden w-full h-[100dvh]">
+      {/* Floating Back Button Arrow Only */}
+      <div className="absolute top-4 left-4 z-50">
         <button
-          onClick={resetChat}
-          title="Reset conversation"
-          className="p-2.5 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-medium"
+          onClick={() => router.back()}
+          className="p-3 text-white/80 hover:text-white bg-white/[0.08] hover:bg-white/[0.15] border border-white/10 rounded-full backdrop-blur-xl transition-all active:scale-95 shadow-lg flex items-center justify-center"
+          aria-label="Go back"
         >
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden xs:inline">Reset</span>
+          <ArrowLeft className="w-5 h-5" />
         </button>
-      </header>
+      </div>
 
       {/* Message History */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 max-w-3xl w-full mx-auto">
+      <main className="flex-1 overflow-y-auto p-4 pt-16 md:p-6 md:pt-20 space-y-4 max-w-3xl w-full mx-auto">
         {messages.map((msg) => (
           <div
             key={msg.id}
