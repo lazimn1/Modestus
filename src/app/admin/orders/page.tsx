@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   ShoppingCart,
@@ -34,6 +34,7 @@ export default function AdminOrdersPage() {
   
   // Necessary order inspection state
   const [inspectOrder, setInspectOrder] = useState<any | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const supabase = createClient();
 
@@ -45,7 +46,7 @@ export default function AdminOrdersPage() {
         .select("*")
         .order("placed_at", { ascending: false });
 
-      let merged: any[] = data || [];
+      const merged: any[] = data || [];
 
       // Merge with any orders saved in browser local storage from guest checkouts
       if (typeof window !== "undefined") {
@@ -82,6 +83,11 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const showToast = (message: string, type: "success" | "error" = "success") => {
+    setToast({ message, type });
+    window.setTimeout(() => setToast(null), 3500);
+  };
+
   useEffect(() => {
     fetchOrders();
   }, [supabase]);
@@ -106,6 +112,7 @@ export default function AdminOrdersPage() {
               window.localStorage.setItem("modestus-orders", JSON.stringify(updated));
             }
           }
+          window.dispatchEvent(new Event("modestus-commerce-change"));
         } catch {
           // ignore
         }
@@ -118,8 +125,10 @@ export default function AdminOrdersPage() {
       if (inspectOrder && String(inspectOrder.id) === String(orderId)) {
         setInspectOrder((prev: any) => ({ ...prev, status: newStatus }));
       }
-    } catch (err) {
+      showToast("Order status updated successfully.", "success");
+    } catch (err: any) {
       console.error("Error updating status:", err);
+      showToast(err?.message || "Failed to update order status.", "error");
     } finally {
       setUpdatingId(null);
     }
@@ -141,6 +150,7 @@ export default function AdminOrdersPage() {
               window.localStorage.setItem("modestus-orders", JSON.stringify(filtered));
             }
           }
+          window.dispatchEvent(new Event("modestus-commerce-change"));
         } catch {
           // ignore
         }
@@ -150,8 +160,10 @@ export default function AdminOrdersPage() {
       if (inspectOrder && String(inspectOrder.id) === String(orderId)) {
         setInspectOrder(null);
       }
-    } catch (err) {
+      showToast("Order deleted successfully.", "success");
+    } catch (err: any) {
       console.error("Error deleting order:", err);
+      showToast(err?.message || "Failed to delete order.", "error");
     }
   };
 
@@ -192,7 +204,16 @@ export default function AdminOrdersPage() {
   }
 
   return (
-    <div className="max-w-[1200px] space-y-6">
+    <div className="max-w-300 space-y-6">
+      {toast && (
+        <div
+          className={`fixed right-5 bottom-5 z-50 rounded-2xl px-4 py-3 text-sm font-semibold shadow-2xl transition-all ${
+            toast.type === "success" ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-900"
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -247,7 +268,7 @@ export default function AdminOrdersPage() {
         </div>
 
         {/* Search Input */}
-        <div className="relative min-w-[260px]">
+        <div className="relative min-w-65">
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -341,7 +362,7 @@ export default function AdminOrdersPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-xs font-medium text-gray-800 line-clamp-1 max-w-[220px]">
+                        <div className="text-xs font-medium text-gray-800 line-clamp-1 max-w-55">
                           {firstItemName}
                         </div>
                         <div className="text-[11px] text-indigo-600 font-semibold mt-0.5">

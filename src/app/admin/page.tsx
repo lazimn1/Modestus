@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   IndianRupee,
@@ -50,52 +50,73 @@ export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>(defaultProducts);
   const [loading, setLoading] = useState<boolean>(true);
-  const [selectedPeriod, setSelectedPeriod] = useState<string>("4 Weeks");
+  const [selectedPeriod, setSelectedPeriod] = useState<string>("7 Days");
   const supabase = createClient();
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [{ data: ordersData }, { data: productsData }] = await Promise.all([
-          supabase.from("orders").select("*"),
-          supabase.from("products").select("*"),
-        ]);
+  const fetchDashboardData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [{ data: ordersData }, { data: productsData }] = await Promise.all([
+        supabase.from("orders").select("*"),
+        supabase.from("products").select("*"),
+      ]);
 
-        if (productsData && productsData.length > 0) {
-          setProducts(productsData);
-        }
+      if (productsData && productsData.length > 0) {
+        setProducts(productsData);
+      }
 
-        // Merge orders from Supabase with orders in browser checkout storage
-        let merged: any[] = ordersData || [];
-        if (typeof window !== "undefined") {
-          try {
-            const localRaw = window.localStorage.getItem("modestus-orders");
-            if (localRaw) {
-              const parsed = JSON.parse(localRaw);
-              if (Array.isArray(parsed)) {
-                const dbIds = new Set(merged.map((o) => o.id));
-                for (const localOrd of parsed) {
-                  if (!dbIds.has(localOrd.id)) {
-                    merged.push(localOrd);
-                  }
+      // Merge orders from Supabase with orders in browser checkout storage
+      const merged: any[] = ordersData || [];
+      if (typeof window !== "undefined") {
+        try {
+          const localRaw = window.localStorage.getItem("modestus-orders");
+          if (localRaw) {
+            const parsed = JSON.parse(localRaw);
+            if (Array.isArray(parsed)) {
+              const dbIds = new Set(merged.map((o) => o.id));
+              for (const localOrd of parsed) {
+                if (!dbIds.has(localOrd.id)) {
+                  merged.push(localOrd);
                 }
               }
             }
-          } catch {
-            // ignore local storage parse errors
           }
+        } catch {
+          // ignore local storage parse errors
         }
-
-        setOrders(merged);
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-      } finally {
-        setLoading(false);
       }
+
+      setOrders(merged);
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => {
+    queueMicrotask(() => {
+      fetchDashboardData();
+    });
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    const handleExternalUpdate = () => {
+      fetchDashboardData();
     };
 
-    fetchDashboardData();
-  }, [supabase]);
+    if (typeof window !== "undefined") {
+      window.addEventListener("storage", handleExternalUpdate);
+      window.addEventListener("modestus-commerce-change", handleExternalUpdate);
+    }
+
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("storage", handleExternalUpdate);
+        window.removeEventListener("modestus-commerce-change", handleExternalUpdate);
+      }
+    };
+  }, [fetchDashboardData]);
 
   // Strictly calculate live metrics from genuine order records
   const totalRevenue = orders.reduce((sum, ord) => {
@@ -246,7 +267,7 @@ export default function AdminDashboard() {
 
 
   return (
-    <div className="space-y-8 max-w-[1200px]">
+    <div className="space-y-8 max-w-300">
       {/* Page Title */}
       <h1 className="text-[26px] font-bold text-gray-900">Overview Dashboard</h1>
 
@@ -283,7 +304,7 @@ export default function AdminDashboard() {
               <Link
                 key={action.label}
                 href={action.href}
-                className={`group relative overflow-hidden rounded-xl bg-gradient-to-br ${action.gradient} p-5 text-white transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
+                className={`group relative overflow-hidden rounded-xl bg-linear-to-br ${action.gradient} p-5 text-white transition-transform duration-200 hover:scale-[1.02] hover:shadow-lg`}
               >
                 <Icon className="w-6 h-6 mb-3 opacity-90" />
                 <p className="text-[14px] font-bold leading-tight">{action.label}</p>
@@ -303,7 +324,7 @@ export default function AdminDashboard() {
               <button
                 key={period}
                 onClick={() => setSelectedPeriod(period)}
-                className={`px-3 sm:px-4 py-[6px] rounded-md text-[12px] font-medium transition-all duration-200 shrink-0 ${
+                className={`px-3 sm:px-4 py-1.5 rounded-md text-[12px] font-medium transition-all duration-200 shrink-0 ${
                   selectedPeriod === period
                     ? "bg-white text-gray-900 shadow-sm border border-gray-200"
                     : "text-gray-500 hover:text-gray-700"
@@ -319,7 +340,7 @@ export default function AdminDashboard() {
         <div className="w-full overflow-x-auto">
           <svg
             viewBox="0 0 900 340"
-            className="w-full min-w-[500px]"
+            className="w-full min-w-125"
             style={{ maxHeight: 360 }}
           >
             <defs>
