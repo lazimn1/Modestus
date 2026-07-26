@@ -65,23 +65,28 @@ export default function AdminDashboard() {
           setProducts(productsData);
         }
 
-        // Use strictly original order data from Supabase and browser checkout storage
-        let foundOrders: any[] = [];
-        if (ordersData && ordersData.length > 0) {
-          foundOrders = ordersData;
-        } else if (typeof window !== "undefined") {
+        // Merge orders from Supabase with orders in browser checkout storage
+        let merged: any[] = ordersData || [];
+        if (typeof window !== "undefined") {
           try {
             const localRaw = window.localStorage.getItem("modestus-orders");
             if (localRaw) {
               const parsed = JSON.parse(localRaw);
-              if (Array.isArray(parsed) && parsed.length > 0) foundOrders = parsed;
+              if (Array.isArray(parsed)) {
+                const dbIds = new Set(merged.map((o) => o.id));
+                for (const localOrd of parsed) {
+                  if (!dbIds.has(localOrd.id)) {
+                    merged.push(localOrd);
+                  }
+                }
+              }
             }
           } catch {
             // ignore local storage parse errors
           }
         }
 
-        setOrders(foundOrders);
+        setOrders(merged);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
       } finally {
@@ -92,7 +97,7 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, [supabase]);
 
-  // Strictly calculate live metrics from original data without any simulation or fallback
+  // Strictly calculate live metrics from genuine order records
   const totalRevenue = orders.reduce((sum, ord) => {
     const amount =
       ord.total !== undefined && ord.total !== null
@@ -251,11 +256,12 @@ export default function AdminDashboard() {
     const numPoints = chartBuckets.length;
     const pts = chartBuckets.map((b, idx) => {
       const x = numPoints > 1 ? (idx / (numPoints - 1)) * 800 : 400;
-      const y = 220 - (b.value / maxBucketVal) * 180;
+      // Map 0 to y=200 (exact alignment with bottom grid line ₹0) and maxVal to y=20 (top grid line)
+      const y = 200 - (b.value / maxBucketVal) * 180;
       return { x, y, value: b.value };
     });
 
-    if (pts.length === 0) return { linePath: "", areaPath: "", peak: { x: 400, y: 220 } };
+    if (pts.length === 0) return { linePath: "M0,200 L800,200", areaPath: "", peak: { x: 400, y: 200 } };
 
     let linePath = `M${pts[0].x},${pts[0].y}`;
     for (let i = 1; i < pts.length; i++) {
@@ -392,9 +398,9 @@ export default function AdminDashboard() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
-              <path d={areaPath} fill="url(#areaGradient)" />
-              {/* Dot highlight on peak */}
-              <circle cx={peak.x} cy={peak.y} r="6" fill="white" stroke="#6366f1" strokeWidth="3" />
+              {totalOrders > 0 && <path d={areaPath} fill="url(#areaGradient)" />}
+              {/* Dot highlight on peak when orders exist */}
+              {totalOrders > 0 && <circle cx={peak.x} cy={peak.y} r="6" fill="white" stroke="#6366f1" strokeWidth="3" />}
             </svg>
 
             {/* X-axis labels */}
@@ -408,8 +414,8 @@ export default function AdminDashboard() {
 
         <p className="text-center text-[12px] text-gray-400 mt-10">
           {totalOrders > 0
-            ? `Showing real-time sales trend across ${totalOrders} processed order${totalOrders > 1 ? "s" : ""}.`
-            : "Sales data will appear here once orders begin processing."}
+            ? `Showing real-time sales trend across ${totalOrders} recorded order${totalOrders > 1 ? "s" : ""}.`
+            : "No sales recorded yet. When checkouts are completed or test orders added, the graph curve will plot here in real time."}
         </p>
       </div>
     </div>
