@@ -121,14 +121,14 @@ export default function AdminDashboard() {
       </div>
 
       {/* Sales Trend */}
-      <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
+      <div className="bg-white rounded-xl border border-gray-100 p-4 sm:p-6 shadow-sm overflow-hidden">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-3">
           <h2 className="text-[18px] font-bold text-gray-900">Sales Trend</h2>
-          <div className="flex bg-gray-50 rounded-lg p-1 border border-gray-100">
+          <div className="flex flex-wrap bg-gray-50 rounded-lg p-1 border border-gray-100 max-w-full overflow-x-auto">
             {["7 Days", "4 Weeks", "12 Months", "5 Years"].map((period, i) => (
               <button
                 key={period}
-                className={`px-4 py-[6px] rounded-md text-[12px] font-medium transition-all duration-200 ${
+                className={`px-3 sm:px-4 py-[6px] rounded-md text-[12px] font-medium transition-all duration-200 shrink-0 ${
                   i === 1
                     ? "bg-white text-gray-900 shadow-sm border border-gray-200"
                     : "text-gray-500 hover:text-gray-700"

@@ -334,20 +334,20 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
               Create, modify, and style your luxury silhouettes in real time. Changes synchronize instantly across all customer touchpoints.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
             <button
               onClick={refreshProducts}
               disabled={loading}
-              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors flex items-center justify-center border border-white/10"
+              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors flex items-center justify-center border border-white/10 shrink-0"
               title="Refresh Catalog"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
             </button>
             <button
               onClick={handleOpenCreate}
-              className="bg-amber-100 hover:bg-white text-stone-950 px-5 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-0.5"
+              className="bg-amber-100 hover:bg-white text-stone-950 px-5 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex-1 sm:flex-initial"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-4 h-4 shrink-0" />
               Add New Product
             </button>
           </div>
@@ -375,9 +375,9 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
       </div>
 
       {/* Filter and View Controls */}
-      <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Search */}
-        <div className="relative flex-1 max-w-md">
+        <div className="relative flex-1 w-full lg:max-w-md">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
@@ -397,12 +397,12 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
         </div>
 
         {/* Filters & View Toggles */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full lg:w-auto">
           {/* Badge Filter */}
           <select
             value={selectedBadge}
             onChange={(e) => setSelectedBadge(e.target.value)}
-            className="bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-stone-900"
+            className="bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 sm:flex-initial"
           >
             <option value="All">All Badges</option>
             <option value="Bestseller">Bestseller</option>
@@ -413,12 +413,12 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
           </select>
 
           {/* Sort */}
-          <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5">
-            <ArrowUpDown className="w-3.5 h-3.5 text-stone-400" />
+          <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 flex-1 sm:flex-initial justify-between sm:justify-start">
+            <ArrowUpDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-stone-700 text-xs font-medium focus:outline-none"
+              className="bg-transparent text-stone-700 text-xs font-medium focus:outline-none w-full"
             >
               <option value="id-asc">Sort by ID</option>
               <option value="newest">Newest First</option>
@@ -429,7 +429,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-stone-100 p-1 rounded-lg border border-stone-200">
+          <div className="flex items-center bg-stone-100 p-1 rounded-lg border border-stone-200 shrink-0">
             <button
               onClick={() => setViewMode("table")}
               className={`p-1.5 rounded-md transition-all ${
@@ -498,47 +498,39 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
               </thead>
               <tbody className="divide-y divide-stone-200 bg-white">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-stone-50/70 transition-colors group">
+                  <tr key={product.id} className="hover:bg-stone-50/80 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-4">
-                        <div className="h-14 w-11 flex-shrink-0 bg-stone-100 rounded-lg relative overflow-hidden border border-stone-200 shadow-sm">
+                        <div className="relative w-12 h-16 rounded-lg bg-stone-100 overflow-hidden shrink-0 border border-stone-200">
                           {product.images && product.images.length > 0 ? (
-                            <Image src={product.images[0]} alt={product.title} fill className="object-cover" />
+                            <Image
+                              src={product.images[0]}
+                              alt={product.title}
+                              fill
+                              className="object-cover"
+                            />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center text-stone-300">
                               <ImageIcon className="w-5 h-5" />
                             </div>
                           )}
-                          {product.badge && (
-                            <span className="absolute top-1 left-1 bg-black/80 text-white text-[8px] font-bold px-1.5 py-0.5 rounded backdrop-blur-sm uppercase">
-                              {product.badge}
-                            </span>
-                          )}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-sm font-bold text-stone-900 group-hover:text-amber-800 transition-colors">
-                              {product.title}
-                            </span>
-                            <Link
-                              href={`/shop/${product.slug}`}
-                              target="_blank"
-                              className="text-stone-400 hover:text-stone-800 transition-colors opacity-0 group-hover:opacity-100"
-                              title="View on Storefront"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                            </Link>
+                            <span className="text-xs font-mono font-medium text-stone-400">#{product.id}</span>
+                            {product.badge && (
+                              <span className="text-[10px] font-bold px-2 py-0.5 bg-stone-900 text-white rounded-md uppercase tracking-wider">
+                                {product.badge}
+                              </span>
+                            )}
                           </div>
-                          <div className="text-xs text-stone-500 mt-0.5 max-w-xs truncate">{product.subtitle}</div>
-                          <div className="text-[10px] font-mono text-stone-400 mt-1">/{product.slug}</div>
+                          <p className="font-serif text-sm font-normal text-stone-900 mt-0.5">{product.title}</p>
+                          <p className="text-xs text-stone-500 line-clamp-1 max-w-[200px]">{product.subtitle}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-stone-900">₹{product.price.toLocaleString()}</div>
-                      {product.originalPrice && (
-                        <div className="text-xs text-stone-400 line-through">₹{product.originalPrice.toLocaleString()}</div>
-                      )}
+                      <span className="text-sm font-bold text-stone-900">₹{product.price.toLocaleString()}</span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-1.5 mb-1.5">
@@ -551,9 +543,9 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
                           />
                         ))}
                       </div>
-                      <div className="flex flex-wrap gap-1 max-w-[160px]">
-                        {product.sizes.map((s) => (
-                          <span key={s} className="px-1.5 py-0.5 bg-stone-100 text-stone-700 rounded text-[10px] font-medium font-mono">
+                      <div className="flex flex-wrap gap-1 max-w-[140px]">
+                        {(product.sizes || []).map((s, idx) => (
+                          <span key={idx} className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-mono font-semibold">
                             {s}
                           </span>
                         ))}
@@ -655,28 +647,32 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 mt-4 border-t border-stone-100">
-                  <button
-                    onClick={() => handleOpenEdit(product)}
-                    className="flex-1 bg-stone-100 hover:bg-stone-900 hover:text-white text-stone-800 text-xs font-semibold py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <Edit2 className="w-3.5 h-3.5" /> Edit
-                  </button>
-                  <div className="flex items-center gap-1 ml-2">
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-stone-100">
+                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
+                    Active
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleOpenEdit(product)}
+                      className="p-2 text-stone-600 hover:text-stone-950 hover:bg-stone-100 rounded-lg transition-colors"
+                      title="Edit Product"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       onClick={() => handleDuplicate(product)}
-                      className="p-2 text-stone-500 hover:text-stone-900 hover:bg-stone-100 rounded-lg transition-colors"
-                      title="Duplicate"
+                      className="p-2 text-stone-600 hover:text-stone-950 hover:bg-stone-100 rounded-lg transition-colors"
+                      title="Duplicate Silhoutte"
                     >
-                      <Copy className="w-4 h-4" />
+                      <Copy className="w-3.5 h-3.5" />
                     </button>
                     <button
                       onClick={() => handleDelete(product.id, product.title)}
                       disabled={deletingId === product.id}
                       className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete"
+                      title="Delete Product"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   </div>
                 </div>
@@ -691,54 +687,54 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
         <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-4xl h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
             {/* Modal Header */}
-            <div className="px-6 py-5 border-b border-stone-200 flex items-center justify-between bg-stone-900 text-white">
+            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-200 flex items-center justify-between bg-stone-900 text-white gap-3">
               <div>
                 <span className="text-[10px] font-mono tracking-widest text-amber-300 uppercase font-bold">
                   {formState.id ? `Editing ID #${formState.id}` : "New Silhouette Creation"}
                 </span>
-                <h2 className="font-serif text-2xl font-normal text-white mt-0.5">
+                <h2 className="font-serif text-xl sm:text-2xl font-normal text-white mt-0.5 line-clamp-1">
                   {formState.title || "Untitled Product"}
                 </h2>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-full hover:bg-white/10 text-stone-400 hover:text-white transition-colors"
+                className="p-2 rounded-full hover:bg-white/10 text-stone-400 hover:text-white transition-colors shrink-0"
               >
                 <X className="w-6 h-6" />
               </button>
             </div>
 
             {/* Modal Navigation Tabs */}
-            <div className="flex border-b border-stone-200 bg-stone-50 px-6">
+            <div className="flex border-b border-stone-200 bg-stone-50 px-2 sm:px-6 overflow-x-auto max-w-full">
               <button
                 onClick={() => setActiveTab("core")}
-                className={`py-3.5 px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+                className={`py-3 sm:py-3.5 px-3 sm:px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 shrink-0 ${
                   activeTab === "core"
                     ? "border-stone-900 text-stone-900 bg-white"
                     : "border-transparent text-stone-500 hover:text-stone-800"
                 }`}
               >
-                <FileText className="w-4 h-4" /> 1. General & Pricing
+                <FileText className="w-4 h-4 shrink-0" /> 1. General & Pricing
               </button>
               <button
                 onClick={() => setActiveTab("media")}
-                className={`py-3.5 px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+                className={`py-3 sm:py-3.5 px-3 sm:px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 shrink-0 ${
                   activeTab === "media"
                     ? "border-stone-900 text-stone-900 bg-white"
                     : "border-transparent text-stone-500 hover:text-stone-800"
                 }`}
               >
-                <ImageIcon className="w-4 h-4" /> 2. Media & Colors
+                <ImageIcon className="w-4 h-4 shrink-0" /> 2. Media & Colors
               </button>
               <button
                 onClick={() => setActiveTab("specs")}
-                className={`py-3.5 px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 ${
+                className={`py-3 sm:py-3.5 px-3 sm:px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 shrink-0 ${
                   activeTab === "specs"
                     ? "border-stone-900 text-stone-900 bg-white"
                     : "border-transparent text-stone-500 hover:text-stone-800"
                 }`}
               >
-                <Ruler className="w-4 h-4" /> 3. Specs & Care
+                <Ruler className="w-4 h-4 shrink-0" /> 3. Specs & Care
               </button>
             </div>
 
