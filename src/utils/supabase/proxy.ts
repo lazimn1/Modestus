@@ -51,7 +51,7 @@ export const updateSession = async (request: NextRequest) => {
       .from('admin_users')
       .select('id')
       .eq('id', user.id)
-      .single();
+      .maybeSingle();
 
     if (!adminUser) {
       // user is not admin, redirect to home

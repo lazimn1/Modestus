@@ -51,7 +51,7 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
             .from("admin_users")
             .select("id")
             .eq("id", session.user.id)
-            .single();
+            .maybeSingle();
           setIsAdmin(!!data);
         }
       } else {

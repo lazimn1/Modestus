@@ -33,7 +33,7 @@ export default function ContentEditorShell({
         .from("site_content")
         .select("value")
         .eq("key", contentKey)
-        .single();
+        .maybeSingle();
       setData(row?.value ?? DEFAULTS[contentKey]);
       setLoading(false);
     };

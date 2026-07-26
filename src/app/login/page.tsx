@@ -45,7 +45,7 @@ export default function LoginPage() {
         .from("admin_users")
         .select("id")
         .eq("id", data.user.id)
-        .single();
+        .maybeSingle();
 
       if (adminData) {
         // Admin user — redirect to admin panel

@@ -16,7 +16,7 @@ export function useSiteContent<T = any>(key: string): T {
           .from("site_content")
           .select("value")
           .eq("key", key)
-          .single();
+          .maybeSingle();
         if (mounted && data?.value) {
           setContent(data.value as T);
         }
