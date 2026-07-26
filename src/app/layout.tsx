@@ -6,6 +6,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
 import { isAdminEmail } from "@/lib/admin";
+import AiStylistWidget from "@/components/AiStylistWidget";
 
 const cerkiymo = localFont({
   src: "./fonts/cerkiymo.otf",
@@ -50,6 +51,7 @@ export default async function RootLayout({
           <LayoutShell>
             {children}
           </LayoutShell>
+          <AiStylistWidget />
         </AuthProvider>
       </body>
     </html>
