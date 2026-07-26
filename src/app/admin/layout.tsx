@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { isAdminEmail } from "@/lib/admin";
 import {
   LayoutGrid,
   Package,
@@ -51,13 +52,7 @@ export default function AdminLayout({
       if (!user) {
         router.replace("/login");
       } else {
-        const { data: adminData } = await supabase
-          .from("admin_users")
-          .select("id")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (!adminData) {
+        if (!isAdminEmail(user.email)) {
           router.replace("/");
         } else {
           setUserEmail(user.email ?? null);

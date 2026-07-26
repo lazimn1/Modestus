@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, Mail, ArrowRight, ArrowLeft, User } from "lucide-react";
+import { isAdminEmail } from "@/lib/admin";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -41,13 +42,7 @@ export default function LoginPage() {
 
     // Check if user is an admin
     if (data.user) {
-      const { data: adminData } = await supabase
-        .from("admin_users")
-        .select("id")
-        .eq("id", data.user.id)
-        .maybeSingle();
-
-      if (adminData) {
+      if (isAdminEmail(data.user.email)) {
         // Admin user — redirect to admin panel
         router.push("/admin");
       } else {
@@ -190,7 +185,7 @@ export default function LoginPage() {
           
           <div className="mt-6 text-center">
             <p className="text-white/40 text-sm">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-medium transition-colors">
                 Sign up
               </Link>

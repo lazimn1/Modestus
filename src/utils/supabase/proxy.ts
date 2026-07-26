@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { type NextRequest, NextResponse } from "next/server";
+import { isAdminEmail } from "@/lib/admin";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -46,14 +47,7 @@ export const updateSession = async (request: NextRequest) => {
       return NextResponse.redirect(url)
     }
 
-    // check if user is admin
-    const { data: adminUser } = await supabase
-      .from('admin_users')
-      .select('id')
-      .eq('id', user.id)
-      .maybeSingle();
-
-    if (!adminUser) {
+    if (!isAdminEmail(user.email)) {
       // user is not admin, redirect to home
       const url = request.nextUrl.clone()
       url.pathname = '/'

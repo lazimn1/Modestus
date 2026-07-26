@@ -1,8 +1,9 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
+import { isAdminEmail } from "@/lib/admin";
 
 interface User {
   email: string;
@@ -30,7 +31,7 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
   const [isAdmin, setIsAdmin] = useState<boolean>(initialIsAdmin);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     const {
@@ -43,17 +44,7 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
           name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || "",
         });
         
-        // If they just logged in or session changed, we re-check admin status
-        // Alternatively, this can be handled via server refresh, but it's okay to do it here
-        // if initialIsAdmin is already correct.
-        if (session.user.id !== user?.id) {
-          const { data } = await supabase
-            .from("admin_users")
-            .select("id")
-            .eq("id", session.user.id)
-            .maybeSingle();
-          setIsAdmin(!!data);
-        }
+        setIsAdmin(isAdminEmail(session.user.email));
       } else {
         setUser(null);
         setIsAdmin(false);
@@ -61,7 +52,7 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase, user?.id]);
+  }, [supabase]);
 
   const signOut = async () => {
     setIsLoading(true);

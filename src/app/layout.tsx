@@ -5,6 +5,7 @@ import LayoutShell from "@/components/LayoutShell";
 import { AuthProvider } from "@/context/AuthContext";
 import { createClient } from "@/utils/supabase/server";
 import { cookies } from "next/headers";
+import { isAdminEmail } from "@/lib/admin";
 
 const cerkiymo = localFont({
   src: "./fonts/cerkiymo.otf",
@@ -29,15 +30,7 @@ export default async function RootLayout({
 
   const { data: { user } } = await supabase.auth.getUser();
 
-  let initialIsAdmin = false;
-  if (user) {
-    const { data } = await supabase
-      .from("admin_users")
-      .select("id")
-      .eq("id", user.id)
-      .maybeSingle();
-    initialIsAdmin = !!data;
-  }
+  const initialIsAdmin = isAdminEmail(user?.email);
 
   const initialUser = user
     ? {
@@ -62,4 +55,3 @@ export default async function RootLayout({
     </html>
   );
 }
-
