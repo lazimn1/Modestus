@@ -242,49 +242,8 @@ export default function AdminDashboard() {
   const chartBuckets = getChartBuckets();
   const maxBucketVal = Math.max(...chartBuckets.map((b) => b.value), 1000);
 
-  // Dynamic Y-axis labels scaled to actual maximum revenue in active period
-  const yAxisLabels = [
-    `₹${Math.round(maxBucketVal).toLocaleString("en-IN")}`,
-    `₹${Math.round(maxBucketVal * 0.75).toLocaleString("en-IN")}`,
-    `₹${Math.round(maxBucketVal * 0.5).toLocaleString("en-IN")}`,
-    `₹${Math.round(maxBucketVal * 0.25).toLocaleString("en-IN")}`,
-    "₹0",
-  ];
 
-  // Generate smooth cubic Bezier SVG path strictly from original data buckets
-  const generateSvgCurves = () => {
-    const numPoints = chartBuckets.length;
-    const pts = chartBuckets.map((b, idx) => {
-      const x = numPoints > 1 ? (idx / (numPoints - 1)) * 800 : 400;
-      // Map 0 to y=200 (exact alignment with bottom grid line ₹0) and maxVal to y=20 (top grid line)
-      const y = 200 - (b.value / maxBucketVal) * 180;
-      return { x, y, value: b.value };
-    });
 
-    if (pts.length === 0) return { linePath: "M0,200 L800,200", areaPath: "", peak: { x: 400, y: 200 } };
-
-    let linePath = `M${pts[0].x},${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const prev = pts[i - 1];
-      const curr = pts[i];
-      const dx = (curr.x - prev.x) * 0.35;
-      linePath += ` C${prev.x + dx},${prev.y} ${curr.x - dx},${curr.y} ${curr.x},${curr.y}`;
-    }
-
-    const lastX = pts[pts.length - 1].x;
-    const firstX = pts[0].x;
-    const areaPath = `${linePath} L${lastX},240 L${firstX},240 Z`;
-
-    // Find highest peak point in original data for dot highlight
-    let peak = pts[0];
-    for (const p of pts) {
-      if (p.value > peak.value) peak = p;
-    }
-
-    return { linePath, areaPath, peak };
-  };
-
-  const { linePath, areaPath, peak } = generateSvgCurves();
 
   return (
     <div className="space-y-8 max-w-[1200px]">
@@ -356,66 +315,185 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Chart Placeholder */}
-        <div className="relative h-[280px] flex items-end gap-1 px-2">
-          {/* Y-axis labels */}
-          <div className="absolute left-0 top-0 bottom-8 flex flex-col justify-between text-[11px] text-gray-400 w-14">
-            {yAxisLabels.map((label, idx) => (
-              <span key={idx}>{label}</span>
-            ))}
-          </div>
+        {/* Accurate SVG Chart — all elements share one coordinate system */}
+        <div className="w-full overflow-x-auto">
+          <svg
+            viewBox="0 0 900 340"
+            className="w-full min-w-[500px]"
+            style={{ maxHeight: 360 }}
+          >
+            <defs>
+              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="#6366f1" />
+                <stop offset="100%" stopColor="#4f46e5" />
+              </linearGradient>
+              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15" />
+                <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
+              </linearGradient>
+            </defs>
 
-          {/* Chart area */}
-          <div className="ml-16 flex-1 relative h-full">
-            {/* Grid lines */}
-            <div className="absolute inset-0 flex flex-col justify-between">
-              {[0, 1, 2, 3, 4].map((i) => (
-                <div key={i} className="border-b border-dashed border-gray-100 w-full" />
-              ))}
-            </div>
-
-            {/* SVG Chart Line */}
-            <svg
-              viewBox="0 0 800 240"
-              className="absolute inset-0 w-full h-full"
-              preserveAspectRatio="none"
+            {/* ---- Y-axis title ---- */}
+            <text
+              x="12"
+              y="155"
+              textAnchor="middle"
+              fontSize="11"
+              fill="#9ca3af"
+              fontWeight="600"
+              transform="rotate(-90, 12, 155)"
             >
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#6366f1" />
-                  <stop offset="100%" stopColor="#4f46e5" />
-                </linearGradient>
-                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15" />
-                  <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-                </linearGradient>
-              </defs>
-              <path
-                d={linePath}
-                fill="none"
-                stroke="url(#lineGradient)"
-                strokeWidth="3"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              {totalOrders > 0 && <path d={areaPath} fill="url(#areaGradient)" />}
-              {/* Dot highlight on peak when orders exist */}
-              {totalOrders > 0 && <circle cx={peak.x} cy={peak.y} r="6" fill="white" stroke="#6366f1" strokeWidth="3" />}
-            </svg>
+              Revenue (₹)
+            </text>
 
-            {/* X-axis labels */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between translate-y-6 text-[11px] text-gray-400">
-              {chartBuckets.map((bucket, idx) => (
-                <span key={idx}>{bucket.label}</span>
-              ))}
-            </div>
-          </div>
+            {/* ---- Grid lines + Y-axis tick labels ---- */}
+            {/* Chart plot area: x 100→850, y 30→270  (height 240) */}
+            {[0, 0.25, 0.5, 0.75, 1].map((frac, idx) => {
+              const y = 30 + frac * 240; // 30, 90, 150, 210, 270
+              const val = Math.round(maxBucketVal * (1 - frac));
+              return (
+                <g key={idx}>
+                  <line x1="100" y1={y} x2="850" y2={y} stroke="#f3f4f6" strokeWidth="1" strokeDasharray="6 4" />
+                  <text x="90" y={y + 4} textAnchor="end" fontSize="11" fill="#9ca3af">
+                    {`₹${val.toLocaleString("en-IN")}`}
+                  </text>
+                </g>
+              );
+            })}
+
+            {/* ---- Data curve ---- */}
+            {(() => {
+              const plotLeft = 100;
+              const plotRight = 850;
+              const plotTop = 30;
+              const plotBottom = 270;
+              const plotW = plotRight - plotLeft;
+              const plotH = plotBottom - plotTop;
+              const n = chartBuckets.length;
+
+              const pts = chartBuckets.map((b, i) => ({
+                x: n > 1 ? plotLeft + (i / (n - 1)) * plotW : (plotLeft + plotRight) / 2,
+                y: maxBucketVal > 0 ? plotBottom - (b.value / maxBucketVal) * plotH : plotBottom,
+                value: b.value,
+                label: b.label,
+              }));
+
+              // Build smooth cubic bezier path
+              let linePath = "";
+              if (pts.length > 0) {
+                linePath = `M${pts[0].x},${pts[0].y}`;
+                for (let i = 1; i < pts.length; i++) {
+                  const prev = pts[i - 1];
+                  const curr = pts[i];
+                  const dx = (curr.x - prev.x) * 0.35;
+                  linePath += ` C${prev.x + dx},${prev.y} ${curr.x - dx},${curr.y} ${curr.x},${curr.y}`;
+                }
+              }
+              const areaPath = pts.length > 0
+                ? `${linePath} L${pts[pts.length - 1].x},${plotBottom} L${pts[0].x},${plotBottom} Z`
+                : "";
+
+              // Find peak
+              let peakPt = pts[0] || { x: 475, y: plotBottom, value: 0 };
+              for (const p of pts) {
+                if (p.value > peakPt.value) peakPt = p;
+              }
+
+              return (
+                <>
+                  {/* Area fill */}
+                  {totalOrders > 0 && areaPath && <path d={areaPath} fill="url(#areaGradient)" />}
+
+                  {/* Line */}
+                  {linePath && (
+                    <path
+                      d={linePath}
+                      fill="none"
+                      stroke="url(#lineGradient)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  )}
+
+                  {/* Data point dots + hover tooltips */}
+                  {pts.map((pt, i) => (
+                    <g key={i} className="group" style={{ cursor: "default" }}>
+                      {/* Invisible larger hit area */}
+                      <circle cx={pt.x} cy={pt.y} r="16" fill="transparent" />
+                      {/* Visible dot */}
+                      <circle
+                        cx={pt.x}
+                        cy={pt.y}
+                        r={pt === peakPt && totalOrders > 0 ? 6 : 4}
+                        fill="white"
+                        stroke="#6366f1"
+                        strokeWidth={pt === peakPt && totalOrders > 0 ? 3 : 2}
+                      />
+                      {/* Tooltip background */}
+                      <rect
+                        x={pt.x - 52}
+                        y={pt.y - 38}
+                        width="104"
+                        height="26"
+                        rx="6"
+                        fill="#1e1b4b"
+                        opacity="0"
+                        className="transition-opacity duration-150"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        <set attributeName="opacity" to="0.95" begin={`dot${i}.mouseenter`} end={`dot${i}.mouseleave`} />
+                      </rect>
+                      {/* Tooltip text */}
+                      <text
+                        x={pt.x}
+                        y={pt.y - 21}
+                        textAnchor="middle"
+                        fontSize="11"
+                        fontWeight="600"
+                        fill="white"
+                        opacity="0"
+                        style={{ pointerEvents: "none" }}
+                      >
+                        <set attributeName="opacity" to="1" begin={`dot${i}.mouseenter`} end={`dot${i}.mouseleave`} />
+                        {`₹${pt.value.toLocaleString("en-IN")}`}
+                      </text>
+                      {/* Invisible trigger circle with id for hover */}
+                      <circle id={`dot${i}`} cx={pt.x} cy={pt.y} r="16" fill="transparent" style={{ cursor: "pointer" }} />
+                    </g>
+                  ))}
+                </>
+              );
+            })()}
+
+            {/* ---- X-axis tick labels ---- */}
+            {chartBuckets.map((bucket, idx) => {
+              const n = chartBuckets.length;
+              const x = n > 1 ? 100 + (idx / (n - 1)) * 750 : 475;
+              return (
+                <text key={idx} x={x} y="295" textAnchor="middle" fontSize="11" fill="#9ca3af">
+                  {bucket.label}
+                </text>
+              );
+            })}
+
+            {/* ---- X-axis title ---- */}
+            <text x="475" y="320" textAnchor="middle" fontSize="11" fill="#9ca3af" fontWeight="600">
+              {selectedPeriod === "7 Days"
+                ? "Day of Week"
+                : selectedPeriod === "4 Weeks"
+                ? "Week"
+                : selectedPeriod === "12 Months"
+                ? "Month"
+                : "Year"}
+            </text>
+          </svg>
         </div>
 
-        <p className="text-center text-[12px] text-gray-400 mt-10">
+        <p className="text-center text-[12px] text-gray-400 mt-4">
           {totalOrders > 0
-            ? `Showing real-time sales trend across ${totalOrders} recorded order${totalOrders > 1 ? "s" : ""}.`
-            : "No sales recorded yet. When checkouts are completed or test orders added, the graph curve will plot here in real time."}
+            ? `Showing accurate sales trend across ${totalOrders} recorded order${totalOrders > 1 ? "s" : ""}.`
+            : "No sales recorded yet. Complete a checkout or add a test order from the Orders page to see the graph populate."}
         </p>
       </div>
     </div>
