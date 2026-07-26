@@ -492,22 +492,26 @@ export function useCommerce() {
   const handleCreateOrder = useCallback(
     (items: CartItem[], paymentMethod: Order["paymentMethod"], shippingData?: ShippingAddress) => {
       const order = createOrder(items, paymentMethod, shippingData);
+      
+      supabase.from("orders").insert({
+        id: order.id,
+        user_id: user?.id || null,
+        items: order.items,
+        subtotal: order.subtotal,
+        shipping: order.shipping,
+        total: order.total,
+        payment_method: order.paymentMethod,
+        status: order.status,
+        placed_at: order.placedAt,
+        customer_name: order.customer_name,
+        email: order.email,
+        phone: order.phone,
+        shipping_address: order.shipping_address,
+      }).then(({ error }) => {
+        if (error) console.error("Failed to save order to cloud database:", error);
+      });
+
       if (user?.id) {
-        supabase.from("orders").insert({
-          id: order.id,
-          user_id: user.id,
-          items: order.items,
-          subtotal: order.subtotal,
-          shipping: order.shipping,
-          total: order.total,
-          payment_method: order.paymentMethod,
-          status: order.status,
-          placed_at: order.placedAt,
-          customer_name: order.customer_name,
-          email: order.email,
-          phone: order.phone,
-          shipping_address: order.shipping_address,
-        }).then();
         supabase.from("cart_items").delete().eq("user_id", user.id).then();
       }
       return order;
