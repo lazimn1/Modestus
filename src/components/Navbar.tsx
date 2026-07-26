@@ -52,7 +52,7 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setIsMobileMenuOpen(false)}
-              className="text-4xl md:text-5xl lg:text-6xl text-purewhite whitespace-nowrap"
+              className="text-5xl sm:text-6xl md:text-7xl lg:text-[80px] text-purewhite whitespace-nowrap leading-none"
               style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
             >
               modestus
@@ -155,7 +155,7 @@ export default function Navbar() {
                 <Link
                   href="/"
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-xl text-purewhite"
+                  className="text-3xl sm:text-4xl text-purewhite leading-none"
                   style={{ fontFamily: 'var(--font-cerkiymo), sans-serif' }}
                 >
                   modestus
@@ -172,15 +172,15 @@ export default function Navbar() {
               <div className="flex flex-col overflow-y-auto py-2">
                 {/* User Profile Header in Menu */}
                 {user && (
-                  <div className="mx-4 mt-3 mb-2 p-3.5 bg-purewhite/[0.07] rounded-2xl border border-purewhite/15 flex items-center gap-3.5 shadow-lg">
-                    <div className="w-11 h-11 rounded-full bg-[#00897b] flex items-center justify-center text-white font-bold text-lg shrink-0 shadow-md">
+                  <div className="mx-4 mt-3 mb-2 p-3 bg-purewhite/[0.07] rounded-xl border border-purewhite/15 flex items-center gap-3 shadow-lg">
+                    <div className="w-9 h-9 rounded-full bg-[#00897b] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md">
                       {(user.name ? user.name[0] : (user.email ? user.email[0] : "U")).toUpperCase()}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <p className="text-purewhite font-bold text-sm tracking-wide truncate leading-tight">
+                      <p className="text-purewhite font-bold text-xs md:text-sm tracking-wide truncate leading-tight">
                         {user.name || formatDisplayName(user.email)}
                       </p>
-                      <p className="text-purewhite/60 text-xs truncate mt-0.5 font-sans">
+                      <p className="text-purewhite/60 text-[11px] md:text-xs truncate mt-0.5 font-sans">
                         {user.email}
                       </p>
                     </div>
@@ -192,7 +192,7 @@ export default function Navbar() {
                   <Link
                     href="/admin"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="mx-4 mt-3 mb-2 px-5 py-3 flex items-center gap-3 bg-purewhite rounded-xl text-pureblack font-bold text-sm tracking-widest uppercase hover:bg-purewhite/90 transition-colors"
+                    className="mx-4 mt-3 mb-2 px-4 py-2.5 flex items-center gap-2.5 bg-purewhite rounded-xl text-pureblack font-bold text-xs md:text-sm tracking-widest uppercase hover:bg-purewhite/90 transition-colors"
                   >
                     <Shield className="w-4 h-4" />
                     Admin Panel
@@ -213,7 +213,7 @@ export default function Navbar() {
                     key={link.name}
                     href={link.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-6 py-4 text-purewhite font-normal text-base tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
+                    className="px-5 py-2.5 md:px-6 md:py-3.5 text-purewhite font-normal text-xs md:text-sm tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
                   >
                     {link.name}
                   </Link>
@@ -223,16 +223,16 @@ export default function Navbar() {
                 {user ? (
                   <button
                     onClick={handleSignOut}
-                    className="px-6 py-4 text-left text-purewhite font-normal text-base tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-3"
+                    className="px-5 py-2.5 md:px-6 md:py-3.5 text-left text-purewhite font-normal text-xs md:text-sm tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-2.5"
                   >
-                    <LogOut className="w-4 h-4" />
+                    <LogOut className="w-3.5 h-3.5" />
                     Sign Out
                   </button>
                 ) : (
                   <Link
                     href="/login"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-6 py-4 text-purewhite font-normal text-base tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
+                    className="px-5 py-2.5 md:px-6 md:py-3.5 text-purewhite font-normal text-xs md:text-sm tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
                   >
                     Log in
                   </Link>
