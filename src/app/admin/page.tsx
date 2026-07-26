@@ -13,7 +13,7 @@ import {
   Palette,
 } from "lucide-react";
 import { createClient } from "@/utils/supabase/client";
-import { products as defaultProducts, Product } from "@/lib/products";
+import { products as defaultProducts } from "@/lib/products";
 
 const quickActions = [
   {
@@ -61,10 +61,11 @@ export default function AdminDashboard() {
           supabase.from("products").select("*"),
         ]);
 
-        const activeProducts = productsData && productsData.length > 0 ? productsData : defaultProducts;
-        setProducts(activeProducts);
+        if (productsData && productsData.length > 0) {
+          setProducts(productsData);
+        }
 
-        // Check for orders in Supabase or local storage
+        // Use strictly original order data from Supabase and browser checkout storage
         let foundOrders: any[] = [];
         if (ordersData && ordersData.length > 0) {
           foundOrders = ordersData;
@@ -76,25 +77,8 @@ export default function AdminDashboard() {
               if (Array.isArray(parsed) && parsed.length > 0) foundOrders = parsed;
             }
           } catch {
-            // ignore local storage errors
+            // ignore local storage parse errors
           }
-        }
-
-        // If no orders exist yet, generate functional baseline analytics from existing catalog data
-        if (foundOrders.length === 0 && activeProducts.length > 0) {
-          const now = new Date();
-          foundOrders = activeProducts.slice(0, 6).map((prod: any, idx: number) => {
-            const orderDate = new Date(now);
-            orderDate.setDate(now.getDate() - (idx * 4)); // Spaced over recent weeks/days
-            return {
-              id: 1001 + idx,
-              total: prod.price || 15000,
-              subtotal: prod.price || 15000,
-              placed_at: orderDate.toISOString(),
-              status: "Completed",
-              items: [{ title: prod.title, price: prod.price, quantity: 1 }],
-            };
-          });
         }
 
         setOrders(foundOrders);
@@ -108,7 +92,7 @@ export default function AdminDashboard() {
     fetchDashboardData();
   }, [supabase]);
 
-  // Calculate live functional metrics from existing data
+  // Strictly calculate live metrics from original data without any simulation or fallback
   const totalRevenue = orders.reduce((sum, ord) => {
     const amount =
       ord.total !== undefined && ord.total !== null
@@ -157,44 +141,103 @@ export default function AdminDashboard() {
     },
   ];
 
-  // Calculate dynamic sales trend buckets based on selected period
+  // Strictly compute actual chronological sales buckets from original orders
   const getChartBuckets = () => {
+    const now = new Date();
     if (selectedPeriod === "7 Days") {
-      const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-      const baseVal = totalOrders > 0 ? totalRevenue / 7 : 12000;
-      return days.map((label, idx) => ({
-        label,
-        value: Math.round(baseVal * (0.6 + ((idx * 37) % 8) * 0.1)),
-      }));
+      const days: { label: string; value: number }[] = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now);
+        d.setDate(now.getDate() - i);
+        const label = d.toLocaleDateString("en-US", { weekday: "short" });
+        const dayStr = d.toISOString().split("T")[0];
+
+        const dayOrders = orders.filter((ord) => {
+          const ordDate = ord.placed_at || ord.created_at;
+          return ordDate && ordDate.startsWith(dayStr);
+        });
+
+        const dayRevenue = dayOrders.reduce((sum, ord) => {
+          const amt =
+            ord.total !== undefined && ord.total !== null
+              ? Number(ord.total)
+              : ord.subtotal !== undefined && ord.subtotal !== null
+              ? Number(ord.subtotal)
+              : 0;
+          return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+
+        days.push({ label, value: dayRevenue });
+      }
+      return days;
     } else if (selectedPeriod === "12 Months") {
       const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-      const baseVal = totalOrders > 0 ? totalRevenue * 0.3 : 25000;
-      return months.map((label, idx) => ({
-        label,
-        value: Math.round(baseVal * (0.5 + ((idx * 23) % 10) * 0.12)),
-      }));
+      return months.map((label, idx) => {
+        const monthOrders = orders.filter((ord) => {
+          const ordDate = ord.placed_at || ord.created_at;
+          return ordDate && new Date(ordDate).getMonth() === idx;
+        });
+        const monthRevenue = monthOrders.reduce((sum, ord) => {
+          const amt =
+            ord.total !== undefined && ord.total !== null
+              ? Number(ord.total)
+              : ord.subtotal !== undefined && ord.subtotal !== null
+              ? Number(ord.subtotal)
+              : 0;
+          return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+        return { label, value: monthRevenue };
+      });
     } else if (selectedPeriod === "5 Years") {
-      const years = ["2022", "2023", "2024", "2025"];
-      const baseVal = totalOrders > 0 ? totalRevenue * 2.5 : 180000;
-      return years.map((label, idx) => ({
-        label,
-        value: Math.round(baseVal * (0.7 + idx * 0.3)),
-      }));
+      const currentYear = now.getFullYear();
+      const years: { label: string; value: number }[] = [];
+      for (let y = currentYear - 3; y <= currentYear; y++) {
+        const yearOrders = orders.filter((ord) => {
+          const ordDate = ord.placed_at || ord.created_at;
+          return ordDate && new Date(ordDate).getFullYear() === y;
+        });
+        const yearRevenue = yearOrders.reduce((sum, ord) => {
+          const amt =
+            ord.total !== undefined && ord.total !== null
+              ? Number(ord.total)
+              : ord.subtotal !== undefined && ord.subtotal !== null
+              ? Number(ord.subtotal)
+              : 0;
+          return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+        years.push({ label: String(y), value: yearRevenue });
+      }
+      return years;
     } else {
       // 4 Weeks (default)
-      const weeks = ["Week 1", "Week 2", "Week 3", "Week 4"];
-      const baseVal = totalOrders > 0 ? totalRevenue / 4 : 24000;
-      return weeks.map((label, idx) => ({
-        label,
-        value: Math.round(baseVal * (0.7 + ((idx * 17) % 6) * 0.15)),
-      }));
+      const weeks: { label: string; value: number }[] = [];
+      for (let i = 3; i >= 0; i--) {
+        const label = `Week ${4 - i}`;
+        const weekOrders = orders.filter((ord) => {
+          const ordDate = ord.placed_at || ord.created_at;
+          if (!ordDate) return false;
+          const diffDays = Math.floor((now.getTime() - new Date(ordDate).getTime()) / (1000 * 3600 * 24));
+          return diffDays >= i * 7 && diffDays < (i + 1) * 7;
+        });
+        const weekRevenue = weekOrders.reduce((sum, ord) => {
+          const amt =
+            ord.total !== undefined && ord.total !== null
+              ? Number(ord.total)
+              : ord.subtotal !== undefined && ord.subtotal !== null
+              ? Number(ord.subtotal)
+              : 0;
+          return sum + (isNaN(amt) ? 0 : amt);
+        }, 0);
+        weeks.push({ label, value: weekRevenue });
+      }
+      return weeks;
     }
   };
 
   const chartBuckets = getChartBuckets();
-  const maxBucketVal = Math.max(...chartBuckets.map((b) => b.value), 30000);
+  const maxBucketVal = Math.max(...chartBuckets.map((b) => b.value), 1000);
 
-  // Dynamic Y-axis labels scaled to actual chart maximum
+  // Dynamic Y-axis labels scaled to actual maximum revenue in active period
   const yAxisLabels = [
     `₹${Math.round(maxBucketVal).toLocaleString("en-IN")}`,
     `₹${Math.round(maxBucketVal * 0.75).toLocaleString("en-IN")}`,
@@ -203,7 +246,7 @@ export default function AdminDashboard() {
     "₹0",
   ];
 
-  // Generate smooth cubic Bezier SVG path from functional data buckets
+  // Generate smooth cubic Bezier SVG path strictly from original data buckets
   const generateSvgCurves = () => {
     const numPoints = chartBuckets.length;
     const pts = chartBuckets.map((b, idx) => {
@@ -212,7 +255,7 @@ export default function AdminDashboard() {
       return { x, y, value: b.value };
     });
 
-    if (pts.length === 0) return { linePath: "", areaPath: "", peak: { x: 400, y: 100 } };
+    if (pts.length === 0) return { linePath: "", areaPath: "", peak: { x: 400, y: 220 } };
 
     let linePath = `M${pts[0].x},${pts[0].y}`;
     for (let i = 1; i < pts.length; i++) {
@@ -226,7 +269,7 @@ export default function AdminDashboard() {
     const firstX = pts[0].x;
     const areaPath = `${linePath} L${lastX},240 L${firstX},240 Z`;
 
-    // Find highest peak point for dot highlight
+    // Find highest peak point in original data for dot highlight
     let peak = pts[0];
     for (const p of pts) {
       if (p.value > peak.value) peak = p;
@@ -364,7 +407,9 @@ export default function AdminDashboard() {
         </div>
 
         <p className="text-center text-[12px] text-gray-400 mt-10">
-          Showing functional analytics derived from {totalOrders} recorded transactions and catalog telemetry.
+          {totalOrders > 0
+            ? `Showing real-time sales trend across ${totalOrders} processed order${totalOrders > 1 ? "s" : ""}.`
+            : "Sales data will appear here once orders begin processing."}
         </p>
       </div>
     </div>
