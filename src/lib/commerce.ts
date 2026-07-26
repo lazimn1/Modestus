@@ -18,6 +18,16 @@ export type WishlistItem = {
   addedAt: string;
 };
 
+export type ShippingAddress = {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  streetAddress?: string;
+  city?: string;
+  state?: string;
+  pincode?: string;
+};
+
 export type Order = {
   id: string;
   items: CartItem[];
@@ -25,8 +35,12 @@ export type Order = {
   shipping: number;
   total: number;
   paymentMethod: "online" | "cod";
-  status: "Confirmed" | "Processing" | "Shipped";
+  status: "Confirmed" | "Processing" | "Shipped" | "Delivered" | "Cancelled";
   placedAt: string;
+  customer_name?: string;
+  email?: string;
+  phone?: string;
+  shipping_address?: ShippingAddress;
 };
 
 export type CartLine = CartItem & {
@@ -152,7 +166,11 @@ export function removeWishlistItem(productId: number) {
   return next;
 }
 
-export function createOrder(items: CartItem[], paymentMethod: Order["paymentMethod"]) {
+export function createOrder(
+  items: CartItem[],
+  paymentMethod: Order["paymentMethod"],
+  shippingData?: ShippingAddress
+) {
   const subtotal = items.reduce((sum, item) => {
     const product = products.find((candidate) => candidate.id === item.productId);
     return sum + (product?.price ?? 0) * item.quantity;
@@ -167,6 +185,10 @@ export function createOrder(items: CartItem[], paymentMethod: Order["paymentMeth
     paymentMethod,
     status: "Confirmed",
     placedAt: new Date().toISOString(),
+    customer_name: shippingData?.fullName || "Guest Customer",
+    email: shippingData?.email || "",
+    phone: shippingData?.phone || "",
+    shipping_address: shippingData || {},
   };
 
   writeJson(ORDERS_KEY, [order, ...getOrders()]);
@@ -457,8 +479,8 @@ export function useCommerce() {
   );
 
   const handleCreateOrder = useCallback(
-    (items: CartItem[], paymentMethod: Order["paymentMethod"]) => {
-      const order = createOrder(items, paymentMethod);
+    (items: CartItem[], paymentMethod: Order["paymentMethod"], shippingData?: ShippingAddress) => {
+      const order = createOrder(items, paymentMethod, shippingData);
       if (user?.id) {
         supabase.from("orders").insert({
           id: order.id,
@@ -470,6 +492,10 @@ export function useCommerce() {
           payment_method: order.paymentMethod,
           status: order.status,
           placed_at: order.placedAt,
+          customer_name: order.customer_name,
+          email: order.email,
+          phone: order.phone,
+          shipping_address: order.shipping_address,
         }).then();
         supabase.from("cart_items").delete().eq("user_id", user.id).then();
       }

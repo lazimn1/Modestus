@@ -18,6 +18,8 @@ import {
   Clock,
   Truck,
   XCircle,
+  Mail,
+  Phone,
 } from "lucide-react";
 import { formatINR, products } from "@/lib/products";
 
@@ -299,8 +301,10 @@ export default function AdminOrdersPage() {
                   const orderDate = order.placed_at || order.created_at || order.placedAt;
                   const customerName =
                     order.customer_name || order.shippingAddress?.fullName || order.shipping_address?.fullName || "Guest Customer";
-                  const customerCity =
-                    order.shippingAddress?.city || order.shipping_address?.city || order.payment_method?.toUpperCase() || "India";
+                  const customerEmail =
+                    order.email || order.shippingAddress?.email || order.shipping_address?.email;
+                  const customerPhone =
+                    order.phone || order.shippingAddress?.phone || order.shipping_address?.phone;
 
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
@@ -312,7 +316,19 @@ export default function AdminOrdersPage() {
                           <User className="w-3 h-3 text-gray-400 shrink-0" />
                           {customerName}
                         </div>
-                        <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                        {customerEmail && (
+                          <div className="text-[11px] text-gray-600 mt-0.5 flex items-center gap-1">
+                            <Mail className="w-3 h-3 text-gray-400 shrink-0" />
+                            {customerEmail}
+                          </div>
+                        )}
+                        {customerPhone && (
+                          <div className="text-[11px] text-gray-500 mt-0.5 flex items-center gap-1">
+                            <Phone className="w-3 h-3 text-gray-400 shrink-0" />
+                            {customerPhone}
+                          </div>
+                        )}
+                        <div className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-gray-400 shrink-0" />
                           {orderDate
                             ? new Date(orderDate).toLocaleDateString("en-US", {
@@ -417,29 +433,40 @@ export default function AdminOrdersPage() {
             <div className="bg-gray-50 rounded-xl p-4 space-y-3 border border-gray-100">
               <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
                 <MapPin className="w-3.5 h-3.5 text-indigo-600" />
-                Shipping Details
+                Customer & Shipping Details
               </h4>
-              <div className="text-xs space-y-1 text-gray-700">
-                <p className="font-bold text-gray-900">
+              <div className="text-xs space-y-2 text-gray-700">
+                <div className="flex items-center gap-2 font-bold text-gray-900 text-sm">
+                  <User className="w-4 h-4 text-indigo-600 shrink-0" />
                   {inspectOrder.customer_name ||
                     inspectOrder.shippingAddress?.fullName ||
                     inspectOrder.shipping_address?.fullName ||
                     "Guest Customer"}
-                </p>
+                </div>
+                {(inspectOrder.email || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.email) && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    {inspectOrder.email || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.email}
+                  </div>
+                )}
+                {(inspectOrder.phone || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.phone) && (
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    {inspectOrder.phone || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.phone}
+                  </div>
+                )}
                 {inspectOrder.shippingAddress || inspectOrder.shipping_address ? (
-                  <>
-                    <p>{(inspectOrder.shippingAddress || inspectOrder.shipping_address).street}</p>
+                  <div className="pt-2 border-t border-gray-200/60 mt-2 text-gray-600 space-y-0.5">
+                    <p className="font-semibold text-gray-800">Delivery Address:</p>
+                    <p>{(inspectOrder.shippingAddress || inspectOrder.shipping_address).streetAddress || (inspectOrder.shippingAddress || inspectOrder.shipping_address).street}</p>
                     <p>
                       {(inspectOrder.shippingAddress || inspectOrder.shipping_address).city},{" "}
                       {(inspectOrder.shippingAddress || inspectOrder.shipping_address).state}{" "}
-                      {(inspectOrder.shippingAddress || inspectOrder.shipping_address).zip}
+                      {(inspectOrder.shippingAddress || inspectOrder.shipping_address).pincode || (inspectOrder.shippingAddress || inspectOrder.shipping_address).zip}
                     </p>
-                    <p className="text-gray-500 mt-1">
-                      Phone: {(inspectOrder.shippingAddress || inspectOrder.shipping_address).phone || "—"}
-                    </p>
-                  </>
+                  </div>
                 ) : (
-                  <p className="text-gray-500 italic">Standard delivery address / COD checkout</p>
+                  <p className="text-gray-500 italic pt-1">Standard delivery address / COD checkout</p>
                 )}
               </div>
             </div>

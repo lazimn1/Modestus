@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { Product } from "@/lib/products";
@@ -9,9 +9,7 @@ import ImageUploadWebP from "@/components/admin/ImageUploadWebP";
 import {
   Plus,
   Search,
-  SlidersHorizontal,
   Edit2,
-  Copy,
   Trash2,
   X,
   Check,
@@ -20,28 +18,11 @@ import {
   Image as ImageIcon,
   Palette,
   Ruler,
-  FileText,
-  Sparkles,
-  Eye,
-  ArrowUpDown,
-  LayoutGrid,
-  List,
-  ExternalLink,
 } from "lucide-react";
-import Link from "next/link";
 
 interface AdminProductsManagerProps {
   initialProducts: Product[];
 }
-
-const QUICK_IMAGE_PRESETS = [
-  "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80",
-  "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80",
-  "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&q=80",
-  "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80",
-  "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&q=80",
-  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=900&q=80",
-];
 
 const STANDARD_SIZES = ["XS", "S", "M", "L", "XL", "XXL", "Free Size"];
 
@@ -49,19 +30,12 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [loading, setLoading] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [selectedBadge, setSelectedBadge] = useState<string>("All");
-  const [sortBy, setSortBy] = useState<string>("id-asc");
-  const [viewMode, setViewMode] = useState<"table" | "grid">("table");
-
-  // Modal / Drawer state
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<"core" | "media" | "specs">("core");
   const [formState, setFormState] = useState<Partial<Product>>({});
   const [saving, setSaving] = useState<boolean>(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Temporary input states for lists inside the modal
   const [newImageUrl, setNewImageUrl] = useState<string>("");
   const [newColorName, setNewColorName] = useState<string>("");
   const [newColorHex, setNewColorHex] = useState<string>("#000000");
@@ -69,7 +43,6 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
 
   const supabase = createClient();
 
-  // Refresh products from Supabase
   const refreshProducts = async () => {
     setLoading(true);
     try {
@@ -89,171 +62,132 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
     setTimeout(() => setToast(null), 4000);
   };
 
-  // Filter and sort
-  const filteredProducts = useMemo(() => {
-    return products
-      .filter((p) => {
-        const matchesSearch =
-          p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.subtitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.slug.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesBadge =
-          selectedBadge === "All"
-            ? true
-            : selectedBadge === "No Badge"
-            ? !p.badge
-            : p.badge === selectedBadge;
-        return matchesSearch && matchesBadge;
-      })
-      .sort((a, b) => {
-        if (sortBy === "price-asc") return a.price - b.price;
-        if (sortBy === "price-desc") return b.price - a.price;
-        if (sortBy === "title-asc") return a.title.localeCompare(b.title);
-        if (sortBy === "newest") return b.id - a.id;
-        return a.id - b.id;
-      });
-  }, [products, searchTerm, selectedBadge, sortBy]);
+  const filteredProducts = useMemo(
+    () =>
+      products.filter((product) => {
+        const term = searchTerm.trim().toLowerCase();
+        if (!term) return true;
+        return [product.title, product.subtitle, product.slug]
+          .filter(Boolean)
+          .some((value) => value.toLowerCase().includes(term));
+      }),
+    [products, searchTerm]
+  );
 
-  // Open modal for new product
   const handleOpenCreate = () => {
     setFormState({
       title: "",
       subtitle: "",
       slug: "",
       price: 5000,
-      images: [QUICK_IMAGE_PRESETS[0]],
-      colors: [
-        { name: "Midnight Black", hex: "#0a0a0a" },
-        { name: "Charcoal", hex: "#4a4a4a" },
-      ],
-      sizes: ["S", "M", "L", "XL"],
-      rating: 4.9,
-      reviewCount: 12,
-      aspectClass: "aspect-[3/4]",
-      description: "Crafted from signature Japanese crepe, this piece offers an uninterrupted silhouette designed for effortless elegance and movement.",
-      fabric: "100% Japanese Crepe. Fully lined with breathable satin. Hand wash cold or dry clean recommended.",
-      sizeGuide: "Our garments are tailored for a relaxed, commanding fit. True to size with modest proportions.",
-      badge: "New",
+      originalPrice: undefined,
+      badge: undefined,
+      images: ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"],
+      colors: [{ name: "Midnight Black", hex: "#0a0a0a" }],
+      sizes: ["S", "M", "L"],
+      description: "",
+      fabric: "",
+      sizeGuide: "",
     });
-    setActiveTab("core");
     setIsModalOpen(true);
   };
 
-  // Open modal for editing existing product
   const handleOpenEdit = (product: Product) => {
     setFormState({ ...product });
-    setActiveTab("core");
     setIsModalOpen(true);
   };
 
-  // Auto-generate slug from title if creating new or slug is empty
-  const handleTitleChange = (val: string) => {
-    const isNew = !formState.id;
-    const updates: Partial<Product> = { title: val };
-    if (isNew || !formState.slug) {
-      updates.slug = val
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/(^-|-$)/g, "");
-    }
-    setFormState((prev) => ({ ...prev, ...updates }));
+  const handleTitleChange = (value: string) => {
+    const slug = value
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+    setFormState((prev) => ({ ...prev, title: value, slug: prev.id ? prev.slug : slug }));
   };
 
-  // Save (Create or Update)
   const handleSave = async () => {
     if (!formState.title || !formState.price) {
-      showToast("Title and Price are required", "error");
+      showToast("Title and price are required.", "error");
       return;
     }
+
     setSaving(true);
     try {
-      const dbPayload = mapProductToDb(formState);
-      
-      // Ensure slug is present
-      if (!dbPayload.slug && dbPayload.title) {
-        dbPayload.slug = dbPayload.title
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/(^-|-$)/g, "") || `product-${Date.now()}`;
-      }
-
-      // Ensure images array is not empty
-      if (!dbPayload.images || !Array.isArray(dbPayload.images) || dbPayload.images.length === 0) {
-        dbPayload.images = ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"];
-      }
+      const payload = mapProductToDb({
+        ...formState,
+        slug:
+          formState.slug && formState.slug.trim()
+            ? formState.slug.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")
+            : formState.title
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, "-")
+                .replace(/(^-|-$)/g, ""),
+        images:
+          formState.images && formState.images.length > 0
+            ? formState.images
+            : ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"],
+        colors:
+          formState.colors && formState.colors.length > 0
+            ? formState.colors
+            : [{ name: "Standard Black", hex: "#0a0a0a" }],
+        sizes:
+          formState.sizes && formState.sizes.length > 0
+            ? formState.sizes
+            : ["S", "M", "L"],
+        rating: formState.rating ?? 4.9,
+        reviewCount: formState.reviewCount ?? 0,
+        aspectClass: formState.aspectClass ?? "aspect-[3/4]",
+      });
 
       if (formState.id) {
-        // Update
-        const { error } = await supabase
-          .from("products")
-          .update(dbPayload)
-          .eq("id", formState.id);
+        const { error } = await supabase.from("products").update(payload).eq("id", formState.id);
         if (error) throw error;
-        showToast("Product updated successfully!");
+        showToast("Product updated successfully.", "success");
       } else {
-        // Create - prevent slug collision
+        const normalizedSlug = payload.slug;
         const { data: existing } = await supabase
           .from("products")
           .select("id")
-          .eq("slug", dbPayload.slug)
+          .eq("slug", normalizedSlug)
           .maybeSingle();
 
         if (existing) {
-          dbPayload.slug = `${dbPayload.slug}-${Math.floor(1000 + Math.random() * 9000)}`;
+          payload.slug = `${normalizedSlug}-${Math.floor(1000 + Math.random() * 9000)}`;
         }
 
-        const { error } = await supabase.from("products").insert([dbPayload]);
+        const { error } = await supabase.from("products").insert([payload]);
         if (error) throw error;
-        showToast("New product published to catalog!");
+        showToast("New product added to the catalog.", "success");
       }
+
       setIsModalOpen(false);
       await refreshProducts();
-    } catch (err: any) {
-      console.error("Failed to save product:", err);
-      const errorMsg = err?.message || err?.details || err?.hint || (typeof err === "string" ? err : "Failed to save product");
-      showToast(errorMsg, "error");
+    } catch (error: any) {
+      showToast(error?.message || "Unable to save product.", "error");
+      console.error(error);
     } finally {
       setSaving(false);
     }
   };
 
-  // Delete product
   const handleDelete = async (id: number, title: string) => {
-    if (!confirm(`Are you sure you want to delete "${title}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete "${title}"? This action cannot be undone.`)) return;
     setDeletingId(id);
     try {
       const { error } = await supabase.from("products").delete().eq("id", id);
       if (error) throw error;
-      showToast(`Deleted "${title}"`);
+      showToast("Product removed.", "success");
       await refreshProducts();
-    } catch (err: any) {
-      showToast(err.message || "Failed to delete", "error");
+    } catch (error: any) {
+      showToast(error?.message || "Failed to delete product.", "error");
     } finally {
       setDeletingId(null);
     }
   };
 
-  // Duplicate product
-  const handleDuplicate = async (product: Product) => {
-    try {
-      const clone = { ...product };
-      delete (clone as any).id;
-      clone.title = `${clone.title} (Copy)`;
-      clone.slug = `${clone.slug}-copy-${Math.floor(Math.random() * 1000)}`;
-      const dbPayload = mapProductToDb(clone);
-      const { error } = await supabase.from("products").insert([dbPayload]);
-      if (error) throw error;
-      showToast(`Cloned "${product.title}"`);
-      await refreshProducts();
-    } catch (err: any) {
-      showToast(err.message || "Failed to clone product", "error");
-    }
-  };
-
-  // Image helpers
-  const addImage = (url: string) => {
-    if (!url) return;
-    setFormState((prev) => ({ ...prev, images: [...(prev.images || []), url] }));
+  const addImage = () => {
+    if (!newImageUrl.trim()) return;
+    setFormState((prev) => ({ ...prev, images: [...(prev.images || []), newImageUrl.trim()] }));
     setNewImageUrl("");
   };
 
@@ -264,12 +198,11 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
     }));
   };
 
-  // Color helpers
   const addColor = () => {
-    if (!newColorName) return;
+    if (!newColorName.trim()) return;
     setFormState((prev) => ({
       ...prev,
-      colors: [...(prev.colors || []), { name: newColorName, hex: newColorHex }],
+      colors: [...(prev.colors || []), { name: newColorName.trim(), hex: newColorHex }],
     }));
     setNewColorName("");
   };
@@ -281,306 +214,144 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
     }));
   };
 
-  // Size helpers
   const toggleSize = (size: string) => {
-    const current = formState.sizes || [];
-    const exists = current.includes(size);
-    if (exists) {
-      setFormState((prev) => ({ ...prev, sizes: current.filter((s) => s !== size) }));
-    } else {
-      setFormState((prev) => ({ ...prev, sizes: [...current, size] }));
-    }
+    const currentSizes = formState.sizes || [];
+    setFormState((prev) => ({
+      ...prev,
+      sizes: currentSizes.includes(size)
+        ? currentSizes.filter((s) => s !== size)
+        : [...currentSizes, size],
+    }));
   };
 
   const addCustomSize = () => {
-    if (!newCustomSize) return;
-    if (!(formState.sizes || []).includes(newCustomSize)) {
-      setFormState((prev) => ({ ...prev, sizes: [...(prev.sizes || []), newCustomSize] }));
-    }
+    if (!newCustomSize.trim()) return;
+    setFormState((prev) => {
+      const currentSizes = prev.sizes || [];
+      if (currentSizes.includes(newCustomSize.trim())) return prev;
+      return { ...prev, sizes: [...currentSizes, newCustomSize.trim()] };
+    });
     setNewCustomSize("");
   };
 
-  // Stats calculation
-  const totalProducts = products.length;
-  const avgPrice = Math.round(products.reduce((acc, p) => acc + p.price, 0) / (totalProducts || 1));
-  const bestsellersCount = products.filter((p) => p.badge?.toLowerCase() === "bestseller").length;
-
   return (
-    <div className="space-y-8 pb-16 font-sans">
-      {/* Toast Notification */}
+    <div className="space-y-6 pb-16">
       {toast && (
         <div
-          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-3.5 rounded-xl shadow-xl text-sm font-medium transition-all transform animate-in fade-in slide-in-from-bottom-5 ${
-            toast.type === "success" ? "bg-black text-white" : "bg-red-600 text-white"
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium shadow-xl transition ${
+            toast.type === "success" ? "bg-emerald-50 text-emerald-900" : "bg-red-50 text-red-900"
           }`}
         >
-          {toast.type === "success" ? <Check className="w-4 h-4 text-emerald-400" /> : <AlertCircle className="w-4 h-4" />}
-          <span>{toast.message}</span>
+          {toast.type === "success" ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {toast.message}
         </div>
       )}
 
-      {/* Header & Stats Banner */}
-      <div className="bg-gradient-to-r from-stone-900 to-neutral-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none -mr-20 -mt-20" />
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+      <div className="bg-white border border-stone-200 rounded-3xl p-6 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div>
-            <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/10 text-amber-300 text-[11px] font-semibold tracking-wider uppercase mb-3">
-              <Sparkles className="w-3.5 h-3.5" /> Catalog Management
-            </div>
-            <h1 className="font-serif text-3xl sm:text-4xl font-normal tracking-tight text-stone-100">
-              Product Storefront Hub
-            </h1>
-            <p className="text-stone-400 text-sm mt-1.5 max-w-xl">
-              Create, modify, and style your luxury silhouettes in real time. Changes synchronize instantly across all customer touchpoints.
+            <h1 className="text-2xl font-semibold text-stone-900">Product Catalog</h1>
+            <p className="mt-2 text-sm text-stone-500 max-w-2xl">
+              Manage your product listings, pricing, images and size details in one central place.
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 w-full sm:w-auto">
+          <div className="flex flex-wrap gap-3">
             <button
+              type="button"
               onClick={refreshProducts}
               disabled={loading}
-              className="p-3 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-colors flex items-center justify-center border border-white/10 shrink-0"
-              title="Refresh Catalog"
+              className="inline-flex items-center gap-2 rounded-xl border border-stone-200 bg-stone-50 px-4 py-2 text-sm font-medium text-stone-700 hover:bg-stone-100 transition disabled:opacity-60"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
             </button>
             <button
+              type="button"
               onClick={handleOpenCreate}
-              className="bg-amber-100 hover:bg-white text-stone-950 px-5 py-3 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-xl transition-all transform hover:-translate-y-0.5 flex-1 sm:flex-initial"
+              className="inline-flex items-center gap-2 rounded-xl bg-stone-900 px-5 py-2 text-sm font-semibold text-white hover:bg-stone-800 transition"
             >
-              <Plus className="w-4 h-4 shrink-0" />
-              Add New Product
+              <Plus className="w-4 h-4" /> Add Product
             </button>
-          </div>
-        </div>
-
-        {/* Quick KPI Cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-8 pt-6 border-t border-white/10">
-          <div>
-            <p className="text-stone-400 text-xs font-medium uppercase tracking-wider">Total Silhouettes</p>
-            <p className="text-2xl font-serif font-bold text-white mt-1">{totalProducts}</p>
-          </div>
-          <div>
-            <p className="text-stone-400 text-xs font-medium uppercase tracking-wider">Active Catalog</p>
-            <p className="text-2xl font-serif font-bold text-emerald-400 mt-1">{totalProducts}</p>
-          </div>
-          <div>
-            <p className="text-stone-400 text-xs font-medium uppercase tracking-wider">Average Price</p>
-            <p className="text-2xl font-serif font-bold text-amber-200 mt-1">₹{avgPrice.toLocaleString()}</p>
-          </div>
-          <div>
-            <p className="text-stone-400 text-xs font-medium uppercase tracking-wider">Bestsellers</p>
-            <p className="text-2xl font-serif font-bold text-white mt-1">{bestsellersCount}</p>
           </div>
         </div>
       </div>
 
-      {/* Filter and View Controls */}
-      <div className="bg-white border border-stone-200 rounded-xl p-4 shadow-sm flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        {/* Search */}
-        <div className="relative flex-1 w-full lg:max-w-md">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400" />
+      <div className="bg-white border border-stone-200 rounded-3xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="relative flex-1">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-stone-400" />
           <input
             type="text"
-            placeholder="Search by title, subtitle, or slug..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-stone-50 border border-stone-200 rounded-lg text-sm text-stone-800 placeholder-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-900 focus:bg-white transition-all"
+            onChange={(event) => setSearchTerm(event.target.value)}
+            placeholder="Search products by title, subtitle, or slug"
+            className="w-full rounded-xl border border-stone-200 bg-stone-50 pl-10 pr-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
           />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600"
-            >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
-
-        {/* Filters & View Toggles */}
-        <div className="flex flex-wrap items-center justify-between sm:justify-end gap-3 w-full lg:w-auto">
-          {/* Badge Filter */}
-          <select
-            value={selectedBadge}
-            onChange={(e) => setSelectedBadge(e.target.value)}
-            className="bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium rounded-lg px-3 py-2 focus:outline-none focus:ring-1 focus:ring-stone-900 flex-1 sm:flex-initial"
-          >
-            <option value="All">All Badges</option>
-            <option value="Bestseller">Bestseller</option>
-            <option value="New">New</option>
-            <option value="Limited">Limited</option>
-            <option value="Exclusive">Exclusive</option>
-            <option value="No Badge">No Badge</option>
-          </select>
-
-          {/* Sort */}
-          <div className="flex items-center gap-1.5 bg-stone-50 border border-stone-200 rounded-lg px-2.5 py-1.5 flex-1 sm:flex-initial justify-between sm:justify-start">
-            <ArrowUpDown className="w-3.5 h-3.5 text-stone-400 shrink-0" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="bg-transparent text-stone-700 text-xs font-medium focus:outline-none w-full"
-            >
-              <option value="id-asc">Sort by ID</option>
-              <option value="newest">Newest First</option>
-              <option value="title-asc">Title: A-Z</option>
-              <option value="price-asc">Price: Low to High</option>
-              <option value="price-desc">Price: High to Low</option>
-            </select>
-          </div>
-
-          {/* View Mode Toggle */}
-          <div className="flex items-center bg-stone-100 p-1 rounded-lg border border-stone-200 shrink-0">
-            <button
-              onClick={() => setViewMode("table")}
-              className={`p-1.5 rounded-md transition-all ${
-                viewMode === "table" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-900"
-              }`}
-              title="Table View"
-            >
-              <List className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-1.5 rounded-md transition-all ${
-                viewMode === "grid" ? "bg-white text-stone-900 shadow-sm" : "text-stone-500 hover:text-stone-900"
-              }`}
-              title="Grid View"
-            >
-              <LayoutGrid className="w-4 h-4" />
-            </button>
-          </div>
         </div>
       </div>
 
-      {/* Product Content Display */}
       {filteredProducts.length === 0 ? (
-        <div className="bg-white border border-stone-200 rounded-2xl p-12 text-center max-w-xl mx-auto my-8">
-          <div className="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mx-auto mb-4 text-stone-400">
-            <Search className="w-8 h-8" />
+        <div className="bg-white border border-stone-200 rounded-3xl p-10 text-center shadow-sm">
+          <div className="mx-auto mb-4 h-16 w-16 rounded-full bg-stone-100 flex items-center justify-center text-stone-400">
+            <Search className="w-7 h-7" />
           </div>
-          <h3 className="font-serif text-xl font-normal text-stone-900 mb-1">No silhouettes found</h3>
-          <p className="text-stone-500 text-sm mb-6">
-            We couldn't find any products matching your current search or filter criteria.
-          </p>
-          <button
-            onClick={() => {
-              setSearchTerm("");
-              setSelectedBadge("All");
-            }}
-            className="px-4 py-2 bg-stone-900 text-white rounded-lg text-xs font-semibold hover:bg-stone-800 transition-colors"
-          >
-            Reset Filters
-          </button>
+          <h2 className="text-lg font-semibold text-stone-900">No products found</h2>
+          <p className="mt-2 text-sm text-stone-500">Try a different search term or clear the filter to see all products.</p>
         </div>
-      ) : viewMode === "table" ? (
-        /* ─── TABLE VIEW ─── */
-        <div className="bg-white border border-stone-200 rounded-xl shadow-sm overflow-hidden">
+      ) : (
+        <div className="bg-white border border-stone-200 rounded-3xl shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-stone-200">
+            <table className="min-w-full divide-y divide-stone-200 text-left">
               <thead className="bg-stone-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Product
-                  </th>
-                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Price
-                  </th>
-                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Colors & Sizes
-                  </th>
-                  <th scope="col" className="px-6 py-3.5 text-left text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th scope="col" className="px-6 py-3.5 text-right text-[11px] font-bold text-stone-500 uppercase tracking-wider">
-                    Actions
-                  </th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-stone-500">Product</th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-stone-500">Price</th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-stone-500">Badge</th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-stone-500">Sizes</th>
+                  <th className="px-6 py-4 text-xs font-semibold uppercase tracking-wider text-stone-500 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-stone-200 bg-white">
                 {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-stone-50/80 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-4">
-                        <div className="relative w-12 h-16 rounded-lg bg-stone-100 overflow-hidden shrink-0 border border-stone-200">
+                  <tr key={product.id} className="hover:bg-stone-50 transition-colors">
+                    <td className="px-6 py-4 align-top">
+                      <div className="flex items-start gap-3">
+                        <div className="relative h-16 w-16 rounded-2xl bg-stone-100 overflow-hidden border border-stone-200">
                           {product.images && product.images.length > 0 ? (
-                            <Image
-                              src={product.images[0]}
-                              alt={product.title}
-                              fill
-                              className="object-cover"
-                            />
+                            <Image src={product.images[0]} alt={product.title} fill className="object-cover" />
                           ) : (
-                            <div className="w-full h-full flex items-center justify-center text-stone-300">
+                            <div className="flex h-full w-full items-center justify-center text-stone-400">
                               <ImageIcon className="w-5 h-5" />
                             </div>
                           )}
                         </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-mono font-medium text-stone-400">#{product.id}</span>
-                            {product.badge && (
-                              <span className="text-[10px] font-bold px-2 py-0.5 bg-stone-900 text-white rounded-md uppercase tracking-wider">
-                                {product.badge}
-                              </span>
-                            )}
-                          </div>
-                          <p className="font-serif text-sm font-normal text-stone-900 mt-0.5">{product.title}</p>
-                          <p className="text-xs text-stone-500 line-clamp-1 max-w-[200px]">{product.subtitle}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-stone-900">{product.title}</p>
+                          <p className="text-xs text-stone-500 line-clamp-2">{product.subtitle}</p>
+                          <p className="text-[11px] text-stone-400 mt-1">/{product.slug}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="text-sm font-bold text-stone-900">₹{product.price.toLocaleString()}</span>
+                    <td className="px-6 py-4 align-top text-sm font-semibold text-stone-900">₹{product.price.toLocaleString()}</td>
+                    <td className="px-6 py-4 align-top text-sm text-stone-600">{product.badge || "—"}</td>
+                    <td className="px-6 py-4 align-top text-sm text-stone-600">
+                      {(product.sizes || []).join(", ") || "—"}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        {product.colors.map((c, idx) => (
-                          <div
-                            key={idx}
-                            className="w-3.5 h-3.5 rounded-full border border-stone-300 shadow-xs"
-                            style={{ backgroundColor: c.hex }}
-                            title={c.name}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex flex-wrap gap-1 max-w-[140px]">
-                        {(product.sizes || []).map((s, idx) => (
-                          <span key={idx} className="text-[10px] bg-stone-100 text-stone-700 px-1.5 py-0.5 rounded font-mono font-semibold">
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2.5 py-1 inline-flex text-[11px] font-semibold rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                        Active
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleOpenEdit(product)}
-                          className="p-1.5 text-stone-600 hover:text-stone-950 hover:bg-stone-100 rounded-lg transition-colors"
-                          title="Edit Product"
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDuplicate(product)}
-                          className="p-1.5 text-stone-600 hover:text-stone-950 hover:bg-stone-100 rounded-lg transition-colors"
-                          title="Duplicate Silhoutte"
-                        >
-                          <Copy className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(product.id, product.title)}
-                          disabled={deletingId === product.id}
-                          className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Product"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 align-top text-right text-sm font-medium">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEdit(product)}
+                        className="mr-2 inline-flex items-center justify-center rounded-lg border border-stone-200 bg-stone-50 px-3 py-2 text-stone-700 hover:bg-stone-100 transition"
+                      >
+                        <Edit2 className="w-4 h-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(product.id, product.title)}
+                        disabled={deletingId === product.id}
+                        className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-red-600 hover:bg-red-100 transition disabled:opacity-60"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -588,463 +359,301 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
             </table>
           </div>
         </div>
-      ) : (
-        /* ─── GRID VIEW ─── */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {filteredProducts.map((product) => (
-            <div
-              key={product.id}
-              className="bg-white border border-stone-200 rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all flex flex-col group"
-            >
-              <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
-                {product.images && product.images.length > 0 ? (
-                  <Image
-                    src={product.images[0]}
-                    alt={product.title}
-                    fill
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-stone-300">
-                    <ImageIcon className="w-8 h-8" />
-                  </div>
-                )}
-                {product.badge && (
-                  <span className="absolute top-3 left-3 bg-stone-950/90 text-white text-[9px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider backdrop-blur-sm">
-                    {product.badge}
-                  </span>
-                )}
-                <div className="absolute top-3 right-3 flex flex-col gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Link
-                    href={`/shop/${product.slug}`}
-                    target="_blank"
-                    className="p-2 bg-white/90 hover:bg-white text-stone-900 rounded-full shadow-md transition-colors"
-                    title="View on Storefront"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-
-              <div className="p-5 flex-1 flex flex-col justify-between">
-                <div>
-                  <div className="flex items-center justify-between gap-2 mb-1">
-                    <span className="text-[10px] font-mono font-medium text-stone-400">ID: #{product.id}</span>
-                    <span className="text-xs font-bold text-stone-900">₹{product.price.toLocaleString()}</span>
-                  </div>
-                  <h3 className="font-serif text-lg text-stone-900 font-normal leading-snug">{product.title}</h3>
-                  <p className="text-xs text-stone-500 mt-1 line-clamp-1">{product.subtitle}</p>
-
-                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-stone-100">
-                    {product.colors.map((c, idx) => (
-                      <div
-                        key={idx}
-                        className="w-3.5 h-3.5 rounded-full border border-stone-300 shadow-xs"
-                        style={{ backgroundColor: c.hex }}
-                        title={c.name}
-                      />
-                    ))}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-4 pt-3 border-t border-stone-100">
-                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">
-                    Active
-                  </span>
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleOpenEdit(product)}
-                      className="p-2 text-stone-600 hover:text-stone-950 hover:bg-stone-100 rounded-lg transition-colors"
-                      title="Edit Product"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDuplicate(product)}
-                      className="p-2 text-stone-600 hover:text-stone-950 hover:bg-stone-100 rounded-lg transition-colors"
-                      title="Duplicate Silhoutte"
-                    >
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.id, product.title)}
-                      disabled={deletingId === product.id}
-                      className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Product"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       )}
 
-      {/* ─── PRODUCT EDITOR MODAL / DRAWER ─── */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-4xl h-full shadow-2xl flex flex-col animate-in slide-in-from-right duration-300">
-            {/* Modal Header */}
-            <div className="px-4 sm:px-6 py-4 sm:py-5 border-b border-stone-200 flex items-center justify-between bg-stone-900 text-white gap-3">
+        <div className="fixed inset-0 z-50 overflow-y-auto bg-black/40 p-4 backdrop-blur-sm">
+          <div className="mx-auto w-full max-w-5xl overflow-hidden rounded-[28px] bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-stone-200 px-6 py-5 bg-stone-950 text-white">
               <div>
-                <span className="text-[10px] font-mono tracking-widest text-amber-300 uppercase font-bold">
-                  {formState.id ? `Editing ID #${formState.id}` : "New Silhouette Creation"}
-                </span>
-                <h2 className="font-serif text-xl sm:text-2xl font-normal text-white mt-0.5 line-clamp-1">
-                  {formState.title || "Untitled Product"}
-                </h2>
+                <p className="text-xs uppercase tracking-[0.24em] text-stone-400">Product details</p>
+                <h2 className="mt-2 text-2xl font-semibold">{formState.id ? "Edit Product" : "Add New Product"}</h2>
               </div>
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 rounded-full hover:bg-white/10 text-stone-400 hover:text-white transition-colors shrink-0"
+                className="rounded-full bg-white/10 p-2 text-stone-100 hover:bg-white/20 transition"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Navigation Tabs */}
-            <div className="flex border-b border-stone-200 bg-stone-50 px-2 sm:px-6 overflow-x-auto max-w-full">
-              <button
-                onClick={() => setActiveTab("core")}
-                className={`py-3 sm:py-3.5 px-3 sm:px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 shrink-0 ${
-                  activeTab === "core"
-                    ? "border-stone-900 text-stone-900 bg-white"
-                    : "border-transparent text-stone-500 hover:text-stone-800"
-                }`}
-              >
-                <FileText className="w-4 h-4 shrink-0" /> 1. General & Pricing
-              </button>
-              <button
-                onClick={() => setActiveTab("media")}
-                className={`py-3 sm:py-3.5 px-3 sm:px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 shrink-0 ${
-                  activeTab === "media"
-                    ? "border-stone-900 text-stone-900 bg-white"
-                    : "border-transparent text-stone-500 hover:text-stone-800"
-                }`}
-              >
-                <ImageIcon className="w-4 h-4 shrink-0" /> 2. Media & Colors
-              </button>
-              <button
-                onClick={() => setActiveTab("specs")}
-                className={`py-3 sm:py-3.5 px-3 sm:px-5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-2 shrink-0 ${
-                  activeTab === "specs"
-                    ? "border-stone-900 text-stone-900 bg-white"
-                    : "border-transparent text-stone-500 hover:text-stone-800"
-                }`}
-              >
-                <Ruler className="w-4 h-4 shrink-0" /> 3. Specs & Care
-              </button>
-            </div>
+            <div className="space-y-6 px-6 py-6 sm:px-8">
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Product Title *</label>
+                  <input
+                    type="text"
+                    value={formState.title || ""}
+                    onChange={(event) => handleTitleChange(event.target.value)}
+                    placeholder="e.g. Midnight Abaya"
+                    className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Subtitle</label>
+                  <input
+                    type="text"
+                    value={formState.subtitle || ""}
+                    onChange={(event) => setFormState({ ...formState, subtitle: event.target.value })}
+                    placeholder="e.g. Relaxed luxury silhouette"
+                    className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                  />
+                </div>
+              </div>
 
-            {/* Modal Form Content */}
-            <div className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-6">
-              {activeTab === "core" && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 animate-in fade-in duration-200">
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Product Title *
-                    </label>
-                    <input
-                      type="text"
-                      value={formState.title || ""}
-                      onChange={(e) => handleTitleChange(e.target.value)}
-                      placeholder="e.g. Midnight Abaya"
-                      className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Subtitle / Tagline
-                    </label>
-                    <input
-                      type="text"
-                      value={formState.subtitle || ""}
-                      onChange={(e) => setFormState({ ...formState, subtitle: e.target.value })}
-                      placeholder="e.g. Relaxed Luxury Silhouette"
-                      className="w-full px-4 py-2 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      URL Slug (Auto-generated from title)
-                    </label>
-                    <div className="flex items-center bg-stone-100 border border-stone-200 rounded-xl px-3 overflow-hidden">
-                      <span className="text-stone-400 text-xs font-mono">/shop/</span>
-                      <input
-                        type="text"
-                        value={formState.slug || ""}
-                        onChange={(e) => setFormState({ ...formState, slug: e.target.value })}
-                        className="w-full py-2 bg-transparent text-stone-800 text-xs font-mono focus:outline-none"
-                      />
-                    </div>
-                  </div>
-
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">URL Slug</label>
+                  <input
+                    type="text"
+                    value={formState.slug || ""}
+                    onChange={(event) => setFormState({ ...formState, slug: event.target.value })}
+                    placeholder="product-slug"
+                    className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Price (₹ INR) *
-                    </label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Price (₹) *</label>
                     <input
                       type="number"
-                      value={formState.price || 0}
-                      onChange={(e) => setFormState({ ...formState, price: Number(e.target.value) })}
-                      className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      value={formState.price ?? 0}
+                      onChange={(event) => setFormState({ ...formState, price: Number(event.target.value) })}
+                      min={0}
+                      className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
                     />
                   </div>
-
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Original Price (₹ INR - Optional discount)
-                    </label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Original Price</label>
                     <input
                       type="number"
-                      value={formState.originalPrice || ""}
-                      onChange={(e) =>
-                        setFormState({ ...formState, originalPrice: e.target.value ? Number(e.target.value) : undefined })
+                      value={formState.originalPrice ?? ""}
+                      onChange={(event) =>
+                        setFormState({
+                          ...formState,
+                          originalPrice: event.target.value ? Number(event.target.value) : undefined,
+                        })
                       }
-                      placeholder="e.g. 10000"
-                      className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
+                      min={0}
+                      className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
                     />
                   </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Badge Label (Optional)
-                    </label>
-                    <select
-                      value={formState.badge || ""}
-                      onChange={(e) => setFormState({ ...formState, badge: e.target.value || undefined })}
-                      className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                    >
-                      <option value="">No Badge</option>
-                      <option value="Bestseller">Bestseller</option>
-                      <option value="New">New</option>
-                      <option value="Limited">Limited</option>
-                      <option value="Exclusive">Exclusive</option>
-                      <option value="Must Have">Must Have</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Card Aspect Ratio
-                    </label>
-                    <select
-                      value={formState.aspectClass || "aspect-[3/4]"}
-                      onChange={(e) => setFormState({ ...formState, aspectClass: e.target.value })}
-                      className="w-full px-4 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-stone-900 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                    >
-                      <option value="aspect-[3/4]">Portrait (3:4 Standard)</option>
-                      <option value="aspect-square">Square (1:1 Aspect)</option>
-                      <option value="aspect-[4/3]">Landscape (4:3 Wide)</option>
-                    </select>
-                  </div>
                 </div>
-              )}
+              </div>
 
-              {activeTab === "media" && (
-                <div className="space-y-8 animate-in fade-in duration-200">
-                  {/* Image Management */}
-                  <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6">
-                    <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <ImageIcon className="w-4 h-4 text-stone-600" /> Product Gallery Images
-                    </h3>
-
-                    {/* Current Images */}
-                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                      {(formState.images || []).map((img, idx) => (
-                        <div key={idx} className="relative group aspect-[3/4] bg-stone-200 rounded-xl overflow-hidden border border-stone-300 shadow-sm">
-                          <Image src={img} alt={`Preview ${idx + 1}`} fill className="object-cover" />
+              <div className="grid gap-6 lg:grid-cols-3">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Badge</label>
+                  <select
+                    value={formState.badge || ""}
+                    onChange={(event) => setFormState({ ...formState, badge: event.target.value || undefined })}
+                    className="w-full rounded-2xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                  >
+                    <option value="">No badge</option>
+                    <option value="Bestseller">Bestseller</option>
+                    <option value="New">New</option>
+                    <option value="Limited">Limited</option>
+                    <option value="Exclusive">Exclusive</option>
+                  </select>
+                </div>
+                <div className="lg:col-span-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Images</label>
+                  <div className="space-y-3 rounded-3xl border border-stone-200 bg-stone-50 p-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      {(formState.images || []).map((src, index) => (
+                        <div key={index} className="relative overflow-hidden rounded-2xl border border-stone-200 bg-white">
+                          <Image src={src} alt={`Image ${index + 1}`} width={240} height={220} className="h-28 w-full object-cover" />
                           <button
-                            onClick={() => removeImage(idx)}
-                            className="absolute top-2 right-2 bg-red-600/90 hover:bg-red-600 text-white p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
-                            title="Remove Image"
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute right-2 top-2 rounded-full bg-black/70 p-1.5 text-white hover:bg-black"
+                            aria-label="Remove image"
                           >
-                            <X className="w-3.5 h-3.5" />
+                            <X className="w-4 h-4" />
                           </button>
-                          <span className="absolute bottom-2 left-2 bg-black/60 text-white text-[9px] font-bold px-1.5 py-0.5 rounded backdrop-blur-xs">
-                            #{idx + 1}
-                          </span>
                         </div>
                       ))}
                     </div>
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-3">
+                      <input
+                        type="text"
+                        value={newImageUrl}
+                        onChange={(event) => setNewImageUrl(event.target.value)}
+                        placeholder="Add image URL"
+                        className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                      />
+                      <button
+                        type="button"
+                        onClick={addImage}
+                        className="inline-flex items-center justify-center rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition"
+                      >
+                        Add Image
+                      </button>
+                    </div>
+                    <div>
+                      <ImageUploadWebP
+                        onUpload={(url) => setFormState((prev) => ({ ...prev, images: [...(prev.images || []), url] }))}
+                        multiple={true}
+                        label="Upload image files"
+                        buttonText="Upload images"
+                        className="mt-2"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                    {/* WebP Auto-Converting Uploader */}
-                    <ImageUploadWebP
-                      onUpload={(url) => addImage(url)}
-                      multiple={true}
-                      label="Upload Gallery Photos (Auto-converts PNG, JPG, GIF to WebP)"
-                      buttonText="Drop or Select Product Images"
-                      className="mt-2"
-                    />
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div className="rounded-3xl border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Colors</p>
+                      <p className="text-sm text-stone-500">Add the product color variations below.</p>
+                    </div>
+                    <Palette className="h-5 w-5 text-stone-600" />
                   </div>
 
-                  {/* Colors Management */}
-                  <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6">
-                    <h3 className="text-xs font-bold text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Palette className="w-4 h-4 text-stone-600" /> Color Variations
-                    </h3>
-
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {(formState.colors || []).map((col, idx) => (
-                        <div
-                          key={idx}
-                          className="flex items-center gap-2 bg-white border border-stone-300 rounded-full pl-2 pr-3 py-1 shadow-xs"
+                  <div className="space-y-2 mb-4">
+                    {(formState.colors || []).map((color, index) => (
+                      <div key={index} className="flex items-center justify-between rounded-2xl bg-white px-3 py-2 border border-stone-200">
+                        <div className="flex items-center gap-3">
+                          <span className="h-5 w-5 rounded-full border border-stone-300" style={{ backgroundColor: color.hex }} />
+                          <span className="text-sm text-stone-700">{color.name}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeColor(index)}
+                          className="rounded-full p-1 text-stone-400 hover:text-red-600"
                         >
-                          <span className="w-4 h-4 rounded-full border border-stone-300" style={{ backgroundColor: col.hex }} />
-                          <span className="text-xs font-semibold text-stone-800">{col.name}</span>
-                          <button
-                            onClick={() => removeColor(idx)}
-                            className="text-stone-400 hover:text-red-600 ml-1 transition-colors"
-                          >
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Add Color Input */}
-                    <div className="flex flex-wrap sm:flex-nowrap items-center gap-2">
-                      <div className="flex items-center gap-2 bg-white border border-stone-300 rounded-xl px-3 py-1.5">
-                        <input
-                          type="color"
-                          value={newColorHex}
-                          onChange={(e) => setNewColorHex(e.target.value)}
-                          className="w-6 h-6 border-0 bg-transparent cursor-pointer"
-                        />
-                        <input
-                          type="text"
-                          value={newColorHex}
-                          onChange={(e) => setNewColorHex(e.target.value)}
-                          className="w-20 text-xs font-mono text-stone-700 bg-transparent focus:outline-none uppercase"
-                        />
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                      <input
-                        type="text"
-                        value={newColorName}
-                        onChange={(e) => setNewColorName(e.target.value)}
-                        placeholder="Color name (e.g. Midnight Navy)"
-                        className="flex-1 px-4 py-2 bg-white border border-stone-300 rounded-xl text-xs text-stone-800 focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      />
-                      <button
-                        onClick={addColor}
-                        className="bg-stone-900 hover:bg-stone-800 text-white px-5 py-2 rounded-xl text-xs font-semibold transition-colors flex items-center gap-1.5"
-                      >
-                        <Plus className="w-4 h-4" /> Add Color
-                      </button>
-                    </div>
+                    ))}
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-[auto_1fr_auto] items-center">
+                    <input
+                      type="color"
+                      value={newColorHex}
+                      onChange={(event) => setNewColorHex(event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-stone-200 bg-white p-0"
+                    />
+                    <input
+                      type="text"
+                      value={newColorName}
+                      onChange={(event) => setNewColorName(event.target.value)}
+                      placeholder="Color name"
+                      className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                    />
+                    <button
+                      type="button"
+                      onClick={addColor}
+                      className="inline-flex items-center justify-center rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition"
+                    >
+                      Add
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {activeTab === "specs" && (
-                <div className="space-y-6 animate-in fade-in duration-200">
-                  {/* Sizes */}
-                  <div className="bg-stone-50 border border-stone-200 rounded-2xl p-6">
-                    <label className="block text-xs font-bold text-stone-900 uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <Ruler className="w-4 h-4 text-stone-600" /> Available Sizes (Click to toggle)
-                    </label>
-
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {STANDARD_SIZES.map((size) => {
-                        const isSelected = (formState.sizes || []).includes(size);
-                        return (
-                          <button
-                            key={size}
-                            onClick={() => toggleSize(size)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold font-mono transition-all border ${
-                              isSelected
-                                ? "bg-stone-900 text-white border-stone-900 shadow-sm"
-                                : "bg-white text-stone-600 border-stone-200 hover:border-stone-400"
-                            }`}
-                          >
-                            {size} {isSelected && "✓"}
-                          </button>
-                        );
-                      })}
+                <div className="rounded-3xl border border-stone-200 bg-stone-50 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-stone-500">Sizes</p>
+                      <p className="text-sm text-stone-500">Toggle available size tags.</p>
                     </div>
-
-                    {/* Custom size input */}
-                    <div className="flex gap-2 max-w-sm">
-                      <input
-                        type="text"
-                        value={newCustomSize}
-                        onChange={(e) => setNewCustomSize(e.target.value)}
-                        placeholder="Custom size tag..."
-                        className="flex-1 px-3 py-1.5 bg-white border border-stone-300 rounded-lg text-xs font-mono focus:outline-none"
-                      />
-                      <button
-                        onClick={addCustomSize}
-                        className="bg-stone-800 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
-                      >
-                        Add Tag
-                      </button>
-                    </div>
+                    <Ruler className="h-5 w-5 text-stone-600" />
                   </div>
-
-                  {/* Description */}
-                  <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Detailed Silhouette Description
-                    </label>
-                    <textarea
-                      rows={4}
-                      value={formState.description || ""}
-                      onChange={(e) => setFormState({ ...formState, description: e.target.value })}
-                      className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      placeholder="Write a rich, luxurious description of the silhouette, tailoring, and drape..."
+                  <div className="flex flex-wrap gap-2">
+                    {STANDARD_SIZES.map((size) => {
+                      const selected = (formState.sizes || []).includes(size);
+                      return (
+                        <button
+                          key={size}
+                          type="button"
+                          onClick={() => toggleSize(size)}
+                          className={`rounded-2xl border px-4 py-2 text-sm transition ${
+                            selected
+                              ? "border-stone-900 bg-stone-900 text-white"
+                              : "border-stone-200 bg-white text-stone-700 hover:border-stone-400"
+                          }`}
+                        >
+                          {size}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_auto]">
+                    <input
+                      type="text"
+                      value={newCustomSize}
+                      onChange={(event) => setNewCustomSize(event.target.value)}
+                      placeholder="Custom size tag"
+                      className="w-full rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
                     />
+                    <button
+                      type="button"
+                      onClick={addCustomSize}
+                      className="inline-flex items-center justify-center rounded-2xl bg-stone-900 px-4 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition"
+                    >
+                      Add
+                    </button>
                   </div>
+                </div>
+              </div>
 
-                  {/* Fabric */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Description</label>
+                  <textarea
+                    rows={5}
+                    value={formState.description || ""}
+                    onChange={(event) => setFormState({ ...formState, description: event.target.value })}
+                    placeholder="Write a rich product description."
+                    className="w-full rounded-3xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
+                  />
+                </div>
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Fabric Composition & Care Instructions
-                    </label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Fabric & Care</label>
                     <textarea
                       rows={3}
                       value={formState.fabric || ""}
-                      onChange={(e) => setFormState({ ...formState, fabric: e.target.value })}
-                      className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      placeholder="e.g. 100% Japanese Crepe. Fully lined. Hand wash cold or dry clean recommended..."
+                      onChange={(event) => setFormState({ ...formState, fabric: event.target.value })}
+                      placeholder="Example: 100% Japanese crepe. Hand wash cold or dry clean."
+                      className="w-full rounded-3xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
                     />
                   </div>
-
-                  {/* Size Guide */}
                   <div>
-                    <label className="block text-xs font-bold text-stone-700 uppercase tracking-wider mb-2">
-                      Size Guide & Fit Proportions
-                    </label>
+                    <label className="block text-xs font-semibold uppercase tracking-wider text-stone-500 mb-2">Size Guide</label>
                     <textarea
                       rows={3}
                       value={formState.sizeGuide || ""}
-                      onChange={(e) => setFormState({ ...formState, sizeGuide: e.target.value })}
-                      className="w-full p-4 bg-stone-50 border border-stone-200 rounded-xl text-stone-800 text-sm focus:bg-white focus:outline-none focus:ring-2 focus:ring-stone-900"
-                      placeholder="e.g. Relaxed fit. Size S fits 36 inch bust. Total length approx 57 inches..."
+                      onChange={(event) => setFormState({ ...formState, sizeGuide: event.target.value })}
+                      placeholder="Example: Fits true to size. Length 57 inches."
+                      className="w-full rounded-3xl border border-stone-200 bg-stone-50 px-4 py-3 text-sm text-stone-900 focus:border-stone-400 focus:outline-none focus:ring-2 focus:ring-stone-200"
                     />
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
-            {/* Modal Footer */}
-            <div className="px-6 py-4 border-t border-stone-200 bg-stone-50 flex items-center justify-between">
+            <div className="flex flex-col gap-3 border-t border-stone-200 bg-stone-50 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
               <button
+                type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-6 py-2.5 rounded-xl border border-stone-300 text-stone-700 font-semibold text-xs hover:bg-stone-200 transition-colors"
+                className="rounded-2xl border border-stone-200 bg-white px-5 py-3 text-sm font-semibold text-stone-700 hover:bg-stone-100 transition"
               >
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleSave}
                 disabled={saving}
-                className="px-8 py-2.5 rounded-xl bg-stone-900 hover:bg-black text-white font-semibold text-xs shadow-md hover:shadow-xl transition-all flex items-center gap-2 disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-2xl bg-stone-900 px-6 py-3 text-sm font-semibold text-white hover:bg-stone-800 transition disabled:opacity-60"
               >
-                {saving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-                {formState.id ? "Update Silhouette" : "Publish to Catalog"}
+                {saving && <RefreshCw className="mr-2 h-4 w-4 animate-spin" />}
+                {formState.id ? "Save changes" : "Create product"}
               </button>
             </div>
           </div>
