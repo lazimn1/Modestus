@@ -22,7 +22,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const productIdParam = searchParams.get("productId");
   const router = useRouter();
-  const { cart, cartLines, handleCreateOrder, clearCart } = useCommerce();
+  const { cart, cartLines, createOrder, clearCart } = useCommerce();
 
   // If a specific productId is passed in URL, checkout only that item; otherwise checkout the active cart bag
   const isDirectBuy = Boolean(productIdParam);
@@ -86,7 +86,7 @@ function CheckoutContent() {
     };
 
     // Create order with full customer contact & shipping details attached
-    const order = handleCreateOrder(checkoutItems, paymentMethod, shippingDetails);
+    const order = createOrder(checkoutItems, paymentMethod, shippingDetails);
 
     if (!isDirectBuy) {
       clearCart();
