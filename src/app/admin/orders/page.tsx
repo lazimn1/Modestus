@@ -6,7 +6,6 @@ import {
   ShoppingCart,
   Package,
   CreditCard,
-  Trash2,
   RefreshCw,
   Search,
   Eye,
@@ -131,39 +130,6 @@ export default function AdminOrdersPage() {
       showToast(err?.message || "Failed to update order status.", "error");
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  // Functional Order Deletion
-  const handleDeleteOrder = async (orderId: string | number) => {
-    if (!confirm(`Are you sure you want to permanently delete order #${orderId}?`)) return;
-    try {
-      await supabase.from("orders").delete().eq("id", orderId);
-
-      if (typeof window !== "undefined") {
-        try {
-          const localRaw = window.localStorage.getItem("modestus-orders");
-          if (localRaw) {
-            const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed)) {
-              const filtered = parsed.filter((o: any) => String(o.id) !== String(orderId));
-              window.localStorage.setItem("modestus-orders", JSON.stringify(filtered));
-            }
-          }
-          window.dispatchEvent(new Event("modestus-commerce-change"));
-        } catch {
-          // ignore
-        }
-      }
-
-      setOrders((prev) => prev.filter((o) => String(o.id) !== String(orderId)));
-      if (inspectOrder && String(inspectOrder.id) === String(orderId)) {
-        setInspectOrder(null);
-      }
-      showToast("Order deleted successfully.", "success");
-    } catch (err: any) {
-      console.error("Error deleting order:", err);
-      showToast(err?.message || "Failed to delete order.", "error");
     }
   };
 
@@ -410,13 +376,6 @@ export default function AdminOrdersPage() {
                             title="Inspect Order Details"
                           >
                             <Eye className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteOrder(order.id)}
-                            className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                            title="Delete order"
-                          >
-                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
