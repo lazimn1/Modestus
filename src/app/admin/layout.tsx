@@ -42,24 +42,34 @@ export default function AdminLayout({
 
   useEffect(() => {
     if (isLoginPage) {
-      setChecking(false);
+      queueMicrotask(() => setChecking(false));
       return;
     }
 
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) {
         router.replace("/login");
       } else {
-        setUserEmail(user.email ?? null);
-        setChecking(false);
+        const { data: adminData } = await supabase
+          .from("admin_users")
+          .select("id")
+          .eq("id", user.id)
+          .maybeSingle();
+
+        if (!adminData) {
+          router.replace("/");
+        } else {
+          setUserEmail(user.email ?? null);
+          setChecking(false);
+        }
       }
     });
   }, [isLoginPage, router]);
 
   // Close mobile menu on route change
   useEffect(() => {
-    setMobileMenuOpen(false);
+    queueMicrotask(() => setMobileMenuOpen(false));
   }, [pathname]);
 
   // Login page — render without sidebar
