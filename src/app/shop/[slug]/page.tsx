@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, products as defaultProducts, formatINR, Product } from "@/lib/products";
+import { getProductBySlug, products as defaultProducts, formatINR, Product, mapDbToProduct } from "@/lib/products";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import { mapDbToProduct } from "@/lib/useProducts";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
 import ReviewsSection from "@/components/pdp/ReviewsSection";
@@ -21,11 +20,6 @@ function getSupabase() {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
-    },
-    global: {
-      fetch: (url, options) => {
-        return fetch(url, { ...options, cache: "no-store", next: { revalidate: 0 } });
-      },
     },
   });
 }
