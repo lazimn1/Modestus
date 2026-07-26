@@ -103,7 +103,7 @@ export default function LoginPage() {
             {/* Name */}
             <div className="space-y-2">
               <label className="text-white/60 text-xs font-semibold uppercase tracking-wider">
-                Full Name (to display in menu)
+                Full Name
               </label>
               <div className="relative">
                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-white/30" />
