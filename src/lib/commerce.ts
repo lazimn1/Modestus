@@ -248,7 +248,7 @@ export function useCommerce() {
           .eq("user_id", user.id);
 
         if (!hasSyncedGuest && cloudWishlist) {
-          const cloudProductIds = new Set(cloudWishlist.map((i: any) => i.product_id));
+          const cloudProductIds = new Set(cloudWishlist.map((i: { product_id: number }) => i.product_id));
           for (const item of getWishlist()) {
             if (!cloudProductIds.has(item.productId)) {
               await supabase.from("wishlist_items").insert({
@@ -266,9 +266,9 @@ export function useCommerce() {
           .eq("user_id", user.id);
 
         if (updatedWishlist) {
-          const formatted: WishlistItem[] = updatedWishlist.map((i: any) => ({
+          const formatted: WishlistItem[] = updatedWishlist.map((i: { product_id: number; created_at?: string }) => ({
             productId: i.product_id,
-            addedAt: i.created_at,
+            addedAt: i.created_at || new Date().toISOString(),
           }));
           writeJson(WISHLIST_KEY, formatted);
         }
@@ -281,7 +281,7 @@ export function useCommerce() {
 
         if (!hasSyncedGuest && cloudCart) {
           const cloudKeys = new Set(
-            cloudCart.map((i: any) => `${i.product_id}:${i.size}:${i.color}`)
+            cloudCart.map((i: { product_id: number; size: string; color: string }) => `${i.product_id}:${i.size}:${i.color}`)
           );
           for (const item of getCart()) {
             const key = `${item.productId}:${item.size}:${item.color}`;
@@ -304,12 +304,12 @@ export function useCommerce() {
           .eq("user_id", user.id);
 
         if (updatedCart) {
-          const formattedCart: CartItem[] = updatedCart.map((i: any) => ({
+          const formattedCart: CartItem[] = updatedCart.map((i: { product_id: number; quantity: number; size: string; color: string; created_at?: string }) => ({
             productId: i.product_id,
             quantity: i.quantity,
             size: i.size,
             color: i.color,
-            addedAt: i.created_at,
+            addedAt: i.created_at || new Date().toISOString(),
           }));
           writeJson(CART_KEY, formattedCart);
         }
@@ -321,8 +321,8 @@ export function useCommerce() {
           .eq("user_id", user.id)
           .order("placed_at", { ascending: false });
 
-        if (cloudOrders && cloudOrders.length > 0) {
-          const formattedOrders: Order[] = cloudOrders.map((i: any) => ({
+        if (cloudOrders) {
+          const formattedOrders: Order[] = cloudOrders.map((i: { id: string; items: CartItem[]; subtotal: number; shipping: number; total: number; payment_method: Order["paymentMethod"]; status: Order["status"]; placed_at?: string }) => ({
             id: i.id,
             items: i.items,
             subtotal: Number(i.subtotal),
@@ -330,8 +330,19 @@ export function useCommerce() {
             total: Number(i.total),
             paymentMethod: i.payment_method,
             status: i.status,
-            placedAt: i.placed_at,
+            placedAt: i.placed_at || new Date().toISOString(),
           }));
+
+          // Preserve any newly created local orders that haven't synced to Supabase yet
+          const localOrders = getOrders();
+          const cloudIds = new Set(formattedOrders.map((o) => String(o.id)));
+          for (const loc of localOrders) {
+            if (!cloudIds.has(String(loc.id))) {
+              formattedOrders.push(loc);
+            }
+          }
+          formattedOrders.sort((a, b) => new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime());
+
           writeJson(ORDERS_KEY, formattedOrders);
         }
 
@@ -344,7 +355,7 @@ export function useCommerce() {
     };
 
     syncCloudData();
-  }, [user?.id, supabase]);
+  }, [user, supabase]);
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
@@ -364,7 +375,7 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const handleUpdateQuantity = useCallback(
@@ -393,11 +404,11 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const handleRemoveFromCart = useCallback(
-    (target: Pick<CartItem, "productId" | "size" | "color">, quantity?: number) => {
+    (target: Pick<CartItem, "productId" | "size" | "color">) => {
       const next = removeCartItem(target);
       if (user?.id) {
         supabase
@@ -411,7 +422,7 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const handleClearCart = useCallback(() => {
@@ -419,7 +430,7 @@ export function useCommerce() {
     if (user?.id) {
       supabase.from("cart_items").delete().eq("user_id", user.id).then();
     }
-  }, [user?.id, supabase]);
+  }, [user, supabase]);
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
@@ -443,7 +454,7 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const handleAddToWishlist = useCallback(
@@ -459,7 +470,7 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const handleRemoveFromWishlist = useCallback(
@@ -475,7 +486,7 @@ export function useCommerce() {
       }
       return next;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const handleCreateOrder = useCallback(
@@ -501,7 +512,7 @@ export function useCommerce() {
       }
       return order;
     },
-    [user?.id, supabase]
+    [user, supabase]
   );
 
   const cartLines = useMemo(() => getCartLines(cart), [cart]);
