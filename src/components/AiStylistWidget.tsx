@@ -23,7 +23,7 @@ export default function AiStylistWidget() {
     {
       id: "welcome",
       sender: "ai",
-      text: "Welcome to Modestus VIP Styling. I am your AI luxury fashion advisor. How may I assist you in curating your wardrobe today?",
+      text: "Welcome to M Chat. How may I assist you today?",
     },
   ]);
   const [input, setInput] = useState("");
@@ -115,7 +115,7 @@ export default function AiStylistWidget() {
       {
         id: "welcome",
         sender: "ai",
-        text: "Welcome to Modestus VIP Styling. I am your AI luxury fashion advisor. How may I assist you in curating your wardrobe today?",
+        text: "Welcome to M Chat. How may I assist you today?",
       },
     ]);
   };
@@ -169,12 +169,11 @@ export default function AiStylistWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="group relative flex items-center gap-3 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white font-medium px-5 py-3.5 rounded-full shadow-2xl shadow-indigo-500/30 border border-white/20 transition-all duration-300 hover:scale-105"
-          aria-label="Open AI VIP Stylist"
+          className="group relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full shadow-2xl shadow-indigo-500/30 border border-white/20 transition-all duration-300 hover:scale-105"
+          aria-label="Open M Chat"
         >
-          <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
-          <Sparkles className="w-5 h-5 text-indigo-200 animate-spin" style={{ animationDuration: "8s" }} />
-          <span className="text-sm tracking-wide font-semibold">VIP Stylist</span>
+          <div className="absolute top-1 right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
+          <Sparkles className="w-6 h-6 text-indigo-200 animate-spin" style={{ animationDuration: "8s" }} />
         </button>
       )}
 
@@ -187,15 +186,9 @@ export default function AiStylistWidget() {
               <div className="w-9 h-9 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300">
                 <Sparkles className="w-5 h-5" />
               </div>
-              <div>
-                <h3 className="text-white text-sm font-bold tracking-wide flex items-center gap-1.5">
-                  Modestus AI Stylist
-                  <span className="text-[10px] bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-1.5 py-0.5 rounded-full font-mono uppercase">
-                    VIP
-                  </span>
-                </h3>
-                <p className="text-white/40 text-xs">Personal Luxury Fashion Guide</p>
-              </div>
+              <h3 className="text-white text-base font-bold tracking-wide">
+                M Chat
+              </h3>
             </div>
 
             <div className="flex items-center gap-1">
@@ -302,7 +295,7 @@ export default function AiStylistWidget() {
               </button>
             </form>
             <p className="text-[10px] text-white/20 text-center mt-2">
-              Powered by Google Gemini &bull; Modestus Luxury AI
+              M Chat
             </p>
           </div>
         </div>
