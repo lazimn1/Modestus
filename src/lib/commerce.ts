@@ -2,8 +2,9 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { products, type Product } from "@/lib/products";
-import { createClient } from "@/utils/supabase/client";
-import { useOptionalAuth } from "@/context/AuthContext";
+// ── SUPABASE DISCONNECTED ── (kept for easy restoration)
+// import { createClient } from "@/utils/supabase/client";
+// import { useOptionalAuth } from "@/context/AuthContext";
 
 export type CartItem = {
   productId: number;
@@ -210,9 +211,11 @@ export function useCommerce() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
 
-  const auth = useOptionalAuth();
-  const user = auth?.user;
-  const supabase = createClient();
+  // ── SUPABASE DISCONNECTED ── (kept for easy restoration)
+  // const auth = useOptionalAuth();
+  // const user = auth?.user;
+  // const supabase = createClient();
+  const user = null; // disconnected
 
   const refresh = useCallback(() => {
     setCart(getCart());
@@ -233,290 +236,93 @@ export function useCommerce() {
     };
   }, [refresh]);
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    const syncCloudData = async () => {
-      try {
-        const syncKey = `modestus_synced_${user.id}`;
-        const hasSyncedGuest = typeof window !== "undefined" && window.sessionStorage.getItem(syncKey);
-
-        // 1. Sync wishlist
-        const { data: cloudWishlist } = await supabase
-          .from("wishlist_items")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (!hasSyncedGuest && cloudWishlist) {
-          const cloudProductIds = new Set(cloudWishlist.map((i: { product_id: number }) => i.product_id));
-          for (const item of getWishlist()) {
-            if (!cloudProductIds.has(item.productId)) {
-              await supabase.from("wishlist_items").insert({
-                user_id: user.id,
-                product_id: item.productId,
-                created_at: item.addedAt || new Date().toISOString(),
-              });
-            }
-          }
-        }
-
-        const { data: updatedWishlist } = await supabase
-          .from("wishlist_items")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (updatedWishlist) {
-          const formatted: WishlistItem[] = updatedWishlist.map((i: { product_id: number; created_at?: string }) => ({
-            productId: i.product_id,
-            addedAt: i.created_at || new Date().toISOString(),
-          }));
-          writeJson(WISHLIST_KEY, formatted);
-        }
-
-        // 2. Sync cart
-        const { data: cloudCart } = await supabase
-          .from("cart_items")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (!hasSyncedGuest && cloudCart) {
-          const cloudKeys = new Set(
-            cloudCart.map((i: { product_id: number; size: string; color: string }) => `${i.product_id}:${i.size}:${i.color}`)
-          );
-          for (const item of getCart()) {
-            const key = `${item.productId}:${item.size}:${item.color}`;
-            if (!cloudKeys.has(key)) {
-              await supabase.from("cart_items").insert({
-                user_id: user.id,
-                product_id: item.productId,
-                quantity: item.quantity,
-                size: item.size,
-                color: item.color,
-                created_at: item.addedAt || new Date().toISOString(),
-              });
-            }
-          }
-        }
-
-        const { data: updatedCart } = await supabase
-          .from("cart_items")
-          .select("*")
-          .eq("user_id", user.id);
-
-        if (updatedCart) {
-          const formattedCart: CartItem[] = updatedCart.map((i: { product_id: number; quantity: number; size: string; color: string; created_at?: string }) => ({
-            productId: i.product_id,
-            quantity: i.quantity,
-            size: i.size,
-            color: i.color,
-            addedAt: i.created_at || new Date().toISOString(),
-          }));
-          writeJson(CART_KEY, formattedCart);
-        }
-
-        // 3. Sync orders
-        const { data: cloudOrders } = await supabase
-          .from("orders")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("placed_at", { ascending: false });
-
-        if (cloudOrders) {
-          const formattedOrders: Order[] = cloudOrders.map((i: { id: string; items: CartItem[]; subtotal: number; shipping: number; total: number; payment_method: Order["paymentMethod"]; status: Order["status"]; placed_at?: string }) => ({
-            id: i.id,
-            items: i.items,
-            subtotal: Number(i.subtotal),
-            shipping: Number(i.shipping),
-            total: Number(i.total),
-            paymentMethod: i.payment_method,
-            status: i.status,
-            placedAt: i.placed_at || new Date().toISOString(),
-          }));
-
-          // Preserve any newly created local orders that haven't synced to Supabase yet
-          const localOrders = getOrders();
-          const cloudIds = new Set(formattedOrders.map((o) => String(o.id)));
-          for (const loc of localOrders) {
-            if (!cloudIds.has(String(loc.id))) {
-              formattedOrders.push(loc);
-            }
-          }
-          formattedOrders.sort((a, b) => new Date(b.placedAt || 0).getTime() - new Date(a.placedAt || 0).getTime());
-
-          writeJson(ORDERS_KEY, formattedOrders);
-        }
-
-        if (typeof window !== "undefined" && !hasSyncedGuest) {
-          window.sessionStorage.setItem(syncKey, "true");
-        }
-      } catch (e) {
-        console.error("Cloud sync error:", e);
-      }
-    };
-
-    syncCloudData();
-  }, [user, supabase]);
+  // ── SUPABASE CLOUD SYNC DISCONNECTED ── (kept for easy restoration)
+  // useEffect(() => {
+  //   if (!user?.id) return;
+  //   const syncCloudData = async () => { ... };
+  //   syncCloudData();
+  // }, [user, supabase]);
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
       const next = addCartItem(newItem);
-      if (user?.id) {
-        const item = next.find((i) => cartKey(i) === cartKey(newItem));
-        if (item) {
-          supabase.from("cart_items").upsert({
-            user_id: user.id,
-            product_id: item.productId,
-            quantity: item.quantity,
-            size: item.size,
-            color: item.color,
-            created_at: item.addedAt,
-          }).then();
-        }
-      }
+      // ── SUPABASE DISCONNECTED ──
+      // if (user?.id) {
+      //   const item = next.find((i) => cartKey(i) === cartKey(newItem));
+      //   if (item) {
+      //     supabase.from("cart_items").upsert({ ... }).then();
+      //   }
+      // }
       return next;
     },
-    [user, supabase]
+    []
   );
 
   const handleUpdateQuantity = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">, quantity: number) => {
       const next = updateCartItemQuantity(target, quantity);
-      if (user?.id) {
-        if (quantity <= 0) {
-          supabase
-            .from("cart_items")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("product_id", target.productId)
-            .eq("size", target.size)
-            .eq("color", target.color)
-            .then();
-        } else {
-          supabase
-            .from("cart_items")
-            .update({ quantity })
-            .eq("user_id", user.id)
-            .eq("product_id", target.productId)
-            .eq("size", target.size)
-            .eq("color", target.color)
-            .then();
-        }
-      }
+      // ── SUPABASE DISCONNECTED ──
+      // if (user?.id) { supabase.from("cart_items")... }
       return next;
     },
-    [user, supabase]
+    []
   );
 
   const handleRemoveFromCart = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">) => {
       const next = removeCartItem(target);
-      if (user?.id) {
-        supabase
-          .from("cart_items")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("product_id", target.productId)
-          .eq("size", target.size)
-          .eq("color", target.color)
-          .then();
-      }
+      // ── SUPABASE DISCONNECTED ──
+      // if (user?.id) { supabase.from("cart_items").delete()... }
       return next;
     },
-    [user, supabase]
+    []
   );
 
   const handleClearCart = useCallback(() => {
     clearCart();
-    if (user?.id) {
-      supabase.from("cart_items").delete().eq("user_id", user.id).then();
-    }
-  }, [user, supabase]);
+    // ── SUPABASE DISCONNECTED ──
+    // if (user?.id) { supabase.from("cart_items").delete().eq("user_id", user.id).then(); }
+  }, []);
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
-      const exists = getWishlist().some((item) => item.productId === productId);
       const next = toggleWishlistItem(productId);
-      if (user?.id) {
-        if (exists) {
-          supabase
-            .from("wishlist_items")
-            .delete()
-            .eq("user_id", user.id)
-            .eq("product_id", productId)
-            .then();
-        } else {
-          supabase.from("wishlist_items").insert({
-            user_id: user.id,
-            product_id: productId,
-            created_at: new Date().toISOString(),
-          }).then();
-        }
-      }
+      // ── SUPABASE DISCONNECTED ──
+      // if (user?.id) { supabase.from("wishlist_items")... }
       return next;
     },
-    [user, supabase]
+    []
   );
 
   const handleAddToWishlist = useCallback(
     (productId: number) => {
-      const exists = getWishlist().some((item) => item.productId === productId);
       const next = addWishlistItem(productId);
-      if (user?.id && !exists) {
-        supabase.from("wishlist_items").insert({
-          user_id: user.id,
-          product_id: productId,
-          created_at: new Date().toISOString(),
-        }).then();
-      }
+      // ── SUPABASE DISCONNECTED ──
+      // if (user?.id && !exists) { supabase.from("wishlist_items").insert(...)... }
       return next;
     },
-    [user, supabase]
+    []
   );
 
   const handleRemoveFromWishlist = useCallback(
     (productId: number) => {
       const next = removeWishlistItem(productId);
-      if (user?.id) {
-        supabase
-          .from("wishlist_items")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("product_id", productId)
-          .then();
-      }
+      // ── SUPABASE DISCONNECTED ──
+      // if (user?.id) { supabase.from("wishlist_items").delete()... }
       return next;
     },
-    [user, supabase]
+    []
   );
 
   const handleCreateOrder = useCallback(
     (items: CartItem[], paymentMethod: Order["paymentMethod"], shippingData?: ShippingAddress) => {
       const order = createOrder(items, paymentMethod, shippingData);
-      
-      supabase.from("orders").insert({
-        id: order.id,
-        user_id: user?.id || null,
-        items: order.items,
-        subtotal: order.subtotal,
-        shipping: order.shipping,
-        total: order.total,
-        payment_method: order.paymentMethod,
-        status: order.status,
-        placed_at: order.placedAt,
-        customer_name: order.customer_name,
-        email: order.email,
-        phone: order.phone,
-        shipping_address: order.shipping_address,
-      }).then(({ error }) => {
-        if (error) console.error("Failed to save order to cloud database:", error);
-      });
-
-      if (user?.id) {
-        supabase.from("cart_items").delete().eq("user_id", user.id).then();
-      }
+      // ── SUPABASE DISCONNECTED ── (kept for easy restoration)
+      // supabase.from("orders").insert({ id: order.id, user_id: user?.id || null, ... }).then(...);
+      // if (user?.id) { supabase.from("cart_items").delete().eq("user_id", user.id).then(); }
       return order;
     },
-    [user, supabase]
+    []
   );
 
   const cartLines = useMemo(() => getCartLines(cart), [cart]);

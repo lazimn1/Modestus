@@ -1,8 +1,10 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
-import { products as defaultProducts, mapDbToProduct, formatINR } from "@/lib/products";
+// ── SUPABASE DISCONNECTED ── (kept for easy restoration)
+// import { createClient } from "@/utils/supabase/server";
+// import { cookies } from "next/headers";
+import { getProducts } from "@/lib/shopify/queries";
+import { products as defaultProducts, formatINR } from "@/lib/products";
 
 export async function POST(req: Request) {
   try {
@@ -22,24 +24,44 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch live catalog from Supabase or fallback to static catalog
-    let catalog = defaultProducts;
+    // ── SUPABASE DISCONNECTED ── (kept for easy restoration)
+    // let catalog = defaultProducts;
+    // try {
+    //   const cookieStore = await cookies();
+    //   const supabase = createClient(cookieStore);
+    //   const { data } = await supabase.from("products").select("*").order("id", { ascending: true });
+    //   if (data && data.length > 0) {
+    //     catalog = data.map(mapDbToProduct);
+    //   }
+    // } catch (dbError) {
+    //   console.warn("Could not fetch database catalog for AI, falling back to static catalog:", dbError);
+    // }
+
+    // ── SHOPIFY STOREFRONT API ──
+    let catalog: any[] = defaultProducts as any[];
     try {
-      const cookieStore = await cookies();
-      const supabase = createClient(cookieStore);
-      const { data } = await supabase.from("products").select("*").order("id", { ascending: true });
-      if (data && data.length > 0) {
-        catalog = data.map(mapDbToProduct);
+      const nodes = await getProducts();
+      if (nodes && nodes.length > 0) {
+        catalog = nodes.map((node: any) => ({
+          title: node.title,
+          slug: node.handle,
+          price: parseFloat(node.priceRange?.maxVariantPrice?.amount ?? "0"),
+          subtitle: node.description?.split(".")[0] ?? "",
+          fabric: "",
+          sizes: ["XS", "S", "M", "L", "XL"],
+          colors: [{ name: "Default" }],
+          description: node.description ?? "",
+        }));
       }
-    } catch (dbError) {
-      console.warn("Could not fetch database catalog for AI, falling back to static catalog:", dbError);
+    } catch (shopifyError) {
+      console.warn("Could not fetch Shopify catalog for AI, falling back to static catalog:", shopifyError);
     }
 
     // Build rich product context for Gemini
     const catalogContext = catalog
       .map(
         (p) =>
-          `- Title: "${p.title}" (Link: /shop/${p.slug}) | Price: ${formatINR(p.price)} | Subtitle: "${p.subtitle}" | Fabric: ${p.fabric} | Sizes: ${p.sizes.join(", ")} | Colors: ${p.colors.map((c) => c.name).join(", ")} | Description: ${p.description}`
+          `- Title: "${p.title}" (Link: /shop/${p.slug}) | Price: ${formatINR(p.price)} | Subtitle: "${p.subtitle}" | Fabric: ${p.fabric} | Sizes: ${p.sizes.join(", ")} | Colors: ${p.colors.map((c: { name: string }) => c.name).join(", ")} | Description: ${p.description}`
       )
       .join("\n");
 
