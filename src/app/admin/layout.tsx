@@ -3,8 +3,6 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { isAdminEmail } from "@/lib/admin";
 import {
   LayoutGrid,
   Package,
@@ -34,57 +32,17 @@ export default function AdminLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [userEmail, setUserEmail] = useState<string | null>(null);
-  const [checking, setChecking] = useState(true);
+  const [userEmail] = useState<string | null>("admin@modestus.com");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // If we're on the login page, just render children (the login layout handles it)
-  const isLoginPage = pathname === "/login";
-
-  useEffect(() => {
-    if (isLoginPage) {
-      queueMicrotask(() => setChecking(false));
-      return;
-    }
-
-    const supabase = createClient();
-    supabase.auth.getUser().then(async ({ data: { user } }) => {
-      if (!user) {
-        router.replace("/login");
-      } else {
-        if (!isAdminEmail(user.email)) {
-          router.replace("/");
-        } else {
-          setUserEmail(user.email ?? null);
-          setChecking(false);
-        }
-      }
-    });
-  }, [isLoginPage, router]);
 
   // Close mobile menu on route change
   useEffect(() => {
     queueMicrotask(() => setMobileMenuOpen(false));
   }, [pathname]);
 
-  // Login page — render without sidebar
-  if (isLoginPage) {
-    return <>{children}</>;
-  }
-
-  // Loading state while checking auth
-  if (checking) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#f5f5f7]">
-        <div className="w-8 h-8 border-3 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
-      </div>
-    );
-  }
-
   const handleSignOut = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.replace("/login");
+    await fetch("/api/auth/signout", { method: "POST" });
+    router.replace("/");
   };
 
   return (

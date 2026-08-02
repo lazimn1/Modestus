@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, Mail, ArrowRight, ArrowLeft, User } from "lucide-react";
+import { signupCustomer } from "@/app/actions/auth";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -21,55 +21,28 @@ export default function SignupPage() {
     setError("");
     setSuccess(false);
     setLoading(true);
-
-    const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: {
-          full_name: name.trim(),
-        },
-      },
-    });
-
-    if (authError) {
-      console.error("Signup Error:", authError);
-      setError(authError.message || "Failed to create account. Please try again.");
+    
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("email", email);
+    formData.append("password", password);
+    
+    const result = await signupCustomer(null, formData);
+    
+    if (result.error) {
+      setError(result.error);
       setLoading(false);
-      return;
-    }
-
-    if (data.user?.identities && data.user.identities.length === 0) {
-      setError("An account with this email already exists.");
-      setLoading(false);
-      return;
-    }
-
-    setSuccess(true);
-    setLoading(false);
-
-    // If auto-confirm is enabled, they are logged in, otherwise they need to check email
-    if (data.session) {
+    } else if (result.success) {
       router.push("/");
       router.refresh();
+    } else {
+      setSuccess(true);
+      setLoading(false);
     }
   };
 
   const handleGoogleSignIn = async () => {
-    setError("");
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (authError) {
-      console.error("Google Sign-in Error:", authError);
-      setError(authError.message || "Failed to initialize Google login.");
-    }
+    setError("Google Sign-in is not supported via Shopify.");
   };
 
   return (

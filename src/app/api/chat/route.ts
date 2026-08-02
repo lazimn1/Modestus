@@ -1,8 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-// ── SUPABASE DISCONNECTED ── (kept for easy restoration)
-// import { createClient } from "@/utils/supabase/server";
-// import { cookies } from "next/headers";
 import { getProducts } from "@/lib/shopify/queries";
 import { products as defaultProducts, formatINR } from "@/lib/products";
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import { type Product, formatINR } from "@/lib/products";
 import { Heart, ShoppingBag } from "lucide-react";
 import { getDefaultVariant, useCommerce } from "@/lib/commerce";
+import { getVariantId } from "@/lib/useProducts";
 
 interface ProductCardProps {
   product: Product;
@@ -66,8 +67,10 @@ export default function ProductCard({ product, index }: ProductCardProps) {
               aria-label={`Add ${product.title} to cart`}
               onClick={(e) => {
                 e.preventDefault();
+                const vId = getVariantId(product, defaultVariant.size, defaultVariant.color);
                 addToCart({
                   productId: product.id,
+                  variantId: vId,
                   quantity: 1,
                   size: defaultVariant.size,
                   color: defaultVariant.color,

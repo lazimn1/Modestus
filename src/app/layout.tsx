@@ -3,10 +3,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
 import { AuthProvider } from "@/context/AuthContext";
-import { createClient } from "@/utils/supabase/server";
-import { cookies } from "next/headers";
-import { isAdminEmail } from "@/lib/admin";
 import AiStylistWidget from "@/components/AiStylistWidget";
+import { getCustomer } from "@/app/actions/auth";
+
 
 const cerkiymo = localFont({
   src: "./fonts/cerkiymo.otf",
@@ -26,20 +25,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookieStore = await cookies();
-  const supabase = createClient(cookieStore);
-
-  const { data: { user } } = await supabase.auth.getUser();
-
-  const initialIsAdmin = isAdminEmail(user?.email);
-
-  const initialUser = user
-    ? {
-        email: user.email ?? "",
-        id: user.id,
-        name: user.user_metadata?.full_name || user.user_metadata?.name || "",
-      }
-    : null;
+  const customer = await getCustomer();
+  const initialUser = customer ? { id: customer.id, email: customer.email, name: customer.firstName } : null;
 
   return (
     <html lang="en">
@@ -47,7 +34,7 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
       <body className={`${cerkiymo.variable} font-sans bg-lightgray text-pureblack antialiased`}>
-        <AuthProvider initialUser={initialUser} initialIsAdmin={initialIsAdmin}>
+        <AuthProvider initialUser={initialUser} initialIsAdmin={false}>
           <LayoutShell>
             {children}
           </LayoutShell>

@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, products as defaultProducts, formatINR, Product, mapDbToProduct } from "@/lib/products";
-import { createClient as createSupabaseClient } from "@supabase/supabase-js";
+import { getProductBySlug, products as defaultProducts, formatINR, Product } from "@/lib/products";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
 import ReviewsSection from "@/components/pdp/ReviewsSection";
@@ -13,34 +12,38 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 export const fetchCache = "force-no-store";
 
-function getSupabase() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co";
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY || "placeholder";
-  return createSupabaseClient(url, key, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  });
+import { getProduct, getProducts } from "@/lib/shopify/queries";
+
+// Local helper to map Shopify node to Product
+function mapShopifyToProduct(node: any): Product {
+  const price = parseFloat(node?.priceRange?.maxVariantPrice?.amount ?? "0");
+  const images = node?.images?.edges?.map((edge: any) => edge.node.url) || [];
+  return {
+    id: node?.id ?? 0,
+    title: node?.title ?? "",
+    subtitle: node?.description?.split(".")[0] ?? "",
+    description: node?.description ?? "",
+    price,
+    slug: node?.handle ?? "",
+    fabric: "",
+    sizes: ["XS", "S", "M", "L", "XL"],
+    colors: [{ name: "Default", hex: "#000000" }],
+    images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"],
+    badge: undefined,
+    rating: 0,
+    reviewCount: 0,
+    sizeGuide: "",
+    reviews: [],
+    aspectClass: "",
+    originalPrice: undefined,
+  };
 }
 
 async function fetchProduct(slug: string): Promise<Product | undefined> {
   try {
-    const supabase = getSupabase();
-    // Check by slug first
-    let { data, error } = await supabase.from("products").select("*").eq("slug", slug).maybeSingle();
-    
-    // If not found by slug and slug is a number, try by ID
-    if (!data && !isNaN(Number(slug))) {
-      const res = await supabase.from("products").select("*").eq("id", Number(slug)).maybeSingle();
-      data = res.data;
-    }
-
-    if (error) {
-      console.error("Supabase PDP error for slug:", slug, error);
-    }
-    if (data) {
-      return mapDbToProduct(data);
+    const node = await getProduct(slug);
+    if (node) {
+      return mapShopifyToProduct(node);
     }
   } catch (err) {
     console.error("fetchProduct exception:", err);
@@ -50,12 +53,13 @@ async function fetchProduct(slug: string): Promise<Product | undefined> {
 
 async function fetchAllProducts(): Promise<Product[]> {
   try {
-    const supabase = getSupabase();
-    const { data } = await supabase.from("products").select("*").order("id", { ascending: true });
-    if (data && data.length > 0) {
-      return data.map(mapDbToProduct);
+    const nodes = await getProducts();
+    if (nodes && nodes.length > 0) {
+      return nodes.map(mapShopifyToProduct);
     }
-  } catch {}
+  } catch (err) {
+    console.error("fetchAllProducts exception:", err);
+  }
   return defaultProducts;
 }
 

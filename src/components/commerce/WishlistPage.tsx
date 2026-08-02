@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Eye, Heart, ShoppingBag, Trash2 } from "lucide-react";
 import { formatINR } from "@/lib/products";
 import { getDefaultVariant, useCommerce } from "@/lib/commerce";
+import { useProducts, getVariantId } from "@/lib/useProducts";
 
 export default function WishlistPage() {
   const {
@@ -111,8 +112,10 @@ export default function WishlistPage() {
                       <div className="mt-4 sm:mt-5 grid grid-cols-[1fr_40px] sm:grid-cols-[1fr_44px] gap-2">
                         <button
                           onClick={() => {
+                            const vId = getVariantId(product, variant.size, variant.color);
                             addToCart({
                               productId: product.id,
+                              variantId: vId,
                               quantity: 1,
                               size: variant.size,
                               color: variant.color,

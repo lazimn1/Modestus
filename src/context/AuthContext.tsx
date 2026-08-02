@@ -1,9 +1,8 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect, useMemo, ReactNode } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { createContext, useContext, useState, ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { isAdminEmail } from "@/lib/admin";
+import { logoutCustomer } from "@/app/actions/auth";
 
 interface User {
   email: string;
@@ -31,41 +30,13 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
   const [isAdmin, setIsAdmin] = useState<boolean>(initialIsAdmin);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
-
-  useEffect(() => {
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setUser({
-          email: session.user.email ?? "",
-          id: session.user.id,
-          name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || "",
-        });
-        
-        setIsAdmin(isAdminEmail(session.user.email));
-      } else {
-        setUser(null);
-        setIsAdmin(false);
-      }
-    });
-
-    return () => subscription.unsubscribe();
-  }, [supabase]);
 
   const signOut = async () => {
     setIsLoading(true);
-    // Call the server to clear server cookies
-    await fetch("/api/auth/signout", { method: "POST" });
-    // Also clear local client session
-    await supabase.auth.signOut();
-    
+    await logoutCustomer();
     setUser(null);
     setIsAdmin(false);
     setIsLoading(false);
-    
-    // Redirect to home and refresh server layout
     router.push("/");
     router.refresh();
   };

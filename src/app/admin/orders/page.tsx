@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState, useMemo } from "react";
-import { createClient } from "@/utils/supabase/client";
 import {
   ShoppingCart,
   Package,
@@ -35,32 +34,17 @@ export default function AdminOrdersPage() {
   const [inspectOrder, setInspectOrder] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  const supabase = createClient();
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const { data } = await supabase
-        .from("orders")
-        .select("*")
-        .order("placed_at", { ascending: false });
-
-      const merged: any[] = data || [];
-
-      // Merge with any orders saved in browser local storage from guest checkouts
+      // Read orders from localStorage only
+      const merged: any[] = [];
       if (typeof window !== "undefined") {
         try {
           const localRaw = window.localStorage.getItem("modestus-orders");
           if (localRaw) {
             const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed)) {
-              const dbIds = new Set(merged.map((o) => String(o.id)));
-              for (const localOrd of parsed) {
-                if (!dbIds.has(String(localOrd.id))) {
-                  merged.push(localOrd);
-                }
-              }
-            }
+            if (Array.isArray(parsed)) merged.push(...parsed);
           }
         } catch (e) {
           console.error("Local storage read error:", e);
@@ -80,7 +64,7 @@ export default function AdminOrdersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -89,16 +73,13 @@ export default function AdminOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
-  }, [supabase]);
+  }, [fetchOrders]);
 
-  // Functional Status Update
+  // Functional Status Update — localStorage only
   const handleStatusChange = async (orderId: string | number, newStatus: string) => {
     setUpdatingId(orderId);
     try {
-      // Update in Supabase
-      await supabase.from("orders").update({ status: newStatus }).eq("id", orderId);
-
-      // Update in Local Storage
+      // Update in localStorage
       if (typeof window !== "undefined") {
         try {
           const localRaw = window.localStorage.getItem("modestus-orders");

@@ -1,35 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
 import AdminProductsManager from "@/components/admin/AdminProductsManager";
-import { mapDbToProduct } from "@/lib/useProducts";
+import { mapShopifyToProduct } from "@/lib/useProducts";
 import { products as defaultProducts, Product } from "@/lib/products";
+import { getProducts } from "@/lib/shopify/queries";
 
 export default function AdminProductsPage() {
   const [initialProducts, setInitialProducts] = useState<Product[]>(defaultProducts);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const { data: rows } = await supabase
-          .from("products")
-          .select("*")
-          .order("id", { ascending: true });
-
-        if (rows && rows.length > 0) {
-          setInitialProducts(rows.map(mapDbToProduct));
+        const nodes = await getProducts();
+        if (nodes && nodes.length > 0) {
+          setInitialProducts(nodes.map(mapShopifyToProduct));
         }
       } catch (err) {
-        console.error("Error fetching products:", err);
+        console.error("Error fetching Shopify products:", err);
       } finally {
         setLoading(false);
       }
     };
     fetchProducts();
-  }, [supabase]);
+  }, []);
 
   if (loading) {
     return (

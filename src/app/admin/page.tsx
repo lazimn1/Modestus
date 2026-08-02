@@ -12,8 +12,8 @@ import {
   ShoppingCart,
   Palette,
 } from "lucide-react";
-import { createClient } from "@/utils/supabase/client";
 import { products as defaultProducts } from "@/lib/products";
+import { getProducts } from "@/lib/shopify/queries";
 
 const quickActions = [
   {
@@ -51,48 +51,38 @@ export default function AdminDashboard() {
   const [products, setProducts] = useState<any[]>(defaultProducts);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("7 Days");
-  const supabase = createClient();
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      const [{ data: ordersData }, { data: productsData }] = await Promise.all([
-        supabase.from("orders").select("*"),
-        supabase.from("products").select("*"),
-      ]);
-
-      if (productsData && productsData.length > 0) {
-        setProducts(productsData);
+      // Fetch products from Shopify
+      try {
+        const nodes = await getProducts();
+        if (nodes && nodes.length > 0) setProducts(nodes);
+      } catch {
+        // fallback to default products already in state
       }
 
-      // Merge orders from Supabase with orders in browser checkout storage
-      const merged: any[] = ordersData || [];
+      // Read orders from localStorage only
+      const merged: any[] = [];
       if (typeof window !== "undefined") {
         try {
           const localRaw = window.localStorage.getItem("modestus-orders");
           if (localRaw) {
             const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed)) {
-              const dbIds = new Set(merged.map((o) => o.id));
-              for (const localOrd of parsed) {
-                if (!dbIds.has(localOrd.id)) {
-                  merged.push(localOrd);
-                }
-              }
-            }
+            if (Array.isArray(parsed)) merged.push(...parsed);
           }
         } catch {
-          // ignore local storage parse errors
+          // ignore localStorage errors
         }
       }
-
       setOrders(merged);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
     } finally {
       setLoading(false);
     }
-  }, [supabase]);
+  }, []);
 
   useEffect(() => {
     queueMicrotask(() => {

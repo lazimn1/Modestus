@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { createClient } from "@/utils/supabase/client";
 import Link from "next/link";
 import { Eye, EyeOff, Lock, Mail, ArrowRight, ArrowLeft, User } from "lucide-react";
-import { isAdminEmail } from "@/lib/admin";
+import { loginCustomer } from "@/app/actions/auth";
+
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,54 +20,24 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setLoading(true);
-
-    const supabase = createClient();
-    const { data, error: authError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (authError) {
-      console.error("Login Error:", authError);
-      setError(authError.message || "Invalid login credentials or server error. Please try again.");
+    
+    const formData = new FormData();
+    formData.append("email", email);
+    formData.append("password", password);
+    
+    const result = await loginCustomer(null, formData);
+    
+    if (result.error) {
+      setError(result.error);
       setLoading(false);
-      return;
+    } else if (result.success) {
+      router.push("/");
+      router.refresh();
     }
-
-    if (data.user && name.trim()) {
-      await supabase.auth.updateUser({
-        data: { full_name: name.trim() },
-      });
-    }
-
-    // Check if user is an admin
-    if (data.user) {
-      if (isAdminEmail(data.user.email)) {
-        // Admin user — redirect to admin panel
-        router.push("/admin");
-      } else {
-        // Regular user — redirect to home
-        router.push("/");
-      }
-    }
-
-    router.refresh();
   };
 
   const handleGoogleSignIn = async () => {
-    setError("");
-    const supabase = createClient();
-    const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
-      },
-    });
-
-    if (authError) {
-      console.error("Google Sign-in Error:", authError);
-      setError(authError.message || "Failed to initialize Google login.");
-    }
+    setError("Google Sign-in is not supported via Shopify.");
   };
 
   return (

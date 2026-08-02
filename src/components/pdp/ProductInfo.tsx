@@ -6,6 +6,7 @@ import { Star, ChevronDown, ShoppingBag, Truck, RotateCcw, Shield } from "lucide
 import { type Product, formatINR } from "@/lib/products";
 import Link from "next/link";
 import { useCommerce } from "@/lib/commerce";
+import { getVariantId } from "@/lib/useProducts";
 
 interface ProductInfoProps {
   product: Product;
@@ -88,8 +89,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       );
       return;
     }
+    const vId = getVariantId(product, checkoutSize, selectedColor);
     addToCart({
       productId: product.id,
+      variantId: vId,
       quantity: 1,
       size: checkoutSize,
       color: selectedColor,

@@ -137,6 +137,12 @@ export const DEFAULTS: Record<string, any> = {
       },
     ],
     cta_heading: "Construct Your Signature",
-    cta_text: "Explore Collections",
   },
+  contact_page: {
+    heading: "CONNECT WITH MODESTUS",
+    subheading: "Whether you require personalized styling advice, custom sizing guidance, or bespoke inquiries, our private client team is dedicated to assisting you.",
+    email: "concierge@modestus.com",
+    phone: "+1 (800) 555-MODEST",
+    address: "123 Fashion Avenue, Suite 400, New York, NY 10012"
+  }
 };

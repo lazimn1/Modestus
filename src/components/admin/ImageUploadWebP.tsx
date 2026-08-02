@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { UploadCloud, CheckCircle2, AlertCircle, Loader2, Image as ImageIcon } from "lucide-react";
+import { UploadCloud, AlertCircle, Loader2, Image as ImageIcon } from "lucide-react";
 
 interface ImageUploadWebPProps {
   onUpload: (url: string) => void;
@@ -24,10 +23,9 @@ export default function ImageUploadWebP({
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const supabase = createClient();
 
-  // Convert any image file to WebP Blob via Canvas
-  const convertToWebP = (file: File): Promise<Blob> => {
+  // Convert any image file to a base64 data URL via Canvas (WebP format)
+  const convertToWebPDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -42,14 +40,8 @@ export default function ImageUploadWebP({
             return;
           }
           ctx.drawImage(img, 0, 0);
-          canvas.toBlob(
-            (blob) => {
-              if (blob) resolve(blob);
-              else reject(new Error("Image to WebP conversion failed"));
-            },
-            "image/webp",
-            0.88 // High quality WebP compression
-          );
+          const dataUrl = canvas.toDataURL("image/webp", 0.88);
+          resolve(dataUrl);
         };
         img.onerror = () => reject(new Error(`Failed to load image file: ${file.name}`));
         if (e.target?.result) {
@@ -63,7 +55,7 @@ export default function ImageUploadWebP({
     });
   };
 
-  const processAndUploadFiles = async (files: FileList | File[]) => {
+  const processFiles = async (files: FileList | File[]) => {
     const fileArray = Array.from(files).filter((f) => f.type.startsWith("image/"));
     if (fileArray.length === 0) {
       setError("Please select valid image files (PNG, JPG, JPEG, etc.)");
@@ -77,34 +69,14 @@ export default function ImageUploadWebP({
       for (let i = 0; i < fileArray.length; i++) {
         const file = fileArray[i];
         setProgressText(`Converting ${file.name} to WebP... (${i + 1}/${fileArray.length})`);
-        
-        const webpBlob = await convertToWebP(file);
-        
-        setProgressText(`Uploading WebP to storage... (${i + 1}/${fileArray.length})`);
-        const filename = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}.webp`;
-
-        const { error: uploadError } = await supabase.storage
-          .from("media")
-          .upload(filename, webpBlob, {
-            contentType: "image/webp",
-            cacheControl: "3600",
-            upsert: false,
-          });
-
-        if (uploadError) {
-          throw new Error(`Upload failed: ${uploadError.message}`);
-        }
-
-        const { data: publicUrlData } = supabase.storage.from("media").getPublicUrl(filename);
-        if (publicUrlData?.publicUrl) {
-          onUpload(publicUrlData.publicUrl);
-        }
+        const dataUrl = await convertToWebPDataUrl(file);
+        onUpload(dataUrl);
       }
-      setProgressText("Upload complete! ✨");
+      setProgressText("Done! ✨");
       setTimeout(() => setProgressText(""), 2500);
     } catch (err: any) {
       console.error("Upload error:", err);
-      setError(err.message || "Failed to process and upload image");
+      setError(err.message || "Failed to process image");
     } finally {
       setUploading(false);
       if (fileInputRef.current) {
@@ -115,7 +87,7 @@ export default function ImageUploadWebP({
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      processAndUploadFiles(e.target.files);
+      processFiles(e.target.files);
     }
   };
 
@@ -133,7 +105,7 @@ export default function ImageUploadWebP({
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      processAndUploadFiles(e.dataTransfer.files);
+      processFiles(e.dataTransfer.files);
     }
   };
 
@@ -168,7 +140,7 @@ export default function ImageUploadWebP({
           <div className="flex flex-col items-center py-2">
             <Loader2 className="w-8 h-8 text-amber-600 animate-spin mb-2" />
             <span className="text-xs font-bold text-stone-800">{progressText || "Processing Image..."}</span>
-            <span className="text-[10px] text-stone-500 mt-1">Auto-converting to high-efficiency WebP format</span>
+            <span className="text-[10px] text-stone-500 mt-1">Auto-converting to WebP format</span>
           </div>
         ) : (
           <>

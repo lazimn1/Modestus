@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, ReactNode } from "react";
-import { createClient } from "@/utils/supabase/client";
 import { DEFAULTS } from "@/lib/siteContent";
 import { Save, RotateCcw, Check, AlertCircle } from "lucide-react";
 
@@ -15,6 +14,8 @@ interface ContentEditorShellProps {
   }) => ReactNode;
 }
 
+const STORAGE_PREFIX = "modestus-site-content-";
+
 export default function ContentEditorShell({
   contentKey,
   title,
@@ -25,39 +26,39 @@ export default function ContentEditorShell({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
-  const supabase = createClient();
 
   useEffect(() => {
-    const load = async () => {
-      const { data: row } = await supabase
-        .from("site_content")
-        .select("value")
-        .eq("key", contentKey)
-        .maybeSingle();
-      setData(row?.value ?? DEFAULTS[contentKey]);
-      setLoading(false);
-    };
-    load();
-  }, [contentKey, supabase]);
+    try {
+      const stored = typeof window !== "undefined"
+        ? window.localStorage.getItem(STORAGE_PREFIX + contentKey)
+        : null;
+      setData(stored ? JSON.parse(stored) : DEFAULTS[contentKey]);
+    } catch {
+      setData(DEFAULTS[contentKey]);
+    }
+    setLoading(false);
+  }, [contentKey]);
 
   const handleSave = async () => {
     setSaving(true);
     setToast(null);
-    const { error } = await supabase
-      .from("site_content")
-      .upsert({ key: contentKey, value: data, updated_at: new Date().toISOString() });
-    setSaving(false);
-    if (error) {
-      setToast({ type: "error", message: "Failed to save: " + error.message });
-    } else {
+    try {
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem(STORAGE_PREFIX + contentKey, JSON.stringify(data));
+      }
       setToast({ type: "success", message: "Changes saved successfully!" });
+    } catch {
+      setToast({ type: "error", message: "Failed to save changes." });
     }
+    setSaving(false);
     setTimeout(() => setToast(null), 3000);
   };
 
   const handleReset = async () => {
     setData(DEFAULTS[contentKey]);
-    await supabase.from("site_content").delete().eq("key", contentKey);
+    if (typeof window !== "undefined") {
+      window.localStorage.removeItem(STORAGE_PREFIX + contentKey);
+    }
     setToast({ type: "success", message: "Reset to defaults." });
     setTimeout(() => setToast(null), 3000);
   };

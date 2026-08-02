@@ -2,12 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { products, type Product } from "@/lib/products";
-// ── SUPABASE DISCONNECTED ── (kept for easy restoration)
-// import { createClient } from "@/utils/supabase/client";
-// import { useOptionalAuth } from "@/context/AuthContext";
 
 export type CartItem = {
   productId: number;
+  variantId?: string; // Shopify variant GID
   quantity: number;
   size: string;
   color: string;
@@ -211,12 +209,6 @@ export function useCommerce() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
 
-  // ── SUPABASE DISCONNECTED ── (kept for easy restoration)
-  // const auth = useOptionalAuth();
-  // const user = auth?.user;
-  // const supabase = createClient();
-  const user = null; // disconnected
-
   const refresh = useCallback(() => {
     setCart(getCart());
     setWishlist(getWishlist());
@@ -236,91 +228,55 @@ export function useCommerce() {
     };
   }, [refresh]);
 
-  // ── SUPABASE CLOUD SYNC DISCONNECTED ── (kept for easy restoration)
-  // useEffect(() => {
-  //   if (!user?.id) return;
-  //   const syncCloudData = async () => { ... };
-  //   syncCloudData();
-  // }, [user, supabase]);
-
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
-      const next = addCartItem(newItem);
-      // ── SUPABASE DISCONNECTED ──
-      // if (user?.id) {
-      //   const item = next.find((i) => cartKey(i) === cartKey(newItem));
-      //   if (item) {
-      //     supabase.from("cart_items").upsert({ ... }).then();
-      //   }
-      // }
-      return next;
+      return addCartItem(newItem);
     },
     []
   );
 
   const handleUpdateQuantity = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">, quantity: number) => {
-      const next = updateCartItemQuantity(target, quantity);
-      // ── SUPABASE DISCONNECTED ──
-      // if (user?.id) { supabase.from("cart_items")... }
-      return next;
+      return updateCartItemQuantity(target, quantity);
     },
     []
   );
 
   const handleRemoveFromCart = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">) => {
-      const next = removeCartItem(target);
-      // ── SUPABASE DISCONNECTED ──
-      // if (user?.id) { supabase.from("cart_items").delete()... }
-      return next;
+      return removeCartItem(target);
     },
     []
   );
 
   const handleClearCart = useCallback(() => {
     clearCart();
-    // ── SUPABASE DISCONNECTED ──
-    // if (user?.id) { supabase.from("cart_items").delete().eq("user_id", user.id).then(); }
   }, []);
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
-      const next = toggleWishlistItem(productId);
-      // ── SUPABASE DISCONNECTED ──
-      // if (user?.id) { supabase.from("wishlist_items")... }
-      return next;
+      return toggleWishlistItem(productId);
     },
     []
   );
 
   const handleAddToWishlist = useCallback(
     (productId: number) => {
-      const next = addWishlistItem(productId);
-      // ── SUPABASE DISCONNECTED ──
-      // if (user?.id && !exists) { supabase.from("wishlist_items").insert(...)... }
-      return next;
+      return addWishlistItem(productId);
     },
     []
   );
 
   const handleRemoveFromWishlist = useCallback(
     (productId: number) => {
-      const next = removeWishlistItem(productId);
-      // ── SUPABASE DISCONNECTED ──
-      // if (user?.id) { supabase.from("wishlist_items").delete()... }
-      return next;
+      return removeWishlistItem(productId);
     },
     []
   );
 
   const handleCreateOrder = useCallback(
     (items: CartItem[], paymentMethod: Order["paymentMethod"], shippingData?: ShippingAddress) => {
-      const order = createOrder(items, paymentMethod, shippingData);
-      // ── SUPABASE DISCONNECTED ── (kept for easy restoration)
-      // supabase.from("orders").insert({ id: order.id, user_id: user?.id || null, ... }).then(...);
-      // if (user?.id) { supabase.from("cart_items").delete().eq("user_id", user.id).then(); }
-      return order;
+      return createOrder(items, paymentMethod, shippingData);
     },
     []
   );
