@@ -1,0 +1,104 @@
+{
+  "name": "Modestus Workflows",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "modestus-chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "id": "webhook-modestus-chat",
+      "name": "Webhook (Chat)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        250,
+        300
+      ],
+      "webhookId": "modestus-chat"
+    },
+    {
+      "parameters": {
+        "content": "=\n\nThis is a placeholder for the actual AI Node you will add in n8n (like OpenAI or Gemini). \n\nWe grab the user's message from: \n{{ $json.body.latestMessageText }}\n\nAnd we return a JSON object with a \"reply\" field.",
+        "height": 331,
+        "width": 395
+      },
+      "id": "sticky-note-1",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        480,
+        140
+      ]
+    },
+    {
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "reply",
+              "value": "=[Mock AI via n8n] I received your message: \"{{ $json.body.latestMessageText }}\". In a real setup, I would be connected to OpenAI or Gemini here!"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-mock-reply",
+      "name": "Set Mock AI Reply",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        560,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shopify-order-created",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-shopify-order",
+      "name": "Webhook (Shopify Order)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        640
+      ],
+      "webhookId": "shopify-order-created"
+    },
+    {
+      "parameters": {
+        "content": "This webhook is ready to receive Order Confirmation payloads directly from your Shopify admin panel.",
+        "height": 223,
+        "width": 313
+      },
+      "id": "sticky-note-2",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        220,
+        500
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook (Chat)": {
+      "main": [
+        [
+          {
+            "node": "Set Mock AI Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

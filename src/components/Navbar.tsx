@@ -1,29 +1,34 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Heart, ShoppingBag, Menu, X, Shield, LogOut } from "lucide-react";
+import { User, Heart, ShoppingBag, Menu, X, LogOut, UserCircle } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useCommerce } from "@/lib/commerce";
 import { useAuth } from "@/context/AuthContext";
-
-function formatDisplayName(email?: string) {
-  if (!email) return "User";
-  const username = email.split("@")[0];
-  return username
-    .replace(/[._-]+/g, " ")
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
+import { logoutAction } from "@/app/actions/auth";
 
 export default function Navbar() {
+  const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { cartCount, wishlistCount } = useCommerce();
-  const { user, isAdmin, signOut } = useAuth();
+  const { customer, refreshCustomer } = useAuth();
+  const [isSigningOut, startSignOut] = useTransition();
 
-  const handleSignOut = async () => {
-    await signOut();
-    setIsMobileMenuOpen(false);
+  const handleSignOut = () => {
+    startSignOut(async () => {
+      await logoutAction();
+      await refreshCustomer();
+      setIsMobileMenuOpen(false);
+      router.push("/");
+      router.refresh();
+    });
   };
+
+  const displayName = customer
+    ? (customer.firstName || customer.email.split("@")[0])
+    : null;
 
   return (
     <>
@@ -64,8 +69,26 @@ export default function Navbar() {
             {/* Desktop Icons */}
             <div className="hidden md:flex items-center gap-2 lg:gap-3">
 
-              {!user && (
-                <Link href="/login" aria-label="Login" className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors">
+              {/* Account / Login */}
+              {customer ? (
+                <Link
+                  href="/account"
+                  aria-label="My Account"
+                  className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
+                >
+                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[9px] font-bold">
+                    {displayName?.[0]?.toUpperCase()}
+                  </div>
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                    Account
+                  </span>
+                </Link>
+              ) : (
+                <Link
+                  href="/login"
+                  aria-label="Login"
+                  className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
+                >
                   <User className="w-4 h-4" />
                   <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
                     Login
@@ -160,43 +183,27 @@ export default function Navbar() {
                 >
                   modestus
                 </Link>
-                <button 
-                  onClick={() => setIsMobileMenuOpen(false)} 
-                  aria-label="Close menu" 
+                <button
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  aria-label="Close menu"
                   className="flex items-center justify-center w-9 h-9 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
                 >
                   <X className="w-5 h-5 text-purewhite" />
                 </button>
               </div>
 
-              <div className="flex flex-col overflow-y-auto py-2">
-                {/* User Profile Header in Menu */}
-                {user && (
-                  <div className="mx-4 mt-3 mb-2 p-3 bg-purewhite/[0.07] rounded-xl border border-purewhite/15 flex items-center gap-3 shadow-lg">
-                    <div className="w-9 h-9 rounded-full bg-[#00897b] flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-md">
-                      {(user.name ? user.name[0] : (user.email ? user.email[0] : "U")).toUpperCase()}
+              <div className="flex flex-col overflow-y-auto py-2 flex-1">
+                {/* Customer chip */}
+                {customer && (
+                  <div className="mx-4 mt-3 mb-2 p-3 bg-purewhite/[0.07] rounded-xl border border-purewhite/15 flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                      {displayName?.[0]?.toUpperCase()}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-purewhite font-bold text-xs md:text-sm tracking-wide truncate leading-tight">
-                        {user.name || formatDisplayName(user.email)}
-                      </p>
-                      <p className="text-purewhite/60 text-[11px] md:text-xs truncate mt-0.5 font-sans">
-                        {user.email}
-                      </p>
+                    <div className="min-w-0">
+                      <p className="text-purewhite font-bold text-xs truncate">{displayName}</p>
+                      <p className="text-purewhite/50 text-[11px] truncate">{customer.email}</p>
                     </div>
                   </div>
-                )}
-
-                {/* Admin Panel Button in Mobile Menu */}
-                {isAdmin && (
-                  <Link
-                    href="/admin"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="mx-4 mt-3 mb-2 px-4 py-2.5 flex items-center gap-2.5 bg-purewhite rounded-xl text-pureblack font-bold text-xs md:text-sm tracking-widest uppercase hover:bg-purewhite/90 transition-colors"
-                  >
-                    <Shield className="w-4 h-4" />
-                    Admin Panel
-                  </Link>
                 )}
 
                 {[
@@ -205,7 +212,6 @@ export default function Navbar() {
                   { name: "Collections", href: "/collections" },
                   { name: "Wishlist", href: "/wishlist" },
                   { name: "Cart", href: "/cart" },
-                  { name: "Orders", href: "/orders" },
                   { name: "About Us", href: "/about" },
                   { name: "Contact", href: "/contact" },
                 ].map((link) => (
@@ -219,23 +225,44 @@ export default function Navbar() {
                   </Link>
                 ))}
 
-                {/* Auth Link */}
-                {user ? (
-                  <button
-                    onClick={handleSignOut}
-                    className="px-5 py-2.5 md:px-6 md:py-3.5 text-left text-purewhite font-normal text-xs md:text-sm tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-2.5"
-                  >
-                    <LogOut className="w-3.5 h-3.5" />
-                    Sign Out
-                  </button>
+                {/* Auth links */}
+                {customer ? (
+                  <>
+                    <Link
+                      href="/account"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-5 py-2.5 text-purewhite font-normal text-xs tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-2.5"
+                    >
+                      <UserCircle className="w-3.5 h-3.5" />
+                      My Account
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      disabled={isSigningOut}
+                      className="px-5 py-2.5 text-left text-purewhite font-normal text-xs tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-2.5"
+                    >
+                      <LogOut className="w-3.5 h-3.5" />
+                      {isSigningOut ? "Signing out..." : "Sign Out"}
+                    </button>
+                  </>
                 ) : (
-                  <Link
-                    href="/login"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="px-5 py-2.5 md:px-6 md:py-3.5 text-purewhite font-normal text-xs md:text-sm tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
-                  >
-                    Log in
-                  </Link>
+                  <>
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-5 py-2.5 text-purewhite font-normal text-xs tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-2.5"
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      Log In
+                    </Link>
+                    <Link
+                      href="/signup"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="px-5 py-2.5 text-purewhite font-normal text-xs tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10"
+                    >
+                      Create Account
+                    </Link>
+                  </>
                 )}
               </div>
             </motion.div>

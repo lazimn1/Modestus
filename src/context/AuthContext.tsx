@@ -1,48 +1,101 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
-import { useRouter } from "next/navigation";
-import { logoutCustomer } from "@/app/actions/auth";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-interface User {
-  email: string;
+export interface ShopifyCustomer {
   id: string;
-  name?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone?: string;
+  defaultAddress?: {
+    id: string;
+    address1: string;
+    address2?: string;
+    city: string;
+    province?: string;
+    country: string;
+    zip: string;
+    phone?: string;
+  };
+  addresses?: {
+    edges: {
+      node: {
+        id: string;
+        address1: string;
+        address2?: string;
+        city: string;
+        province?: string;
+        country: string;
+        zip: string;
+        phone?: string;
+      };
+    }[];
+  };
+  orders?: {
+    edges: {
+      node: {
+        id: string;
+        name: string;
+        processedAt: string;
+        fulfillmentStatus: string;
+        financialStatus: string;
+        currentTotalPrice: { amount: string; currencyCode: string };
+        lineItems: {
+          edges: {
+            node: {
+              title: string;
+              quantity: number;
+              variant?: {
+                image?: { url: string; altText?: string };
+                price: { amount: string; currencyCode: string };
+              };
+            };
+          }[];
+        };
+      };
+    }[];
+  };
 }
 
 interface AuthContextType {
-  user: User | null;
-  isAdmin: boolean;
+  customer: ShopifyCustomer | null;
   isLoading: boolean;
-  signOut: () => Promise<void>;
+  setCustomer: (c: ShopifyCustomer | null) => void;
+  refreshCustomer: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-interface AuthProviderProps {
+export function AuthProvider({
+  children,
+  initialCustomer,
+}: {
   children: ReactNode;
-  initialUser: User | null;
-  initialIsAdmin: boolean;
-}
-
-export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(initialUser);
-  const [isAdmin, setIsAdmin] = useState<boolean>(initialIsAdmin);
+  initialCustomer: ShopifyCustomer | null;
+}) {
+  const [customer, setCustomer] = useState<ShopifyCustomer | null>(initialCustomer);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
-  const signOut = async () => {
+  const refreshCustomer = async () => {
     setIsLoading(true);
-    await logoutCustomer();
-    setUser(null);
-    setIsAdmin(false);
-    setIsLoading(false);
-    router.push("/");
-    router.refresh();
+    try {
+      const res = await fetch("/api/auth/me");
+      if (res.ok) {
+        const data = await res.json();
+        setCustomer(data.customer);
+      } else {
+        setCustomer(null);
+      }
+    } catch {
+      setCustomer(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, isAdmin, isLoading, signOut }}>
+    <AuthContext.Provider value={{ customer, isLoading, setCustomer, refreshCustomer }}>
       {children}
     </AuthContext.Provider>
   );
@@ -50,12 +103,6 @@ export function AuthProvider({ children, initialUser, initialIsAdmin }: AuthProv
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
+  if (!context) throw new Error("useAuth must be used within AuthProvider");
   return context;
-}
-
-export function useOptionalAuth() {
-  return useContext(AuthContext);
 }

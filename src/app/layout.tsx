@@ -2,10 +2,9 @@ import localFont from "next/font/local";
 import type { Metadata } from "next";
 import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
-import { AuthProvider } from "@/context/AuthContext";
 import AiStylistWidget from "@/components/AiStylistWidget";
-import { getCustomer } from "@/app/actions/auth";
-
+import { AuthProvider } from "@/context/AuthContext";
+import { getCustomerAction } from "@/app/actions/auth";
 
 const cerkiymo = localFont({
   src: "./fonts/cerkiymo.otf",
@@ -25,8 +24,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const customer = await getCustomer();
-  const initialUser = customer ? { id: customer.id, email: customer.email, name: customer.firstName } : null;
+  const initialCustomer = await getCustomerAction();
 
   return (
     <html lang="en">
@@ -34,7 +32,7 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=League+Gothic&display=swap" rel="stylesheet" />
       </head>
       <body className={`${cerkiymo.variable} font-sans bg-lightgray text-pureblack antialiased`}>
-        <AuthProvider initialUser={initialUser} initialIsAdmin={false}>
+        <AuthProvider initialCustomer={initialCustomer}>
           <LayoutShell>
             {children}
           </LayoutShell>
