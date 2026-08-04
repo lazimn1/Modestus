@@ -7,7 +7,9 @@ import { type Product, formatINR } from "@/lib/products";
 import Link from "next/link";
 import { useCommerce } from "@/lib/commerce";
 import { getVariantId } from "@/lib/useProducts";
+import { createShopifyCheckout } from "@/lib/shopify/queries";
 import { sendGAEvent } from '@next/third-parties/google';
+import { Loader2 } from "lucide-react";
 
 interface ProductInfoProps {
   product: Product;
@@ -79,6 +81,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCommerce();
   const checkoutSize = selectedSize ?? product.sizes?.[0] ?? "One Size";
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   useEffect(() => {
     sendGAEvent('event', 'view_item', {
@@ -113,6 +116,32 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     });
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2500);
+  };
+
+  const handleBuyNow = async () => {
+    if (!selectedSize && product.sizes.length > 1) {
+      // Shake the size selector
+      document.getElementById("size-selector")?.classList.add("animate-bounce");
+      setTimeout(
+        () => document.getElementById("size-selector")?.classList.remove("animate-bounce"),
+        600
+      );
+      return;
+    }
+    
+    setIsRedirecting(true);
+    try {
+      const vId = getVariantId(product, checkoutSize, selectedColor);
+      if (!vId) throw new Error("Variant not found");
+      
+      const checkoutUrl = await createShopifyCheckout([{ merchandiseId: vId, quantity: 1 }]);
+      if (checkoutUrl) window.location.href = checkoutUrl;
+      else throw new Error("Failed to generate checkout URL.");
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred. Please try again.");
+      setIsRedirecting(false);
+    }
   };
 
   return (
@@ -243,9 +272,20 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           {addedToCart ? "Added to Cart!" : "Add to Cart"}
         </motion.button>
-        <Link href={`/checkout?productId=${product.id}&size=${encodeURIComponent(checkoutSize)}&color=${encodeURIComponent(selectedColor)}`} className="w-full py-3.5 sm:py-4 rounded-full border border-[#2a2621] text-[#2a2621] text-[10px] sm:text-[11px] font-bold uppercase tracking-widest hover:bg-[#e8e2d5] transition-all duration-300 text-center">
-          Buy Now
-        </Link>
+        <button
+          onClick={handleBuyNow}
+          disabled={isRedirecting}
+          className="w-full py-3.5 sm:py-4 rounded-full border border-[#2a2621] text-[#2a2621] text-[10px] sm:text-[11px] font-bold uppercase tracking-widest hover:bg-[#e8e2d5] transition-all duration-300 text-center flex items-center justify-center gap-2 disabled:opacity-50"
+        >
+          {isRedirecting ? (
+            <>
+              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+              Redirecting...
+            </>
+          ) : (
+            "Buy Now"
+          )}
+        </button>
       </div>
 
       {/* Trust Badges */}

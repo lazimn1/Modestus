@@ -1,10 +1,13 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Minus, Plus, ShoppingBag, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import { formatINR } from "@/lib/products";
 import { useCommerce, type CartLine } from "@/lib/commerce";
+import { getVariantId } from "@/lib/useProducts";
+import { createShopifyCheckout } from "@/lib/shopify/queries";
 
 function QuantityStepper({ line }: { line: CartLine }) {
   const { updateQuantity } = useCommerce();
@@ -35,6 +38,28 @@ function QuantityStepper({ line }: { line: CartLine }) {
 export default function CartPage() {
   const { cartLines, cartCount, subtotal, shipping, total, removeFromCart } =
     useCommerce();
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const handleCheckout = async () => {
+    if (cartLines.length === 0) return;
+    setIsRedirecting(true);
+    try {
+      const lines = cartLines.map((line) => {
+        const vId = line.variantId || getVariantId(line.product, line.size, line.color);
+        if (!vId) {
+          throw new Error("Missing variant ID for item.");
+        }
+        return { merchandiseId: vId, quantity: line.quantity };
+      });
+      const checkoutUrl = await createShopifyCheckout(lines);
+      if (checkoutUrl) window.location.href = checkoutUrl;
+      else throw new Error("Failed to generate checkout URL.");
+    } catch (err) {
+      console.error(err);
+      alert("An error occurred during checkout initialization.");
+      setIsRedirecting(false);
+    }
+  };
 
   return (
     <main className="min-h-screen bg-[#faf7f2] pt-24 md:pt-36 pb-24 font-sans">
@@ -157,12 +182,20 @@ export default function CartPage() {
                     <span className="text-base sm:text-lg">{formatINR(total)}</span>
                   </div>
                 </div>
-                <Link
-                  href="/checkout"
-                  className="mt-8 w-full bg-[#2a2621] text-[#faf7f2] h-12 sm:h-14 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity"
+                <button
+                  onClick={handleCheckout}
+                  disabled={isRedirecting || cartLines.length === 0}
+                  className="mt-8 w-full bg-[#2a2621] text-[#faf7f2] h-12 sm:h-14 rounded-full flex items-center justify-center gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50"
                 >
-                  Checkout
-                </Link>
+                  {isRedirecting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Redirecting to Secure Checkout...
+                    </>
+                  ) : (
+                    "Checkout"
+                  )}
+                </button>
                 <p className="text-[9px] sm:text-[10px] text-[#78716c] text-center mt-4 font-medium px-4">
                   Free delivery above Rs. 999. Returns accepted within 15 days.
                 </p>
