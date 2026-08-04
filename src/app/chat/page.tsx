@@ -73,7 +73,7 @@ export default function MobileChatPage() {
           ? apiMessages
           : [{ role: "user", parts: [{ text: userMsg.text }] }];
 
-      const res = await fetch("/api/chat", {
+      const res = await fetch("/api/n8n-chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messages: payloadMessages }),

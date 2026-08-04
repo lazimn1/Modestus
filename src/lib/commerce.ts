@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { products, type Product } from "@/lib/products";
+import { products as staticProducts, type Product } from "@/lib/products";
+import { useProducts } from "./useProducts";
+import { sendGAEvent } from '@next/third-parties/google';
 
 export type CartItem = {
   productId: number;
@@ -168,10 +170,11 @@ export function removeWishlistItem(productId: number) {
 export function createOrder(
   items: CartItem[],
   paymentMethod: Order["paymentMethod"],
-  shippingData?: ShippingAddress
+  shippingData?: ShippingAddress,
+  productsList: Product[] = staticProducts
 ) {
   const subtotal = items.reduce((sum, item) => {
-    const product = products.find((candidate) => candidate.id === item.productId);
+    const product = productsList.find((candidate) => candidate.id === item.productId);
     return sum + (product?.price ?? 0) * item.quantity;
   }, 0);
   const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 149;
@@ -194,10 +197,10 @@ export function createOrder(
   return order;
 }
 
-export function getCartLines(cart: CartItem[]): CartLine[] {
+export function getCartLines(cart: CartItem[], productsList: Product[] = staticProducts): CartLine[] {
   return cart
     .map((item) => {
-      const product = products.find((candidate) => candidate.id === item.productId);
+      const product = productsList.find((candidate) => candidate.id === item.productId);
       return product ? { ...item, product } : null;
     })
     .filter((item): item is CartLine => Boolean(item));
@@ -208,6 +211,7 @@ export function useCommerce() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
+  const { products: dynamicProducts, loading: productsLoading } = useProducts();
 
   const refresh = useCallback(() => {
     setCart(getCart());
@@ -228,11 +232,33 @@ export function useCommerce() {
     };
   }, [refresh]);
 
+  useEffect(() => {
+    if (ready && !productsLoading) {
+      // Clean up invalid items that might be lingering in localStorage
+      const validCart = cart.filter(item => dynamicProducts.some(p => p.id === item.productId));
+      if (validCart.length !== cart.length) {
+        writeJson(CART_KEY, validCart);
+      }
+      const validWishlist = wishlist.filter(item => dynamicProducts.some(p => p.id === item.productId));
+      if (validWishlist.length !== wishlist.length) {
+        writeJson(WISHLIST_KEY, validWishlist);
+      }
+    }
+  }, [cart, wishlist, dynamicProducts, ready, productsLoading]);
+
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
+      const product = dynamicProducts.find(p => p.id === newItem.productId);
+      if (product) {
+        sendGAEvent('event', 'add_to_cart', {
+          value: product.price * newItem.quantity,
+          currency: 'INR',
+          items: [{ item_id: product.id.toString(), item_name: product.title, price: product.price, quantity: newItem.quantity }]
+        });
+      }
       return addCartItem(newItem);
     },
-    []
+    [dynamicProducts]
   );
 
   const handleUpdateQuantity = useCallback(
@@ -244,9 +270,16 @@ export function useCommerce() {
 
   const handleRemoveFromCart = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">) => {
+      const product = dynamicProducts.find(p => p.id === target.productId);
+      if (product) {
+        sendGAEvent('event', 'remove_from_cart', {
+          currency: 'INR',
+          items: [{ item_id: product.id.toString(), item_name: product.title, price: product.price, quantity: 1 }]
+        });
+      }
       return removeCartItem(target);
     },
-    []
+    [dynamicProducts]
   );
 
   const handleClearCart = useCallback(() => {
@@ -276,21 +309,39 @@ export function useCommerce() {
 
   const handleCreateOrder = useCallback(
     (items: CartItem[], paymentMethod: Order["paymentMethod"], shippingData?: ShippingAddress) => {
-      return createOrder(items, paymentMethod, shippingData);
+      const subtotal = items.reduce((sum, item) => {
+        const product = dynamicProducts.find((p) => p.id === item.productId);
+        return sum + (product?.price ?? 0) * item.quantity;
+      }, 0);
+      
+      sendGAEvent('event', 'begin_checkout', {
+        value: subtotal,
+        currency: 'INR',
+        items: items.map(item => {
+          const product = dynamicProducts.find((p) => p.id === item.productId);
+          return {
+            item_id: item.productId.toString(),
+            item_name: product?.title || 'Unknown',
+            price: product?.price || 0,
+            quantity: item.quantity
+          };
+        })
+      });
+      return createOrder(items, paymentMethod, shippingData, dynamicProducts);
     },
-    []
+    [dynamicProducts]
   );
 
-  const cartLines = useMemo(() => getCartLines(cart), [cart]);
+  const cartLines = useMemo(() => getCartLines(cart, dynamicProducts), [cart, dynamicProducts]);
   const wishlistProducts = useMemo(
     () =>
       wishlist
-        .map((item) => products.find((product) => product.id === item.productId))
+        .map((item) => dynamicProducts.find((product) => product.id === item.productId))
         .filter((product): product is Product => Boolean(product)),
-    [wishlist]
+    [wishlist, dynamicProducts]
   );
 
-  const cartCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = cartLines.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cartLines.reduce(
     (sum, item) => sum + item.product.price * item.quantity,
     0

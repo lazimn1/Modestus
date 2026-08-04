@@ -30,7 +30,7 @@ export default function SignupPage() {
         setError(result.error);
       } else if (result.success) {
         await refreshCustomer();
-        router.push("/account");
+        router.push("/");
         router.refresh();
       }
     });

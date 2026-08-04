@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronDown, ShoppingBag, Truck, RotateCcw, Shield } from "lucide-react";
 import { type Product, formatINR } from "@/lib/products";
 import Link from "next/link";
 import { useCommerce } from "@/lib/commerce";
 import { getVariantId } from "@/lib/useProducts";
+import { sendGAEvent } from '@next/third-parties/google';
 
 interface ProductInfoProps {
   product: Product;
@@ -78,6 +79,19 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const [addedToCart, setAddedToCart] = useState(false);
   const { addToCart } = useCommerce();
   const checkoutSize = selectedSize ?? product.sizes?.[0] ?? "One Size";
+
+  useEffect(() => {
+    sendGAEvent('event', 'view_item', {
+      currency: 'INR',
+      value: product.price,
+      items: [{
+        item_id: product.id.toString(),
+        item_name: product.title,
+        price: product.price,
+        quantity: 1
+      }]
+    });
+  }, [product]);
 
   const handleAddToCart = () => {
     if (!selectedSize && product.sizes.length > 1) {

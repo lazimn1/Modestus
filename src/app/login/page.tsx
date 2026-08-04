@@ -28,7 +28,7 @@ export default function LoginPage() {
         setError(result.error);
       } else if (result.success) {
         await refreshCustomer();
-        const redirect = new URLSearchParams(window.location.search).get("redirect") || "/account";
+        const redirect = new URLSearchParams(window.location.search).get("redirect") || "/";
         router.push(redirect);
         router.refresh();
       }

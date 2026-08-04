@@ -5,6 +5,7 @@ import LayoutShell from "@/components/LayoutShell";
 import AiStylistWidget from "@/components/AiStylistWidget";
 import { AuthProvider } from "@/context/AuthContext";
 import { getCustomerAction } from "@/app/actions/auth";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 const cerkiymo = localFont({
   src: "./fonts/cerkiymo.otf",
@@ -38,6 +39,9 @@ export default async function RootLayout({
           </LayoutShell>
           <AiStylistWidget />
         </AuthProvider>
+        {process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID && (
+          <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        )}
       </body>
     </html>
   );
