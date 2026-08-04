@@ -412,32 +412,7 @@ export default function AccountPage() {
                 />
                 <p className="text-white/30 text-xs mt-1.5">Email address cannot be changed here.</p>
               </div>
-              <div>
-                <label htmlFor="pPhone" className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-1.5">Phone</label>
-                <input
-                  id="pPhone"
-                  name="phone"
-                  type="tel"
-                  autoComplete="tel"
-                  defaultValue={customer.phone ?? ""}
-                  placeholder="+44 7700 000000"
-                  className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all"
-                />
-              </div>
 
-              <hr className="border-white/[0.06] my-2" />
-              <h3 className="text-white/70 text-sm font-semibold">Change Password</h3>
-              <div>
-                <label htmlFor="newPassword" className="text-white/50 text-xs font-semibold uppercase tracking-wider block mb-1.5">New Password</label>
-                <input
-                  id="newPassword"
-                  name="newPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  placeholder="Leave blank to keep current"
-                  className="w-full px-4 py-3 bg-white/[0.06] border border-white/[0.1] rounded-xl text-white text-sm placeholder-white/25 focus:outline-none focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/10 transition-all"
-                />
-              </div>
 
               {profileError && (
                 <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm flex items-center gap-2">
