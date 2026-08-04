@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { useProducts } from "@/lib/useProducts";
 import ProductCard from "./ProductCard";
-import { SlidersHorizontal } from "lucide-react";
+import { SlidersHorizontal, Loader2 } from "lucide-react";
 
 export default function ProductGrid() {
   const { products, loading } = useProducts();
@@ -38,13 +38,20 @@ export default function ProductGrid() {
 
       {/* Product Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-8 md:py-12">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {products.map((product, index) => (
-            <div key={product.id}>
-              <ProductCard product={product} index={index} />
-            </div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center min-h-[40vh] gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-pureblack/50" />
+            <p className="text-pureblack/60 text-sm">Loading Modestus Collection...</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {products.map((product, index) => (
+              <div key={product.id}>
+                <ProductCard product={product} index={index} />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
