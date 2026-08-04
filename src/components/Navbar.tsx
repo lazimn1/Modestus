@@ -195,7 +195,7 @@ export default function Navbar() {
               <div className="flex flex-col overflow-y-auto py-2 flex-1">
                 {/* Customer chip */}
                 {customer && (
-                  <div className="mx-4 mt-3 mb-2 p-3 bg-purewhite/[0.07] rounded-xl border border-purewhite/15 flex items-center gap-3">
+                  <Link href="/account" onClick={() => setIsMobileMenuOpen(false)} className="mx-4 mt-3 mb-2 p-3 bg-purewhite/[0.07] rounded-xl border border-purewhite/15 flex items-center gap-3 hover:bg-purewhite/[0.1] transition-colors">
                     <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shrink-0">
                       {displayName?.[0]?.toUpperCase()}
                     </div>
@@ -203,7 +203,7 @@ export default function Navbar() {
                       <p className="text-purewhite font-bold text-xs truncate">{displayName}</p>
                       <p className="text-purewhite/50 text-[11px] truncate">{customer.email}</p>
                     </div>
-                  </div>
+                  </Link>
                 )}
 
                 {[

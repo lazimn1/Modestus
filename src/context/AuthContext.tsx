@@ -80,7 +80,7 @@ export function AuthProvider({
   const refreshCustomer = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/me");
+      const res = await fetch("/api/auth/me", { cache: "no-store" });
       if (res.ok) {
         const data = await res.json();
         setCustomer(data.customer);
