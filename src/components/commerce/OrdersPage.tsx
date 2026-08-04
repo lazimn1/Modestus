@@ -3,8 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Package, ShoppingBag } from "lucide-react";
-import { formatINR, products } from "@/lib/products";
-import { useCommerce, type Order } from "@/lib/commerce";
+import { formatINR } from "@/lib/products";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -21,13 +23,8 @@ function formatDate(value: string) {
   return `${dateString} at ${timeString}`;
 }
 
-function OrderCard({ order }: { order: Order }) {
-  const lines = order.items
-    .map((item) => ({
-      ...item,
-      product: products.find((product) => product.id === item.productId),
-    }))
-    .filter((item) => item.product);
+function OrderCard({ orderNode }: { orderNode: any }) {
+  const lines = orderNode.lineItems?.edges || [];
 
   return (
     <article className="bg-[#fcfaf7] border border-[#e7e1d4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
@@ -36,15 +33,15 @@ function OrderCard({ order }: { order: Order }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-[#78716c]">
-              ORDER #{order.id}
+              ORDER {orderNode.name}
             </p>
             <p className="text-xs sm:text-base font-bold text-[#2a2621] mt-1">
-              {formatDate(order.placedAt)}
+              {formatDate(orderNode.processedAt)}
             </p>
           </div>
           <div className="w-full md:w-auto">
-            <div className="w-full text-center px-4 py-2.5 md:py-1.5 rounded-full bg-[#e8e2d5] text-[#6b6255] border border-[#dad2c2] text-[11px] md:text-xs font-semibold shadow-sm whitespace-nowrap">
-              {order.status === "Confirmed" ? "Payment Pending" : order.status}
+            <div className="w-full text-center px-4 py-2.5 md:py-1.5 rounded-full bg-[#e8e2d5] text-[#6b6255] border border-[#dad2c2] text-[11px] md:text-xs font-semibold shadow-sm whitespace-nowrap uppercase tracking-widest">
+              {orderNode.fulfillmentStatus === "UNFULFILLED" ? "Processing" : orderNode.fulfillmentStatus}
             </div>
           </div>
         </div>
@@ -52,39 +49,34 @@ function OrderCard({ order }: { order: Order }) {
 
       {/* Items List */}
       <div className="py-6 flex flex-col gap-6 border-b border-[#e7e1d4]">
-        {lines.map((line) => {
-          const product = line.product!;
+        {lines.map((edge: any, index: number) => {
+          const item = edge.node;
+          const imageUrl = item.variant?.image?.url || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80";
           return (
             <div
-              key={`${order.id}-${line.productId}-${line.size}-${line.color}`}
+              key={`${orderNode.id}-${index}`}
               className="flex gap-4 sm:gap-6 items-start"
             >
-              <Link
-                href={`/shop/${product.slug}`}
-                className="relative w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl overflow-hidden bg-[#e8e2d5] border border-[#dad2c2]/50 shrink-0"
-              >
+              <div className="relative w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl overflow-hidden bg-[#e8e2d5] border border-[#dad2c2]/50 shrink-0">
                 <Image
-                  src={product.images[0]}
-                  alt={product.title}
+                  src={imageUrl}
+                  alt={item.title}
                   fill
                   sizes="96px"
                   className="object-cover"
                 />
-              </Link>
+              </div>
               <div className="flex-1 min-w-0 flex flex-col pt-1">
                 <div className="flex justify-between items-start gap-2">
-                  <Link
-                    href={`/shop/${product.slug}`}
-                    className="text-xs sm:text-base font-bold text-[#2a2621] hover:opacity-75 transition-opacity"
-                  >
-                    {product.title}
-                  </Link>
+                  <p className="text-xs sm:text-base font-bold text-[#2a2621]">
+                    {item.title}
+                  </p>
                   <p className="text-xs sm:text-base font-bold text-[#2a2621] shrink-0">
-                    {formatINR(product.price * line.quantity)}
+                    {formatINR(parseFloat(item.variant?.price?.amount || "0") * item.quantity)}
                   </p>
                 </div>
                 <p className="text-[10px] sm:text-sm text-[#78716c] mt-1 sm:mt-2 font-medium">
-                  Size: {line.size} | Qty: {line.quantity}
+                  Qty: {item.quantity}
                 </p>
               </div>
             </div>
@@ -95,19 +87,9 @@ function OrderCard({ order }: { order: Order }) {
       {/* Summary */}
       <div className="pt-6">
         <div className="w-full sm:max-w-sm sm:ml-auto space-y-4 text-xs sm:text-sm text-[#78716c]">
-          <div className="flex justify-between items-center">
-            <span>Subtotal</span>
-            <span>{formatINR(order.subtotal)}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span>Shipping</span>
-            <span>
-              {order.shipping === 0 ? "Free" : formatINR(order.shipping)}
-            </span>
-          </div>
-          <div className="pt-4 mt-2 border-t border-[#e7e1d4] flex items-center justify-between font-bold text-[#2a2621]">
+          <div className="flex justify-between items-center text-[#2a2621] font-bold">
             <span className="text-sm md:text-base">Total Paid</span>
-            <span className="text-sm md:text-base">{formatINR(order.total)}</span>
+            <span className="text-sm md:text-base">{formatINR(parseFloat(orderNode.currentTotalPrice?.amount || "0"))}</span>
           </div>
         </div>
       </div>
@@ -115,8 +97,26 @@ function OrderCard({ order }: { order: Order }) {
   );
 }
 
+
 export default function OrdersPage() {
-  const { orders } = useCommerce();
+  const { customer, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && !customer) {
+      router.push("/account/login?callbackUrl=/orders");
+    }
+  }, [customer, isLoading, router]);
+
+  if (isLoading || !customer) {
+    return (
+      <main className="min-h-screen bg-[#faf7f2] pt-24 md:pt-36 pb-24 font-sans flex items-center justify-center">
+        <p className="text-[#78716c] text-sm uppercase tracking-widest font-bold">Loading Orders...</p>
+      </main>
+    );
+  }
+
+  const shopifyOrders = customer.orders?.edges?.map(edge => edge.node) || [];
 
   return (
     <main className="min-h-screen bg-[#faf7f2] pt-24 md:pt-36 pb-24 font-sans">
@@ -128,15 +128,15 @@ export default function OrdersPage() {
               Your Orders
             </h1>
             <p className="text-xs sm:text-sm text-[#78716c] font-medium mt-3">
-              Logged in as guest@modestus.com
+              Logged in as {customer.email}
             </p>
           </div>
 
           <h2 className="font-serif text-2xl md:text-3xl text-[#2a2621] font-normal tracking-tight mb-6">
-            Order History ({orders.length})
+            Order History ({shopifyOrders.length})
           </h2>
 
-          {orders.length === 0 ? (
+          {shopifyOrders.length === 0 ? (
             <div className="min-h-[40vh] flex items-center justify-center text-center bg-[#fcfaf7] border border-[#e7e1d4] rounded-2xl sm:rounded-3xl p-8">
               <div className="max-w-sm flex flex-col items-center">
                 <div className="w-16 h-16 rounded-full bg-[#e8e2d5] flex items-center justify-center mb-5 border border-[#dad2c2]/50">
@@ -159,8 +159,8 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {orders.map((order) => (
-                <OrderCard key={order.id} order={order} />
+              {shopifyOrders.map((orderNode) => (
+                <OrderCard key={orderNode.id} orderNode={orderNode} />
               ))}
             </div>
           )}
