@@ -14,20 +14,63 @@ export const fetchCache = "force-no-store";
 
 import { getProduct, getProducts } from "@/lib/shopify/queries";
 
+// Simple string hash for fallback numeric IDs
+function hashCode(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (Math.imul(31, h) + s.charCodeAt(i)) | 0;
+  return h;
+}
+
 // Local helper to map Shopify node to Product
 function mapShopifyToProduct(node: any): Product {
   const price = parseFloat(node?.priceRange?.maxVariantPrice?.amount ?? "0");
   const images = node?.images?.edges?.map((edge: any) => edge.node.url) || [];
+  
+  // Extract variants
+  const shopifyVariants = node?.variants?.edges?.map((edge: any) => edge.node) || [];
+  
+  // Extract unique sizes and colors
+  const extractedSizes = new Set<string>();
+  const extractedColors = new Map<string, string>();
+
+  shopifyVariants.forEach((variant: any) => {
+    variant.selectedOptions?.forEach((opt: any) => {
+      const name = opt.name.toLowerCase();
+      if (name === "size") {
+        extractedSizes.add(opt.value);
+      } else if (name === "color" || name === "colour") {
+        if (!extractedColors.has(opt.value)) {
+          const v = opt.value.toLowerCase();
+          let hex = "#000000";
+          if (v.includes("red")) hex = "#ef4444";
+          if (v.includes("blue")) hex = "#3b82f6";
+          if (v.includes("green")) hex = "#22c55e";
+          if (v.includes("gray") || v.includes("grey")) hex = "#6b7280";
+          if (v.includes("white")) hex = "#ffffff";
+          extractedColors.set(opt.value, hex);
+        }
+      }
+    });
+  });
+
+  const sizes = extractedSizes.size > 0 ? Array.from(extractedSizes) : ["XS", "S", "M", "L", "XL"];
+  const colors = extractedColors.size > 0 
+    ? Array.from(extractedColors.entries()).map(([name, hex]) => ({ name, hex }))
+    : [{ name: "Default", hex: "#000000" }];
+
+  const gid: string = node?.id ?? "";
+  const numericId = parseInt(gid.split("/").pop() ?? "0", 10) || Math.abs(hashCode(gid));
+  
   return {
-    id: node?.id ?? 0,
+    id: numericId,
     title: node?.title ?? "",
     subtitle: node?.description?.split(".")[0] ?? "",
     description: node?.description ?? "",
     price,
     slug: node?.handle ?? "",
     fabric: "",
-    sizes: ["XS", "S", "M", "L", "XL"],
-    colors: [{ name: "Default", hex: "#000000" }],
+    sizes,
+    colors,
     images: images.length > 0 ? images : ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"],
     badge: undefined,
     rating: 0,
@@ -36,6 +79,7 @@ function mapShopifyToProduct(node: any): Product {
     reviews: [],
     aspectClass: "",
     originalPrice: undefined,
+    shopifyVariants
   };
 }
 
