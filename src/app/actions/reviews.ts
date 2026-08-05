@@ -1,33 +1,9 @@
 "use server";
 
-import { shopifyAdminFetch } from "@/lib/shopify";
 import { getCustomerToken } from "./auth";
 
-const GET_PRODUCT_REVIEWS_QUERY = `
-  query getProductReviews($id: ID!) {
-    product(id: $id) {
-      metafield(namespace: "custom", key: "product_reviews") {
-        id
-        value
-      }
-    }
-  }
-`;
-
-const SET_METAFIELD_MUTATION = `
-  mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
-    metafieldsSet(metafields: $metafields) {
-      metafields {
-        id
-        value
-      }
-      userErrors {
-        field
-        message
-      }
-    }
-  }
-`;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
 export type Review = {
   id: number;
@@ -56,21 +32,33 @@ function getRandomColor() {
 
 export async function getProductReviews(productId: string): Promise<Review[]> {
   try {
-    // Ensure productId is formatted properly if it's not a gid
     const id = productId.includes("gid://") ? productId : `gid://shopify/Product/${productId}`;
     
-    const res = await shopifyAdminFetch({
-      query: GET_PRODUCT_REVIEWS_QUERY,
-      variables: { id },
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews?product_id=eq.${encodeURIComponent(id)}&select=*&order=id.desc`, {
+      headers: {
+        "apikey": SUPABASE_KEY!,
+        "Authorization": `Bearer ${SUPABASE_KEY}`
+      },
       cache: "no-store",
     });
 
-    const metafield = res.body?.data?.product?.metafield;
-    if (!metafield || !metafield.value) {
+    if (!res.ok) {
+      console.error("Supabase GET error:", await res.text());
       return [];
     }
 
-    return JSON.parse(metafield.value);
+    const data = await res.json();
+    
+    return data.map((row: any) => ({
+      id: row.id,
+      author: row.author,
+      location: row.location,
+      rating: row.rating,
+      date: row.date,
+      text: row.text,
+      initials: row.initials,
+      avatarColor: row.avatar_color,
+    }));
   } catch (error) {
     console.error("Failed to get product reviews:", error);
     return [];
@@ -99,46 +87,35 @@ export async function submitProductReview(
 
     const id = productId.includes("gid://") ? productId : `gid://shopify/Product/${productId}`;
 
-    // 2. Fetch existing reviews
-    const existingReviews = await getProductReviews(id);
-
-    // 3. Create the new review object
-    const newReview: Review = {
+    const newReview = {
       id: Date.now(),
+      product_id: id,
       author: authorName,
       location: "Verified Buyer",
       rating,
       date: new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }),
       text: text.trim(),
       initials: authorName.substring(0, 2).toUpperCase(),
-      avatarColor: getRandomColor(),
+      avatar_color: getRandomColor(),
     };
 
-    const updatedReviews = [newReview, ...existingReviews];
-
-    // 4. Save back to Shopify Metafield
-    const res = await shopifyAdminFetch({
-      query: SET_METAFIELD_MUTATION,
-      variables: {
-        metafields: [
-          {
-            ownerId: id,
-            namespace: "custom",
-            key: "product_reviews",
-            type: "json",
-            value: JSON.stringify(updatedReviews),
-          },
-        ],
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/reviews`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY!,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
       },
-      cache: "no-store",
+      body: JSON.stringify(newReview),
     });
 
-    const errors = res.body?.data?.metafieldsSet?.userErrors;
-    if (errors && errors.length > 0) {
-      console.error("Metafield Set Error:", errors);
+    if (!res.ok) {
+      console.error("Supabase POST error:", await res.text());
       return { error: "Failed to save review." };
     }
 
+    const updatedReviews = await getProductReviews(id);
     return { success: true, reviews: updatedReviews };
   } catch (error) {
     console.error("Submit review error:", error);

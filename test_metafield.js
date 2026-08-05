@@ -10,15 +10,53 @@ async function shopifyAdminFetch({ query, variables }) {
     body: JSON.stringify({ query, variables }),
   });
   const body = await result.json();
-  return body;
+  if (body.errors) {
+    throw body.errors[0];
+  }
+  return { body };
 }
 
 async function run() {
-  const res = await shopifyAdminFetch({ query: `query { shop { name } }` });
-  console.log("Shop query:", res);
+  try {
+    const SET_METAFIELD_MUTATION = `
+      mutation metafieldsSet($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          metafields {
+            id
+            value
+          }
+          userErrors {
+            field
+            message
+          }
+        }
+      }
+    `;
+    
+    const GET_PROD = `query { products(first:1) { edges { node { id } } } }`;
+    const prodRes = await shopifyAdminFetch({ query: GET_PROD });
+    const id = prodRes.body.data.products.edges[0].node.id;
 
-  const res2 = await shopifyAdminFetch({ query: `query { customers(first:1) { edges { node { id } } } }` });
-  console.log("Customers query:", res2);
+    console.log("Setting metafield for:", id);
+
+    const res = await shopifyAdminFetch({
+      query: SET_METAFIELD_MUTATION,
+      variables: {
+        metafields: [
+          {
+            ownerId: id,
+            namespace: "custom",
+            key: "product_reviews",
+            type: "json",
+            value: JSON.stringify([]),
+          },
+        ],
+      },
+    });
+    console.log("Success:", JSON.stringify(res.body));
+  } catch (err) {
+    console.error("Error:", err);
+  }
 }
 
 run();
