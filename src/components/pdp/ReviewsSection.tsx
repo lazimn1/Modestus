@@ -64,7 +64,7 @@ export default function ReviewsSection({
   const reviewCount = reviews.length;
   const rating = reviewCount > 0 
     ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / reviewCount).toFixed(1) 
-    : "5.0";
+    : "0.0";
 
   // Approximate distribution for the bar chart based on actual reviews
   const dist = [
