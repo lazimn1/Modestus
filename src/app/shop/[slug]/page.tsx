@@ -4,6 +4,7 @@ import { getProductBySlug, products as defaultProducts, formatINR, Product } fro
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
 import ReviewsSection from "@/components/pdp/ReviewsSection";
+import { getProductReviews } from "@/app/actions/reviews";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
@@ -128,9 +129,12 @@ export default async function ProductDetailPage({
 }) {
   const { slug } = await params;
   const product = await fetchProduct(slug);
-  const allProducts = await fetchAllProducts();
 
   if (!product) notFound();
+
+  const allProducts = await fetchAllProducts();
+  const shopifyReviews = await getProductReviews(product.id.toString());
+  const initialReviews = shopifyReviews.length > 0 ? shopifyReviews : product.reviews;
 
   return (
     <main className="min-h-screen bg-[#faf7f2] font-sans">
@@ -169,9 +173,8 @@ export default async function ProductDetailPage({
 
       {/* Reviews */}
       <ReviewsSection
-        reviews={product.reviews}
-        rating={product.rating}
-        reviewCount={product.reviewCount}
+        productId={product.id.toString()}
+        initialReviews={initialReviews}
         productTitle={product.title}
       />
 

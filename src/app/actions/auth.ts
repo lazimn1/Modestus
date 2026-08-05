@@ -232,7 +232,7 @@ async function setCustomerToken(token: string) {
   });
 }
 
-async function getCustomerToken(): Promise<string | null> {
+export async function getCustomerToken(): Promise<string | null> {
   const cookieStore = await cookies();
   return cookieStore.get(CUSTOMER_TOKEN_COOKIE)?.value ?? null;
 }
