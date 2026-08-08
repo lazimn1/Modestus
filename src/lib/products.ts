@@ -43,8 +43,8 @@ export const products: Product[] = [
     subtitle: "Relaxed Luxury Silhouette",
     price: 8500,
     images: [
-      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80",
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80",
+      "/images/hero-model.webp",
+      "/collection-1.webp",
     ],
     colors: [
       { name: "Midnight Black", hex: "#0a0a0a" },
@@ -102,8 +102,8 @@ export const products: Product[] = [
     subtitle: "Ethereal Two-Piece Co-ord",
     price: 6200,
     images: [
-      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&q=80",
-      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&q=80",
+      "/collection-2.webp",
+      "/gallery-img-1.webp",
     ],
     colors: [
       { name: "Ivory", hex: "#f5f0e8" },
@@ -152,8 +152,8 @@ export const products: Product[] = [
     price: 7800,
     originalPrice: 9200,
     images: [
-      "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=900&q=80",
-      "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=900&q=80",
+      "/collection-3.webp",
+      "/gallery-img-2.webp",
     ],
     colors: [
       { name: "Dusty Rose", hex: "#c9a0a0" },
@@ -201,8 +201,8 @@ export const products: Product[] = [
     subtitle: "Adjustable Wrap Silhouette",
     price: 5500,
     images: [
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80",
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&q=80",
+      "/collection-4.webp",
+      "/gallery-img-3.webp",
     ],
     colors: [
       { name: "Emerald", hex: "#2d6a4f" },
@@ -249,8 +249,8 @@ export const products: Product[] = [
     subtitle: "Embroidered Occasion Wear",
     price: 12000,
     images: [
-      "https://images.unsplash.com/photo-1601924994987-69e26d50dc26?w=900&q=80",
-      "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=900&q=80",
+      "/images/category-1.webp",
+      "/gallery-img-4.webp",
     ],
     colors: [
       { name: "Burgundy", hex: "#800020" },
@@ -308,8 +308,8 @@ export const products: Product[] = [
     subtitle: "Everyday Minimal Essential",
     price: 3800,
     images: [
-      "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80",
-      "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=900&q=80",
+      "/images/category-2.webp",
+      "/hero-1.webp",
     ],
     colors: [
       { name: "Ecru", hex: "#f0e5c9" },
@@ -357,8 +357,8 @@ export const products: Product[] = [
     subtitle: "Premium Instant Hijab Set",
     price: 2200,
     images: [
-      "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=900&q=80",
-      "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=900&q=80",
+      "/images/category-3.webp",
+      "/hero-2.webp",
     ],
     colors: [
       { name: "Pearl White", hex: "#f8f4ef" },
@@ -407,8 +407,8 @@ export const products: Product[] = [
     subtitle: "Effortless Floor-Length Silhouette",
     price: 6800,
     images: [
-      "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=900&q=80",
-      "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=900&q=80",
+      "/images/promo-model.webp",
+      "/hero-3.webp",
     ],
     colors: [
       { name: "Sage Green", hex: "#87a878" },

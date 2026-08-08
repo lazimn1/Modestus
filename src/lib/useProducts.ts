@@ -52,25 +52,29 @@ export function mapShopifyToProduct(node: any): Product {
   // Extract numeric id from Shopify GID (e.g. "gid://shopify/Product/12345" -> 12345)
   const gid: string = node.id ?? "";
   const numericId = parseInt(gid.split("/").pop() ?? "0", 10) || Math.abs(hashCode(gid));
+  const slug = node.handle ?? "";
+  
+  // Find local product to override images and descriptions
+  const localProduct = defaultProducts.find((p) => p.slug === slug);
   
   return {
     id: numericId,
-    title: node.title ?? "",
-    subtitle: node.description?.split(".")[0] ?? "",
-    description: node.description ?? "",
+    title: node.title ?? localProduct?.title ?? "",
+    subtitle: localProduct?.subtitle ?? node.description?.split(".")[0] ?? "",
+    description: localProduct?.description ?? node.description ?? "",
     price,
-    slug: node.handle ?? "",
-    fabric: "",
+    slug,
+    fabric: localProduct?.fabric ?? "",
     sizes,
     colors,
-    images,
-    badge: undefined,
-    rating: 0,
-    reviewCount: 0,
-    sizeGuide: "",
-    reviews: [],
-    aspectClass: "",
-    originalPrice: undefined,
+    images: localProduct?.images ?? images,
+    badge: localProduct?.badge ?? undefined,
+    rating: localProduct?.rating ?? 0,
+    reviewCount: localProduct?.reviewCount ?? 0,
+    sizeGuide: localProduct?.sizeGuide ?? "",
+    reviews: localProduct?.reviews ?? [],
+    aspectClass: localProduct?.aspectClass ?? "",
+    originalPrice: localProduct?.originalPrice ?? undefined,
     shopifyVariants
   };
 }
