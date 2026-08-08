@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, ChevronDown, ShoppingBag, Truck, RotateCcw, Shield } from "lucide-react";
+import { Star, ChevronDown, ShoppingBag, Truck, RotateCcw, Shield, Heart } from "lucide-react";
 import { type Product, formatINR } from "@/lib/products";
 import Link from "next/link";
 import { useCommerce } from "@/lib/commerce";
@@ -79,9 +79,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || "Standard Black");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
-  const { addToCart } = useCommerce();
+  const { addToCart, wishlist, toggleWishlist } = useCommerce();
   const checkoutSize = selectedSize ?? product.sizes?.[0] ?? "One Size";
   const [isRedirecting, setIsRedirecting] = useState(false);
+
+  const wishlisted = wishlist.some((item) => item.productId === product.id);
 
   useEffect(() => {
     sendGAEvent('event', 'view_item', {
@@ -159,13 +161,31 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       )}
 
       {/* Title & Price */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs sm:text-sm uppercase tracking-widest text-[#78716c] font-bold mb-1">
+            {product.subtitle}
+          </p>
+          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2a2621] font-normal tracking-tight leading-tight">
+            {product.title}
+          </h1>
+        </div>
+        
+        {/* Wishlist Button */}
+        <button
+          aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          onClick={() => toggleWishlist(product.id)}
+          className="w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-full border border-[#dad2c2] flex items-center justify-center hover:bg-[#e8e2d5] transition-colors bg-[#faf7f2] mt-1"
+        >
+          <Heart 
+            className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors duration-300 ${
+              wishlisted ? "fill-[#2a2621] text-[#2a2621]" : "text-[#78716c]"
+            }`} 
+          />
+        </button>
+      </div>
+
       <div>
-        <p className="text-xs sm:text-sm uppercase tracking-widest text-[#78716c] font-bold mb-1">
-          {product.subtitle}
-        </p>
-        <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2a2621] font-normal tracking-tight leading-tight">
-          {product.title}
-        </h1>
         <div className="flex items-center gap-2 sm:gap-3 mt-2 sm:mt-3">
           <span className="text-xl sm:text-2xl font-bold text-[#2a2621]">
             {formatINR(product.price)}
