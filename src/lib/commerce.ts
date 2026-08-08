@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { products as staticProducts, type Product } from "@/lib/products";
 import { useProducts } from "./useProducts";
 import { sendGAEvent } from '@next/third-parties/google';
+import { syncWishlistAction, toggleWishlistAction } from "@/app/actions/wishlist";
+import { useAuth } from "@/context/AuthContext";
 
 export type CartItem = {
   productId: number;
@@ -212,6 +214,7 @@ export function useCommerce() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
   const { products: dynamicProducts, loading: productsLoading } = useProducts();
+  const { customer } = useAuth();
 
   const refresh = useCallback(() => {
     setCart(getCart());
@@ -245,6 +248,30 @@ export function useCommerce() {
       }
     }
   }, [cart, wishlist, dynamicProducts, ready, productsLoading]);
+
+  // Sync with Supabase on mount / login
+  useEffect(() => {
+    if (customer?.id && ready && !productsLoading) {
+      const localProductIds = wishlist.map((item) => item.productId);
+      syncWishlistAction(localProductIds).then((res) => {
+        if (res.success && res.productIds) {
+          const syncedWishlist = res.productIds.map((id: number) => ({
+            productId: id,
+            addedAt: new Date().toISOString(),
+          }));
+          // Only update if different to avoid infinite loops
+          if (
+            syncedWishlist.length !== wishlist.length ||
+            !syncedWishlist.every((s: WishlistItem) =>
+              wishlist.some((w) => w.productId === s.productId)
+            )
+          ) {
+            writeJson(WISHLIST_KEY, syncedWishlist);
+          }
+        }
+      });
+    }
+  }, [customer?.id, ready, productsLoading, wishlist.length]); // include wishlist.length to ensure sync if local storage was empty before load
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
@@ -288,23 +315,41 @@ export function useCommerce() {
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
-      return toggleWishlistItem(productId);
+      const currentWishlist = getWishlist();
+      const isAdding = !currentWishlist.some(item => item.productId === productId);
+      const next = toggleWishlistItem(productId);
+      if (customer?.id) {
+        toggleWishlistAction(productId, isAdding);
+      }
+      return next;
     },
-    []
+    [customer?.id]
   );
 
   const handleAddToWishlist = useCallback(
     (productId: number) => {
-      return addWishlistItem(productId);
+      const currentWishlist = getWishlist();
+      const exists = currentWishlist.some(item => item.productId === productId);
+      const next = addWishlistItem(productId);
+      if (!exists && customer?.id) {
+        toggleWishlistAction(productId, true);
+      }
+      return next;
     },
-    []
+    [customer?.id]
   );
 
   const handleRemoveFromWishlist = useCallback(
     (productId: number) => {
-      return removeWishlistItem(productId);
+      const currentWishlist = getWishlist();
+      const exists = currentWishlist.some(item => item.productId === productId);
+      const next = removeWishlistItem(productId);
+      if (exists && customer?.id) {
+        toggleWishlistAction(productId, false);
+      }
+      return next;
     },
-    []
+    [customer?.id]
   );
 
   const handleCreateOrder = useCallback(
