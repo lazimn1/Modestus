@@ -83,7 +83,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   const checkoutSize = selectedSize ?? product.sizes?.[0] ?? "One Size";
   const [isRedirecting, setIsRedirecting] = useState(false);
 
-  const wishlisted = wishlist.some((item) => item.productId === product.id);
+  const wishlisted = wishlist.some((item) => item.productId == product.id);
 
   useEffect(() => {
     sendGAEvent('event', 'view_item', {

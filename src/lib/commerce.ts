@@ -202,7 +202,7 @@ export function createOrder(
 export function getCartLines(cart: CartItem[], productsList: Product[] = staticProducts): CartLine[] {
   return cart
     .map((item) => {
-      const product = productsList.find((candidate) => candidate.id === item.productId);
+      const product = productsList.find((candidate) => candidate.id == item.productId);
       return product ? { ...item, product } : null;
     })
     .filter((item): item is CartLine => Boolean(item));
@@ -235,19 +235,7 @@ export function useCommerce() {
     };
   }, [refresh]);
 
-  useEffect(() => {
-    if (ready && !productsLoading) {
-      // Clean up invalid items that might be lingering in localStorage
-      const validCart = cart.filter(item => dynamicProducts.some(p => p.id === item.productId));
-      if (validCart.length !== cart.length) {
-        writeJson(CART_KEY, validCart);
-      }
-      const validWishlist = wishlist.filter(item => dynamicProducts.some(p => p.id === item.productId));
-      if (validWishlist.length !== wishlist.length) {
-        writeJson(WISHLIST_KEY, validWishlist);
-      }
-    }
-  }, [cart, wishlist, dynamicProducts, ready, productsLoading]);
+    // Clean up logic removed to prevent deleting valid items not currently in paginated dynamicProducts
 
   // Sync with Supabase on mount / login
   useEffect(() => {
@@ -316,7 +304,7 @@ export function useCommerce() {
   const handleToggleWishlist = useCallback(
     (productId: number) => {
       const currentWishlist = getWishlist();
-      const isAdding = !currentWishlist.some(item => item.productId === productId);
+      const isAdding = !currentWishlist.some(item => item.productId == productId);
       const next = toggleWishlistItem(productId);
       if (customer?.id) {
         toggleWishlistAction(productId, isAdding);
@@ -329,7 +317,7 @@ export function useCommerce() {
   const handleAddToWishlist = useCallback(
     (productId: number) => {
       const currentWishlist = getWishlist();
-      const exists = currentWishlist.some(item => item.productId === productId);
+      const exists = currentWishlist.some(item => item.productId == productId);
       const next = addWishlistItem(productId);
       if (!exists && customer?.id) {
         toggleWishlistAction(productId, true);
@@ -342,7 +330,7 @@ export function useCommerce() {
   const handleRemoveFromWishlist = useCallback(
     (productId: number) => {
       const currentWishlist = getWishlist();
-      const exists = currentWishlist.some(item => item.productId === productId);
+      const exists = currentWishlist.some(item => item.productId == productId);
       const next = removeWishlistItem(productId);
       if (exists && customer?.id) {
         toggleWishlistAction(productId, false);
@@ -381,7 +369,7 @@ export function useCommerce() {
   const wishlistProducts = useMemo(
     () =>
       wishlist
-        .map((item) => dynamicProducts.find((product) => product.id === item.productId))
+        .map((item) => dynamicProducts.find((product) => product.id == item.productId))
         .filter((product): product is Product => Boolean(product)),
     [wishlist, dynamicProducts]
   );

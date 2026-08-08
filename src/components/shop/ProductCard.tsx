@@ -15,7 +15,7 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, index }: ProductCardProps) {
   const { wishlist, toggleWishlist, addToCart } = useCommerce();
-  const wishlisted = wishlist.some((item) => item.productId === product.id);
+  const wishlisted = wishlist.some((item) => item.productId == product.id);
   const defaultVariant = getDefaultVariant(product);
 
   return (

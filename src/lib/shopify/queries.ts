@@ -3,7 +3,7 @@ import { shopifyFetch } from './index';
 // GraphQL query to get the first 10 products
 const getProductsQuery = `
   query getProducts {
-    products(first: 20) {
+    products(first: 100) {
       edges {
         node {
           id
