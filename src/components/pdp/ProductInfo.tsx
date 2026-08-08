@@ -50,7 +50,7 @@ function AccordionItem({
         className="w-full flex items-center justify-between py-3 sm:py-4 text-left group"
         aria-expanded={open}
       >
-        <span className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#2a2621] group-hover:opacity-75 transition-opacity">
+        <span className="text-xs sm:text-sm font-bold uppercase tracking-widest text-[#2a2621] group-hover:opacity-75 transition-opacity">
           {title}
         </span>
         <motion.div animate={{ rotate: open ? 180 : 0 }} transition={{ duration: 0.3 }}>
@@ -67,7 +67,7 @@ function AccordionItem({
             transition={{ duration: 0.35, ease: [0.25, 0.1, 0.25, 1] }}
             className="overflow-hidden"
           >
-            <p className="pb-4 text-xs sm:text-sm text-[#78716c] leading-relaxed font-medium">{content}</p>
+            <p className="pb-4 text-sm sm:text-base text-[#78716c] leading-relaxed font-medium">{content}</p>
           </motion.div>
         )}
       </AnimatePresence>
@@ -153,14 +153,14 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     >
       {/* Badge */}
       {product.badge && (
-        <span className="w-fit bg-[#2a2621] text-[#faf7f2] rounded-full text-[8px] sm:text-[9px] font-bold uppercase tracking-widest px-2.5 py-1">
+        <span className="w-fit bg-[#2a2621] text-[#faf7f2] rounded-full text-[10px] sm:text-xs font-bold uppercase tracking-widest px-3 py-1.5">
           {product.badge}
         </span>
       )}
 
       {/* Title & Price */}
       <div>
-        <p className="text-[9px] sm:text-[10px] uppercase tracking-widest text-[#78716c] font-bold mb-1">
+        <p className="text-xs sm:text-sm uppercase tracking-widest text-[#78716c] font-bold mb-1">
           {product.subtitle}
         </p>
         <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl text-[#2a2621] font-normal tracking-tight leading-tight">
@@ -176,12 +176,12 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             </span>
           )}
           {product.originalPrice && (
-            <span className="text-[10px] sm:text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full ml-1">
+            <span className="text-xs sm:text-sm font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full ml-1">
               Save {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}%
             </span>
           )}
         </div>
-        <p className="text-[9px] sm:text-[10px] text-[#78716c] font-medium mt-1">Inclusive of all taxes</p>
+        <p className="text-xs sm:text-sm text-[#78716c] font-medium mt-1">Inclusive of all taxes</p>
       </div>
 
       {/* Rating */}
@@ -191,8 +191,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         aria-label="Jump to reviews"
       >
         <StarRating rating={product.rating} />
-        <span className="text-xs sm:text-sm font-bold text-[#2a2621]">{product.rating}</span>
-        <span className="text-[10px] sm:text-xs text-[#78716c] font-medium group-hover:text-[#2a2621] transition-colors underline underline-offset-2">
+        <span className="text-sm sm:text-base font-bold text-[#2a2621]">{product.rating}</span>
+        <span className="text-xs sm:text-sm text-[#78716c] font-medium group-hover:text-[#2a2621] transition-colors underline underline-offset-2">
           ({product.reviewCount} reviews)
         </span>
       </a>
@@ -202,7 +202,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
 
       {/* Color Selector */}
       <div>
-        <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#78716c] mb-2 sm:mb-3">
+        <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-[#78716c] mb-2 sm:mb-3">
           Colour:{" "}
           <span className="text-[#2a2621]">{selectedColor}</span>
         </p>
@@ -230,11 +230,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
       {/* Size Selector */}
       <div id="size-selector">
         <div className="flex items-center justify-between mb-2 sm:mb-3">
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#78716c]">
+          <p className="text-xs sm:text-sm font-bold uppercase tracking-widest text-[#78716c]">
             Size:{" "}
             <span className="text-[#2a2621]">{selectedSize ?? "Select a size"}</span>
           </p>
-          <button className="text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#78716c] hover:text-[#2a2621] transition-colors underline underline-offset-2">
+          <button className="text-xs sm:text-sm font-bold uppercase tracking-widest text-[#78716c] hover:text-[#2a2621] transition-colors underline underline-offset-2">
             Size Guide
           </button>
         </div>
@@ -243,7 +243,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
             <button
               key={size}
               onClick={() => setSelectedSize(size)}
-              className={`min-w-[40px] sm:min-w-[48px] h-9 sm:h-10 px-3 text-[10px] sm:text-xs font-bold tracking-widest uppercase border rounded-full transition-all duration-200 ${
+              className={`min-w-[44px] sm:min-w-[52px] h-10 sm:h-12 px-3 text-xs sm:text-sm font-bold tracking-widest uppercase border rounded-full transition-all duration-200 ${
                 selectedSize === size
                   ? "bg-[#2a2621] text-[#faf7f2] border-[#2a2621]"
                   : "bg-[#fcfaf7] text-[#2a2621] border-[#dad2c2] hover:border-[#2a2621]"
@@ -254,7 +254,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           ))}
         </div>
         {!selectedSize && product.sizes.length > 1 && (
-          <p className="text-[9px] sm:text-[10px] text-[#78716c] font-medium mt-2">Please select a size</p>
+          <p className="text-xs sm:text-sm text-[#78716c] font-medium mt-2">Please select a size</p>
         )}
       </div>
 
@@ -263,23 +263,23 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         <motion.button
           onClick={handleAddToCart}
           whileTap={{ scale: 0.98 }}
-          className={`w-full py-3.5 sm:py-4 rounded-full flex items-center justify-center gap-2 sm:gap-2.5 text-[10px] sm:text-[11px] font-bold uppercase tracking-widest transition-all duration-300 ${
+          className={`w-full py-4 sm:py-5 rounded-full flex items-center justify-center gap-2 sm:gap-2.5 text-sm sm:text-base font-bold uppercase tracking-widest transition-all duration-300 ${
             addedToCart
               ? "bg-emerald-600 text-white"
               : "bg-[#2a2621] text-[#faf7f2] hover:opacity-90"
           }`}
         >
-          <ShoppingBag className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+          <ShoppingBag className="w-4 h-4 sm:w-5 sm:h-5" />
           {addedToCart ? "Added to Cart!" : "Add to Cart"}
         </motion.button>
         <button
           onClick={handleBuyNow}
           disabled={isRedirecting}
-          className="w-full py-3.5 sm:py-4 rounded-full border border-[#2a2621] text-[#2a2621] text-[10px] sm:text-[11px] font-bold uppercase tracking-widest hover:bg-[#e8e2d5] transition-all duration-300 text-center flex items-center justify-center gap-2 disabled:opacity-50"
+          className="w-full py-4 sm:py-5 rounded-full border border-[#2a2621] text-[#2a2621] text-sm sm:text-base font-bold uppercase tracking-widest hover:bg-[#e8e2d5] transition-all duration-300 text-center flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {isRedirecting ? (
             <>
-              <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+              <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
               Redirecting...
             </>
           ) : (
@@ -296,11 +296,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
           { icon: Shield, label: "Genuine", sub: "100% authentic" },
         ].map(({ icon: Icon, label, sub }) => (
           <div key={label} className="flex flex-col items-center text-center gap-1.5">
-            <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-[#78716c]" />
-            <p className="text-[8px] sm:text-[9px] font-bold uppercase tracking-widest text-[#2a2621] leading-tight mt-1">
+            <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-[#78716c]" />
+            <p className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#2a2621] leading-tight mt-1">
               {label}
             </p>
-            <p className="text-[8px] text-[#78716c] font-medium leading-tight">{sub}</p>
+            <p className="text-[10px] sm:text-xs text-[#78716c] font-medium leading-tight">{sub}</p>
           </div>
         ))}
       </div>

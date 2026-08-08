@@ -143,7 +143,7 @@ export default async function ProductDetailPage({
         aria-label="Breadcrumb"
         className="px-4 sm:px-6 md:px-12 py-3 sm:py-4 border-b border-[#e7e1d4] bg-[#faf7f2] pt-24 md:pt-32"
       >
-        <ol className="max-w-7xl mx-auto flex items-center gap-1.5 sm:gap-2 text-[8px] sm:text-[10px] font-bold uppercase tracking-widest text-[#78716c]">
+        <ol className="max-w-7xl mx-auto flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-bold uppercase tracking-widest text-[#78716c]">
           <li>
             <Link href="/" className="hover:text-[#2a2621] transition-colors">
               Home
@@ -183,7 +183,7 @@ export default async function ProductDetailPage({
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between mb-6 sm:mb-8">
             <div>
-              <p className="text-[9px] sm:text-[10px] uppercase tracking-widest font-bold text-[#78716c] mb-1">
+              <p className="text-xs sm:text-sm uppercase tracking-widest font-bold text-[#78716c] mb-1">
                 Continue Shopping
               </p>
               <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl text-[#2a2621] font-normal tracking-tight">
@@ -192,7 +192,7 @@ export default async function ProductDetailPage({
             </div>
             <Link
               href="/shop"
-              className="hidden md:block text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#2a2621] border-b border-[#2a2621] pb-0.5 hover:opacity-60 transition-opacity"
+              className="hidden md:block text-xs sm:text-sm font-bold uppercase tracking-widest text-[#2a2621] border-b border-[#2a2621] pb-0.5 hover:opacity-60 transition-opacity"
             >
               View All
             </Link>
@@ -211,14 +211,14 @@ export default async function ProductDetailPage({
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     {related.badge && (
-                      <span className="absolute top-2 left-2 bg-[#2a2621] text-[#faf7f2] text-[6px] sm:text-[8px] font-bold uppercase tracking-widest px-2 py-0.5 sm:py-1 rounded-full">
+                      <span className="absolute top-2 left-2 bg-[#2a2621] text-[#faf7f2] text-[8px] sm:text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 sm:py-1 rounded-full">
                         {related.badge}
                       </span>
                     )}
                   </div>
                   <div className="px-1">
-                    <p className="text-[10px] sm:text-xs font-bold text-[#2a2621] truncate">{related.title}</p>
-                    <p className="text-[10px] sm:text-xs font-bold text-[#2a2621] mt-0.5">{formatINR(related.price)}</p>
+                    <p className="text-sm font-bold text-[#2a2621] truncate">{related.title}</p>
+                    <p className="text-sm font-bold text-[#2a2621] mt-0.5">{formatINR(related.price)}</p>
                   </div>
                 </Link>
               ))}
