@@ -6,7 +6,7 @@ import { Package, ShoppingBag } from "lucide-react";
 import { formatINR, products as defaultProducts } from "@/lib/products";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { getOrdersAction } from "@/app/actions/orders";
 
 function formatDate(value: string) {
@@ -112,7 +112,7 @@ function OrderCard({ order }: { order: any }) {
   );
 }
 
-export default function OrdersPage() {
+function OrdersContent() {
   const { customer, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -199,5 +199,13 @@ export default function OrdersPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#faf7f2]" />}>
+      <OrdersContent />
+    </Suspense>
   );
 }

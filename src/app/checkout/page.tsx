@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCommerce } from "@/lib/commerce";
 import { useAuth } from "@/context/AuthContext";
@@ -8,7 +8,7 @@ import { createOrderAction } from "@/app/actions/orders";
 import { formatINR } from "@/lib/products";
 import { Loader2 } from "lucide-react";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { cartLines, subtotal, shipping, total, clearCart } = useCommerce();
@@ -184,5 +184,19 @@ export default function CheckoutPage() {
         </div>
       </section>
     </main>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense
+      fallback={
+        <main className="min-h-screen bg-[#faf7f2] flex items-center justify-center pt-24">
+          <Loader2 className="w-8 h-8 animate-spin text-[#2a2621]" />
+        </main>
+      }
+    >
+      <CheckoutContent />
+    </Suspense>
   );
 }
