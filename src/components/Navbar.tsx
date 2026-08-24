@@ -1,13 +1,14 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { User, Heart, ShoppingBag, Menu, X, LogOut, UserCircle } from "lucide-react";
+import { User, Heart, ShoppingBag, Menu, X, LogOut, UserCircle, Shield } from "lucide-react";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useCommerce } from "@/lib/commerce";
 import { useAuth } from "@/context/AuthContext";
 import { logoutAction } from "@/app/actions/auth";
+import { isAdminEmail } from "@/lib/admin";
 
 export default function Navbar() {
   const router = useRouter();
@@ -92,6 +93,20 @@ export default function Navbar() {
                   <User className="w-4 h-4" />
                   <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
                     Login
+                  </span>
+                </Link>
+              )}
+
+              {/* Admin Panel */}
+              {customer && isAdminEmail(customer.email) && (
+                <Link
+                  href="/admin"
+                  aria-label="Admin Panel"
+                  className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
+                >
+                  <Shield className="w-4 h-4" />
+                  <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
+                    Admin
                   </span>
                 </Link>
               )}
@@ -228,6 +243,16 @@ export default function Navbar() {
                 {/* Auth links */}
                 {customer ? (
                   <>
+                    {isAdminEmail(customer.email) && (
+                      <Link
+                        href="/admin"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="px-5 py-2.5 text-purewhite font-normal text-xs tracking-widest hover:bg-purewhite/5 transition-colors border-b border-purewhite/10 flex items-center gap-2.5"
+                      >
+                        <Shield className="w-3.5 h-3.5" />
+                        Admin Panel
+                      </Link>
+                    )}
                     <Link
                       href="/account"
                       onClick={() => setIsMobileMenuOpen(false)}
