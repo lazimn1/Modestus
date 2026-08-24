@@ -13,7 +13,7 @@ import {
   Palette,
 } from "lucide-react";
 import { products as defaultProducts } from "@/lib/products";
-import { getProducts } from "@/lib/shopify/queries";
+import { getAdminOrdersAction, getAdminProductsAction } from "@/app/actions/admin";
 
 const quickActions = [
   {
@@ -55,30 +55,21 @@ export default function AdminDashboard() {
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
-      // Fetch products from Shopify
-      try {
-        const nodes = await getProducts();
-        if (nodes && nodes.length > 0) setProducts(nodes);
-      } catch {
-        // fallback to default products already in state
+      const [{ products: dbProducts }, { orders: dbOrders }] = await Promise.all([
+        getAdminProductsAction(),
+        getAdminOrdersAction(),
+      ]);
+
+      if (dbProducts && dbProducts.length > 0) {
+        setProducts(dbProducts);
+      } else {
+        setProducts(defaultProducts);
       }
 
-      // Read orders from localStorage only
-      const merged: any[] = [];
-      if (typeof window !== "undefined") {
-        try {
-          const localRaw = window.localStorage.getItem("modestus-orders");
-          if (localRaw) {
-            const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed)) merged.push(...parsed);
-          }
-        } catch {
-          // ignore localStorage errors
-        }
-      }
-      setOrders(merged);
+      setOrders(dbOrders || []);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
+      setProducts(defaultProducts);
     } finally {
       setLoading(false);
     }

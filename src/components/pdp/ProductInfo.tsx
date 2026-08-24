@@ -7,9 +7,9 @@ import { type Product, formatINR } from "@/lib/products";
 import Link from "next/link";
 import { useCommerce } from "@/lib/commerce";
 import { getVariantId } from "@/lib/useProducts";
-import { createShopifyCheckout } from "@/lib/shopify/queries";
 import { sendGAEvent } from '@next/third-parties/google';
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface ProductInfoProps {
   product: Product;
@@ -98,6 +98,8 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     });
   }, [product]);
 
+  const router = useRouter();
+
   const handleAddToCart = () => {
     if (!selectedSize && product.sizes.length > 1) {
       // Shake the size selector
@@ -120,7 +122,7 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     setTimeout(() => setAddedToCart(false), 2500);
   };
 
-  const handleBuyNow = async () => {
+  const handleBuyNow = () => {
     if (!selectedSize && product.sizes.length > 1) {
       // Shake the size selector
       document.getElementById("size-selector")?.classList.add("animate-bounce");
@@ -132,18 +134,16 @@ export default function ProductInfo({ product }: ProductInfoProps) {
     }
     
     setIsRedirecting(true);
-    try {
-      const vId = getVariantId(product, checkoutSize, selectedColor);
-      if (!vId) throw new Error("Variant not found");
-      
-      const checkoutUrl = await createShopifyCheckout([{ merchandiseId: vId, quantity: 1 }]);
-      if (checkoutUrl) window.location.href = checkoutUrl;
-      else throw new Error("Failed to generate checkout URL.");
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred. Please try again.");
-      setIsRedirecting(false);
-    }
+    const vId = getVariantId(product, checkoutSize, selectedColor);
+    addToCart({
+      productId: product.id,
+      variantId: vId,
+      quantity: 1,
+      size: checkoutSize,
+      color: selectedColor,
+    });
+    
+    router.push("/checkout");
   };
 
   return (

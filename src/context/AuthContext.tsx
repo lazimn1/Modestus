@@ -1,67 +1,20 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
-export interface ShopifyCustomer {
+export interface Customer {
   id: string;
+  email: string;
   firstName: string;
   lastName: string;
-  email: string;
   phone?: string;
-  defaultAddress?: {
-    id: string;
-    address1: string;
-    address2?: string;
-    city: string;
-    province?: string;
-    country: string;
-    zip: string;
-    phone?: string;
-  };
-  addresses?: {
-    edges: {
-      node: {
-        id: string;
-        address1: string;
-        address2?: string;
-        city: string;
-        province?: string;
-        country: string;
-        zip: string;
-        phone?: string;
-      };
-    }[];
-  };
-  orders?: {
-    edges: {
-      node: {
-        id: string;
-        name: string;
-        processedAt: string;
-        fulfillmentStatus: string;
-        financialStatus: string;
-        currentTotalPrice: { amount: string; currencyCode: string };
-        lineItems: {
-          edges: {
-            node: {
-              title: string;
-              quantity: number;
-              variant?: {
-                image?: { url: string; altText?: string };
-                price: { amount: string; currencyCode: string };
-              };
-            };
-          }[];
-        };
-      };
-    }[];
-  };
 }
 
 interface AuthContextType {
-  customer: ShopifyCustomer | null;
+  customer: Customer | null;
   isLoading: boolean;
-  setCustomer: (c: ShopifyCustomer | null) => void;
+  setCustomer: (c: Customer | null) => void;
   refreshCustomer: () => Promise<void>;
 }
 
@@ -72,18 +25,26 @@ export function AuthProvider({
   initialCustomer,
 }: {
   children: ReactNode;
-  initialCustomer: ShopifyCustomer | null;
+  initialCustomer: Customer | null;
 }) {
-  const [customer, setCustomer] = useState<ShopifyCustomer | null>(initialCustomer);
+  const [customer, setCustomer] = useState<Customer | null>(initialCustomer);
   const [isLoading, setIsLoading] = useState(false);
 
   const refreshCustomer = async () => {
     setIsLoading(true);
     try {
-      const res = await fetch("/api/auth/me", { cache: "no-store" });
-      if (res.ok) {
-        const data = await res.json();
-        setCustomer(data.customer);
+      const supabase = createSupabaseBrowserClient();
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const meta = user.user_metadata ?? {};
+        setCustomer({
+          id: user.id,
+          email: user.email ?? "",
+          firstName: meta.firstName ?? meta.first_name ?? "",
+          lastName: meta.lastName ?? meta.last_name ?? "",
+          phone: meta.phone ?? "",
+        });
       } else {
         setCustomer(null);
       }
@@ -93,6 +54,29 @@ export function AuthProvider({
       setIsLoading(false);
     }
   };
+
+  // Listen to Supabase auth state changes (login/logout from any tab)
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session?.user) {
+          const meta = session.user.user_metadata ?? {};
+          setCustomer({
+            id: session.user.id,
+            email: session.user.email ?? "",
+            firstName: meta.firstName ?? meta.first_name ?? "",
+            lastName: meta.lastName ?? meta.last_name ?? "",
+            phone: meta.phone ?? "",
+          });
+        } else {
+          setCustomer(null);
+        }
+      }
+    );
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <AuthContext.Provider value={{ customer, isLoading, setCustomer, refreshCustomer }}>

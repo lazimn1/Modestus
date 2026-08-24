@@ -8,6 +8,7 @@ import { formatINR } from "@/lib/products";
 import { useCommerce, type CartLine } from "@/lib/commerce";
 import { getVariantId } from "@/lib/useProducts";
 import { createShopifyCheckout } from "@/lib/shopify/queries";
+import { useRouter } from "next/navigation";
 
 function QuantityStepper({ line }: { line: CartLine }) {
   const { updateQuantity } = useCommerce();
@@ -39,26 +40,12 @@ export default function CartPage() {
   const { cartLines, cartCount, subtotal, shipping, total, removeFromCart } =
     useCommerce();
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const router = useRouter();
 
-  const handleCheckout = async () => {
+  const handleCheckout = () => {
     if (cartLines.length === 0) return;
     setIsRedirecting(true);
-    try {
-      const lines = cartLines.map((line) => {
-        const vId = line.variantId || getVariantId(line.product, line.size, line.color);
-        if (!vId) {
-          throw new Error("Missing variant ID for item.");
-        }
-        return { merchandiseId: vId, quantity: line.quantity };
-      });
-      const checkoutUrl = await createShopifyCheckout(lines);
-      if (checkoutUrl) window.location.href = checkoutUrl;
-      else throw new Error("Failed to generate checkout URL.");
-    } catch (err) {
-      console.error(err);
-      alert("An error occurred during checkout initialization.");
-      setIsRedirecting(false);
-    }
+    router.push("/checkout");
   };
 
   return (

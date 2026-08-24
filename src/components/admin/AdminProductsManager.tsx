@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Product } from "@/lib/products";
 import { mapShopifyToProduct } from "@/lib/useProducts";
-import { getProducts } from "@/lib/shopify/queries";
+import { getAdminProductsAction } from "@/app/actions/admin";
 import {
   Search,
   RefreshCw,
@@ -26,9 +26,9 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
   const refreshProducts = async () => {
     setLoading(true);
     try {
-      const nodes = await getProducts();
-      if (nodes && nodes.length > 0) {
-        setProducts(nodes.map(mapShopifyToProduct));
+      const { products: fetched } = await getAdminProductsAction();
+      if (fetched && fetched.length > 0) {
+        setProducts(fetched);
       }
     } catch (err) {
       console.error(err);
@@ -56,7 +56,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
         <div>
           <h1 className="font-display text-2xl sm:text-3xl text-[#2a2621]">Products</h1>
           <p className="text-[#78716c] text-sm mt-1">
-            Your products are synced and managed directly via Shopify.
+            Your products are managed directly in Supabase.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -68,15 +68,6 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
             <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
             Sync
           </button>
-          <a
-            href="https://admin.shopify.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="h-10 px-5 rounded-full bg-[#2a2621] text-white text-xs font-bold uppercase tracking-widest flex items-center gap-2 hover:bg-[#2a2621]/90 transition-colors"
-          >
-            Manage in Shopify
-            <ExternalLink className="w-3.5 h-3.5" />
-          </a>
         </div>
       </div>
 
@@ -108,7 +99,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
             <p className="text-[#78716c] text-sm max-w-md">
               {searchTerm
                 ? "Try adjusting your search terms."
-                : "Your Shopify store doesn't have any products yet."}
+                : "Your store doesn't have any products yet."}
             </p>
           </div>
         ) : (

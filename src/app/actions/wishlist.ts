@@ -1,37 +1,29 @@
 "use server";
 
-import { getCustomerAction } from "./auth";
-
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function syncWishlistAction(localWishlistProductIds: number[]) {
   try {
-    const customer = await getCustomerAction();
-    if (!customer) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
-    const customerId = customer.id;
+    const userId = user.id;
 
     // 1. Get existing wishlist from Supabase
-    const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/wishlists?customer_id=eq.${encodeURIComponent(customerId)}&select=product_id`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY!,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-        cache: "no-store",
-      }
-    );
+    const { data, error } = await supabase
+      .from("wishlists")
+      .select("product_id")
+      .eq("user_id", userId);
 
-    if (!res.ok) {
-      console.error("Supabase GET error:", await res.text());
+    if (error) {
+      console.error("Supabase GET error:", error.message);
       return { success: false, error: "Failed to fetch wishlist" };
     }
 
-    const data = await res.json();
     const existingProductIds = data.map((row: any) => Number(row.product_id));
 
     // 2. Identify missing items from local wishlist
@@ -42,23 +34,16 @@ export async function syncWishlistAction(localWishlistProductIds: number[]) {
     // 3. Insert missing items to Supabase
     if (missingProductIds.length > 0) {
       const insertData = missingProductIds.map((id) => ({
-        customer_id: customerId,
+        user_id: userId,
         product_id: id.toString(),
       }));
 
-      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/wishlists`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY!,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify(insertData),
-      });
+      const { error: insertError } = await supabase
+        .from("wishlists")
+        .insert(insertData);
 
-      if (!insertRes.ok) {
-        console.error("Supabase POST error:", await insertRes.text());
+      if (insertError) {
+        console.error("Supabase POST error:", insertError.message);
       }
     }
 
@@ -73,48 +58,36 @@ export async function syncWishlistAction(localWishlistProductIds: number[]) {
 
 export async function toggleWishlistAction(productId: number, isAdding: boolean) {
   try {
-    const customer = await getCustomerAction();
-    if (!customer) {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
       return { success: false, error: "Not authenticated" };
     }
 
-    const customerId = customer.id;
+    const userId = user.id;
 
     if (isAdding) {
-      const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/wishlists`, {
-        method: "POST",
-        headers: {
-          apikey: SUPABASE_KEY!,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-          "Content-Type": "application/json",
-          Prefer: "return=minimal",
-        },
-        body: JSON.stringify({
-          customer_id: customerId,
+      const { error: insertError } = await supabase
+        .from("wishlists")
+        .insert({
+          user_id: userId,
           product_id: productId.toString(),
-        }),
-      });
+        });
 
-      if (!insertRes.ok) {
-        console.error("Supabase POST error:", await insertRes.text());
+      if (insertError) {
+        console.error("Supabase POST error:", insertError.message);
         return { success: false, error: "Failed to add to wishlist" };
       }
     } else {
-      const deleteRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/wishlists?customer_id=eq.${encodeURIComponent(
-          customerId
-        )}&product_id=eq.${productId}`,
-        {
-          method: "DELETE",
-          headers: {
-            apikey: SUPABASE_KEY!,
-            Authorization: `Bearer ${SUPABASE_KEY}`,
-          },
-        }
-      );
+      const { error: deleteError } = await supabase
+        .from("wishlists")
+        .delete()
+        .eq("user_id", userId)
+        .eq("product_id", productId.toString());
 
-      if (!deleteRes.ok) {
-        console.error("Supabase DELETE error:", await deleteRes.text());
+      if (deleteError) {
+        console.error("Supabase DELETE error:", deleteError.message);
         return { success: false, error: "Failed to remove from wishlist" };
       }
     }

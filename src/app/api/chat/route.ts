@@ -1,6 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { getProducts } from "@/lib/shopify/queries";
 import { products as defaultProducts, formatINR } from "@/lib/products";
 
 export async function POST(req: Request) {
@@ -34,25 +33,8 @@ export async function POST(req: Request) {
     //   console.warn("Could not fetch database catalog for AI, falling back to static catalog:", dbError);
     // }
 
-    // ── SHOPIFY STOREFRONT API ──
+    // ── PRODUCTS FOR AI ──
     let catalog: any[] = defaultProducts as any[];
-    try {
-      const nodes = await getProducts();
-      if (nodes && nodes.length > 0) {
-        catalog = nodes.map((node: any) => ({
-          title: node.title,
-          slug: node.handle,
-          price: parseFloat(node.priceRange?.maxVariantPrice?.amount ?? "0"),
-          subtitle: node.description?.split(".")[0] ?? "",
-          fabric: "",
-          sizes: ["XS", "S", "M", "L", "XL"],
-          colors: [{ name: "Default" }],
-          description: node.description ?? "",
-        }));
-      }
-    } catch (shopifyError) {
-      console.warn("Could not fetch Shopify catalog for AI, falling back to static catalog:", shopifyError);
-    }
 
     // Build rich product context for Gemini
     const catalogContext = catalog

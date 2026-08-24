@@ -3,10 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Package, ShoppingBag } from "lucide-react";
-import { formatINR } from "@/lib/products";
+import { formatINR, products as defaultProducts } from "@/lib/products";
 import { useAuth } from "@/context/AuthContext";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { getOrdersAction } from "@/app/actions/orders";
 
 function formatDate(value: string) {
   const date = new Date(value);
@@ -23,8 +24,8 @@ function formatDate(value: string) {
   return `${dateString} at ${timeString}`;
 }
 
-function OrderCard({ orderNode }: { orderNode: any }) {
-  const lines = orderNode.lineItems?.edges || [];
+function OrderCard({ order }: { order: any }) {
+  const items = order.items || [];
 
   return (
     <article className="bg-[#fcfaf7] border border-[#e7e1d4] rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-10 shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
@@ -33,15 +34,15 @@ function OrderCard({ orderNode }: { orderNode: any }) {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="text-[10px] md:text-xs font-semibold uppercase tracking-wider text-[#78716c]">
-              ORDER {orderNode.name}
+              ORDER {order.id}
             </p>
             <p className="text-xs sm:text-base font-bold text-[#2a2621] mt-1">
-              {formatDate(orderNode.processedAt)}
+              {formatDate(order.placed_at)}
             </p>
           </div>
           <div className="w-full md:w-auto">
             <div className="w-full text-center px-4 py-2.5 md:py-1.5 rounded-full bg-[#e8e2d5] text-[#6b6255] border border-[#dad2c2] text-[11px] md:text-xs font-semibold shadow-sm whitespace-nowrap uppercase tracking-widest">
-              {orderNode.fulfillmentStatus === "UNFULFILLED" ? "Processing" : orderNode.fulfillmentStatus}
+              {order.status}
             </div>
           </div>
         </div>
@@ -49,18 +50,22 @@ function OrderCard({ orderNode }: { orderNode: any }) {
 
       {/* Items List */}
       <div className="py-6 flex flex-col gap-6 border-b border-[#e7e1d4]">
-        {lines.map((edge: any, index: number) => {
-          const item = edge.node;
-          const imageUrl = item.variant?.image?.url || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80";
+        {items.map((item: any, index: number) => {
+          // Look up product to get title/image
+          const product = defaultProducts.find((p) => p.id === item.productId);
+          const title = product?.title || "Unknown Product";
+          const imageUrl = product?.images?.[0] || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80";
+          const price = product?.price || 0;
+
           return (
             <div
-              key={`${orderNode.id}-${index}`}
+              key={`${order.id}-${index}`}
               className="flex gap-4 sm:gap-6 items-start"
             >
               <div className="relative w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl overflow-hidden bg-[#e8e2d5] border border-[#dad2c2]/50 shrink-0">
                 <Image
                   src={imageUrl}
-                  alt={item.title}
+                  alt={title}
                   fill
                   sizes="96px"
                   className="object-cover"
@@ -68,11 +73,16 @@ function OrderCard({ orderNode }: { orderNode: any }) {
               </div>
               <div className="flex-1 min-w-0 flex flex-col pt-1">
                 <div className="flex justify-between items-start gap-2">
-                  <p className="text-xs sm:text-base font-bold text-[#2a2621]">
-                    {item.title}
-                  </p>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-base font-bold text-[#2a2621]">
+                      {title}
+                    </p>
+                    <p className="text-[10px] sm:text-xs text-[#78716c] mt-1 font-medium">
+                      {item.color} / {item.size}
+                    </p>
+                  </div>
                   <p className="text-xs sm:text-base font-bold text-[#2a2621] shrink-0">
-                    {formatINR(parseFloat(item.variant?.price?.amount || "0") * item.quantity)}
+                    {formatINR(price * item.quantity)}
                   </p>
                 </div>
                 <p className="text-[10px] sm:text-sm text-[#78716c] mt-1 sm:mt-2 font-medium">
@@ -89,26 +99,44 @@ function OrderCard({ orderNode }: { orderNode: any }) {
         <div className="w-full sm:max-w-sm sm:ml-auto space-y-4 text-xs sm:text-sm text-[#78716c]">
           <div className="flex justify-between items-center text-[#2a2621] font-bold">
             <span className="text-sm md:text-base">Total Paid</span>
-            <span className="text-sm md:text-base">{formatINR(parseFloat(orderNode.currentTotalPrice?.amount || "0"))}</span>
+            <span className="text-sm md:text-base">{formatINR(order.total)}</span>
           </div>
+          {order.payment_method === 'cod' && (
+            <p className="text-right text-[10px] sm:text-xs text-[#78716c]">
+              To be paid via Cash on Delivery
+            </p>
+          )}
         </div>
       </div>
     </article>
   );
 }
 
-
 export default function OrdersPage() {
-  const { customer, isLoading } = useAuth();
+  const { customer, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+
+  const successMessage = searchParams.get("success");
 
   useEffect(() => {
-    if (!isLoading && !customer) {
+    if (!isAuthLoading && !customer) {
       router.push("/account/login?callbackUrl=/orders");
     }
-  }, [customer, isLoading, router]);
+  }, [customer, isAuthLoading, router]);
 
-  if (isLoading || !customer) {
+  useEffect(() => {
+    if (customer) {
+      getOrdersAction().then((res) => {
+        if (!res.error) setOrders(res.orders);
+        setLoadingOrders(false);
+      });
+    }
+  }, [customer]);
+
+  if (isAuthLoading || !customer || loadingOrders) {
     return (
       <main className="min-h-screen bg-[#faf7f2] pt-24 md:pt-36 pb-24 font-sans flex items-center justify-center">
         <p className="text-[#78716c] text-sm uppercase tracking-widest font-bold">Loading Orders...</p>
@@ -116,12 +144,16 @@ export default function OrdersPage() {
     );
   }
 
-  const shopifyOrders = customer.orders?.edges?.map(edge => edge.node) || [];
-
   return (
     <main className="min-h-screen bg-[#faf7f2] pt-24 md:pt-36 pb-24 font-sans">
       <section className="px-4 sm:px-6 md:px-12">
         <div className="max-w-4xl mx-auto">
+          {successMessage && (
+            <div className="mb-8 p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-2xl flex items-center justify-center text-sm font-bold">
+              Your order has been placed successfully!
+            </div>
+          )}
+
           {/* Header */}
           <div className="text-center mb-12 hidden md:block">
             <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl text-[#2a2621] font-normal tracking-tight">
@@ -133,10 +165,10 @@ export default function OrdersPage() {
           </div>
 
           <h2 className="font-serif text-2xl md:text-3xl text-[#2a2621] font-normal tracking-tight mb-6">
-            Order History ({shopifyOrders.length})
+            Order History ({orders.length})
           </h2>
 
-          {shopifyOrders.length === 0 ? (
+          {orders.length === 0 ? (
             <div className="min-h-[40vh] flex items-center justify-center text-center bg-[#fcfaf7] border border-[#e7e1d4] rounded-2xl sm:rounded-3xl p-8">
               <div className="max-w-sm flex flex-col items-center">
                 <div className="w-16 h-16 rounded-full bg-[#e8e2d5] flex items-center justify-center mb-5 border border-[#dad2c2]/50">
@@ -159,8 +191,8 @@ export default function OrdersPage() {
             </div>
           ) : (
             <div className="flex flex-col gap-6">
-              {shopifyOrders.map((orderNode) => (
-                <OrderCard key={orderNode.id} orderNode={orderNode} />
+              {orders.map((order) => (
+                <OrderCard key={order.id} order={order} />
               ))}
             </div>
           )}

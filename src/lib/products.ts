@@ -27,12 +27,6 @@ export type Product = {
   reviews: Review[];
   badge?: string;
   aspectClass: string; // for masonry variety
-  shopifyVariants?: {
-    id: string;
-    title: string;
-    availableForSale: boolean;
-    selectedOptions: { name: string; value: string }[];
-  }[];
 };
 
 export const products: Product[] = [
