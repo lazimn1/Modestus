@@ -9,7 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 
 export type CartItem = {
   productId: number;
-  variantId?: string; // Shopify variant GID
+  variantId?: string; // Reserved for future payment gateway variant ID
   quantity: number;
   size: string;
   color: string;

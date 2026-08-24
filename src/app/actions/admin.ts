@@ -1,6 +1,6 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient } from "@/lib/supabase/server";  
 
 export async function getAdminOrdersAction() {
   try {
@@ -9,8 +9,7 @@ export async function getAdminOrdersAction() {
 
     if (!user) return { error: "Not authenticated", orders: [] };
 
-    // The RLS policy will automatically restrict non-admins to their own orders.
-    // By omitting .eq('user_id', user.id), admins will receive all orders.
+    // Admins (checked via RLS) receive ALL orders; regular users only see their own
     const { data, error } = await supabase
       .from("orders")
       .select("*")
@@ -24,10 +23,30 @@ export async function getAdminOrdersAction() {
   }
 }
 
+export async function updateOrderStatusAction(orderId: string, newStatus: string) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) return { error: "Not authenticated" };
+
+    const { error } = await supabase
+      .from("orders")
+      .update({ status: newStatus })
+      .eq("id", orderId);
+
+    if (error) return { error: error.message };
+
+    return { success: true };
+  } catch (e) {
+    return { error: "Failed to update order status." };
+  }
+}
+
 export async function getAdminProductsAction() {
   try {
     const supabase = await createSupabaseServerClient();
-    
+
     const { data, error } = await supabase
       .from("products")
       .select("*")

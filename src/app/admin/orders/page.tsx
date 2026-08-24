@@ -12,53 +12,27 @@ import {
   User,
   MapPin,
   Calendar,
-  CheckCircle2,
-  Clock,
-  Truck,
-  XCircle,
   Mail,
   Phone,
 } from "lucide-react";
 import { formatINR, products } from "@/lib/products";
+import { getAdminOrdersAction, updateOrderStatusAction } from "@/app/actions/admin";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | number | null>(null);
-  
-  // Necessary search & filtering states
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("All");
-  
-  // Necessary order inspection state
   const [inspectOrder, setInspectOrder] = useState<any | null>(null);
   const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      // Read orders from localStorage only
-      const merged: any[] = [];
-      if (typeof window !== "undefined") {
-        try {
-          const localRaw = window.localStorage.getItem("modestus-orders");
-          if (localRaw) {
-            const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed)) merged.push(...parsed);
-          }
-        } catch (e) {
-          console.error("Local storage read error:", e);
-        }
-      }
-
-      // Sort descending by date
-      merged.sort((a, b) => {
-        const tA = new Date(a.placed_at || a.created_at || a.placedAt || 0).getTime();
-        const tB = new Date(b.placed_at || b.created_at || b.placedAt || 0).getTime();
-        return tB - tA;
-      });
-
-      setOrders(merged);
+      const { orders: data, error } = await getAdminOrdersAction();
+      if (error) console.error("Failed to fetch orders:", error);
+      setOrders(data ?? []);
     } catch (err) {
       console.error("Failed to fetch orders:", err);
     } finally {
@@ -75,30 +49,15 @@ export default function AdminOrdersPage() {
     fetchOrders();
   }, [fetchOrders]);
 
-  // Functional Status Update — localStorage only
   const handleStatusChange = async (orderId: string | number, newStatus: string) => {
     setUpdatingId(orderId);
     try {
-      // Update in localStorage
-      if (typeof window !== "undefined") {
-        try {
-          const localRaw = window.localStorage.getItem("modestus-orders");
-          if (localRaw) {
-            const parsed = JSON.parse(localRaw);
-            if (Array.isArray(parsed)) {
-              const updated = parsed.map((o: any) =>
-                String(o.id) === String(orderId) ? { ...o, status: newStatus } : o
-              );
-              window.localStorage.setItem("modestus-orders", JSON.stringify(updated));
-            }
-          }
-          window.dispatchEvent(new Event("modestus-commerce-change"));
-        } catch {
-          // ignore
-        }
+      const { error } = await updateOrderStatusAction(String(orderId), newStatus);
+      if (error) {
+        showToast(error, "error");
+        return;
       }
-
-      // Update local React state
+      // Optimistically update local state
       setOrders((prev) =>
         prev.map((o) => (String(o.id) === String(orderId) ? { ...o, status: newStatus } : o))
       );
@@ -114,7 +73,6 @@ export default function AdminOrdersPage() {
     }
   };
 
-  // Filter and search orders
   const filteredOrders = useMemo(() => {
     return orders.filter((order) => {
       const matchesStatus = selectedStatus === "All" || order.status === selectedStatus;
@@ -123,7 +81,7 @@ export default function AdminOrdersPage() {
       if (!searchQuery.trim()) return true;
       const q = searchQuery.toLowerCase();
       const idStr = String(order.id || "").toLowerCase();
-      const customerStr = (order.customer_name || order.shippingAddress?.fullName || order.user_id || "").toLowerCase();
+      const customerStr = (order.customer_name || order.shipping_address?.fullName || order.user_id || "").toLowerCase();
       const itemsStr = (order.items || [])
         .map((i: any) => (i.title || i.name || "").toLowerCase())
         .join(" ");
@@ -132,7 +90,6 @@ export default function AdminOrdersPage() {
     });
   }, [orders, selectedStatus, searchQuery]);
 
-  // Helper to resolve product name from item
   const getItemName = (item: any) => {
     if (item.title || item.name) return item.title || item.name;
     if (item.productId) {
@@ -145,13 +102,13 @@ export default function AdminOrdersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-7 h-7 border-3 border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
+        <div className="w-7 h-7 border-[3px] border-gray-200 border-t-indigo-600 rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="max-w-300 space-y-6">
+    <div className="max-w-[1200px] space-y-6">
       {toast && (
         <div
           className={`fixed right-5 bottom-5 z-50 rounded-2xl px-4 py-3 text-sm font-semibold shadow-2xl transition-all ${
@@ -161,6 +118,7 @@ export default function AdminOrdersPage() {
           {toast.message}
         </div>
       )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -185,9 +143,8 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Necessary Search & Filter Toolbar */}
+      {/* Search & Filter Toolbar */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 items-stretch md:items-center justify-between">
-        {/* Status Filter Pills */}
         <div className="flex flex-wrap gap-1.5 overflow-x-auto">
           {["All", "Confirmed", "Processing", "Shipped", "Delivered", "Cancelled"].map((status) => {
             const count = status === "All" ? orders.length : orders.filter((o) => o.status === status).length;
@@ -214,8 +171,7 @@ export default function AdminOrdersPage() {
           })}
         </div>
 
-        {/* Search Input */}
-        <div className="relative min-w-65">
+        <div className="relative min-w-[260px]">
           <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
@@ -235,7 +191,7 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
-      {/* Table Section */}
+      {/* Orders Table */}
       {filteredOrders.length === 0 ? (
         <div className="bg-white border border-gray-200 rounded-2xl p-12 text-center shadow-sm">
           <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
@@ -266,13 +222,11 @@ export default function AdminOrdersPage() {
                   const itemsList = order.items || [];
                   const itemsCount = itemsList.reduce((sum: number, item: any) => sum + (item.quantity || 1), 0);
                   const firstItemName = itemsList[0] ? getItemName(itemsList[0]) : "Luxury Item";
-                  const orderDate = order.placed_at || order.created_at || order.placedAt;
-                  const customerName =
-                    order.customer_name || order.shippingAddress?.fullName || order.shipping_address?.fullName || "Guest Customer";
-                  const customerEmail =
-                    order.email || order.shippingAddress?.email || order.shipping_address?.email;
-                  const customerPhone =
-                    order.phone || order.shippingAddress?.phone || order.shipping_address?.phone;
+                  const orderDate = order.placed_at || order.created_at;
+                  const shippingAddr = order.shipping_address;
+                  const customerName = order.customer_name || shippingAddr?.fullName || "Guest Customer";
+                  const customerEmail = order.email || shippingAddr?.email;
+                  const customerPhone = order.phone || shippingAddr?.phone;
 
                   return (
                     <tr key={order.id} className="hover:bg-gray-50/60 transition-colors">
@@ -309,7 +263,7 @@ export default function AdminOrdersPage() {
                         </div>
                       </td>
                       <td className="py-4 px-6">
-                        <div className="text-xs font-medium text-gray-800 line-clamp-1 max-w-55">
+                        <div className="text-xs font-medium text-gray-800 line-clamp-1 max-w-[220px]">
                           {firstItemName}
                         </div>
                         <div className="text-[11px] text-indigo-600 font-semibold mt-0.5">
@@ -319,9 +273,7 @@ export default function AdminOrdersPage() {
                       <td className="py-4 px-6 capitalize text-gray-600 text-xs font-medium">
                         <span className="inline-flex items-center gap-1.5">
                           <CreditCard className="w-3.5 h-3.5 text-gray-400" />
-                          {order.payment_method === "cod" || order.paymentMethod === "cod"
-                            ? "Cash on Delivery"
-                            : "Online Payment"}
+                          {order.payment_method === "cod" ? "Cash on Delivery" : "Online Payment"}
                         </span>
                       </td>
                       <td className="py-4 px-6 font-bold text-gray-900 text-sm">
@@ -332,7 +284,7 @@ export default function AdminOrdersPage() {
                           value={order.status || "Confirmed"}
                           onChange={(e) => handleStatusChange(order.id, e.target.value)}
                           disabled={updatingId === order.id}
-                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all ${
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-lg border focus:outline-none focus:ring-2 focus:ring-indigo-500/20 transition-all disabled:opacity-60 ${
                             order.status === "Delivered"
                               ? "bg-green-50 text-green-700 border-green-200"
                               : order.status === "Shipped"
@@ -350,15 +302,13 @@ export default function AdminOrdersPage() {
                         </select>
                       </td>
                       <td className="py-4 px-6 text-right">
-                        <div className="inline-flex items-center gap-1">
-                          <button
-                            onClick={() => setInspectOrder(order)}
-                            className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            title="Inspect Order Details"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => setInspectOrder(order)}
+                          className="p-1.5 text-gray-500 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                          title="Inspect Order Details"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                       </td>
                     </tr>
                   );
@@ -369,9 +319,9 @@ export default function AdminOrdersPage() {
         </div>
       )}
 
-      {/* Necessary Order Inspection Modal */}
+      {/* Order Inspection Modal */}
       {inspectOrder && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-100 p-6 space-y-6">
             <div className="flex items-start justify-between border-b border-gray-100 pb-4">
               <div>
@@ -399,31 +349,28 @@ export default function AdminOrdersPage() {
               <div className="text-xs space-y-2 text-gray-700">
                 <div className="flex items-center gap-2 font-bold text-gray-900 text-sm">
                   <User className="w-4 h-4 text-indigo-600 shrink-0" />
-                  {inspectOrder.customer_name ||
-                    inspectOrder.shippingAddress?.fullName ||
-                    inspectOrder.shipping_address?.fullName ||
-                    "Guest Customer"}
+                  {inspectOrder.customer_name || inspectOrder.shipping_address?.fullName || "Guest Customer"}
                 </div>
-                {(inspectOrder.email || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.email) && (
+                {(inspectOrder.email || inspectOrder.shipping_address?.email) && (
                   <div className="flex items-center gap-2 text-gray-600">
                     <Mail className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    {inspectOrder.email || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.email}
+                    {inspectOrder.email || inspectOrder.shipping_address?.email}
                   </div>
                 )}
-                {(inspectOrder.phone || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.phone) && (
+                {(inspectOrder.phone || inspectOrder.shipping_address?.phone) && (
                   <div className="flex items-center gap-2 text-gray-600">
                     <Phone className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                    {inspectOrder.phone || (inspectOrder.shippingAddress || inspectOrder.shipping_address)?.phone}
+                    {inspectOrder.phone || inspectOrder.shipping_address?.phone}
                   </div>
                 )}
-                {inspectOrder.shippingAddress || inspectOrder.shipping_address ? (
+                {inspectOrder.shipping_address ? (
                   <div className="pt-2 border-t border-gray-200/60 mt-2 text-gray-600 space-y-0.5">
                     <p className="font-semibold text-gray-800">Delivery Address:</p>
-                    <p>{(inspectOrder.shippingAddress || inspectOrder.shipping_address).streetAddress || (inspectOrder.shippingAddress || inspectOrder.shipping_address).street}</p>
+                    <p>{inspectOrder.shipping_address.streetAddress || inspectOrder.shipping_address.street}</p>
                     <p>
-                      {(inspectOrder.shippingAddress || inspectOrder.shipping_address).city},{" "}
-                      {(inspectOrder.shippingAddress || inspectOrder.shipping_address).state}{" "}
-                      {(inspectOrder.shippingAddress || inspectOrder.shipping_address).pincode || (inspectOrder.shippingAddress || inspectOrder.shipping_address).zip}
+                      {inspectOrder.shipping_address.city},{" "}
+                      {inspectOrder.shipping_address.state}{" "}
+                      {inspectOrder.shipping_address.pincode || inspectOrder.shipping_address.zip}
                     </p>
                   </div>
                 ) : (
@@ -450,7 +397,7 @@ export default function AdminOrdersPage() {
                       </div>
                     </div>
                     <div className="font-bold text-gray-900 text-right shrink-0">
-                      {formatINR((item.price || inspectOrder.subtotal || 0) * (item.quantity || 1))}
+                      {formatINR((item.price || 0) * (item.quantity || 1))}
                     </div>
                   </div>
                 ))}
@@ -461,7 +408,7 @@ export default function AdminOrdersPage() {
             <div className="border-t border-gray-100 pt-4 space-y-2 text-xs">
               <div className="flex justify-between text-gray-600">
                 <span>Subtotal</span>
-                <span>{formatINR(inspectOrder.subtotal || inspectOrder.total || 0)}</span>
+                <span>{formatINR(inspectOrder.subtotal || 0)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>Shipping Fee</span>
@@ -482,7 +429,8 @@ export default function AdminOrdersPage() {
               <select
                 value={inspectOrder.status || "Confirmed"}
                 onChange={(e) => handleStatusChange(inspectOrder.id, e.target.value)}
-                className="text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                disabled={updatingId === inspectOrder.id}
+                className="text-xs font-bold px-3 py-2 rounded-lg border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-60"
               >
                 <option value="Confirmed">Confirmed</option>
                 <option value="Processing">Processing</option>

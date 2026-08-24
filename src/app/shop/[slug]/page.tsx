@@ -48,8 +48,8 @@ export default async function ProductDetailPage({
   if (!product) notFound();
 
   const allProducts = await fetchAllProducts();
-  const shopifyReviews = await getProductReviews(product.id.toString());
-  const initialReviews = shopifyReviews.length > 0 ? shopifyReviews : product.reviews;
+  const reviews = await getProductReviews(product.id);
+  const initialReviews = reviews.length > 0 ? reviews : product.reviews;
 
   return (
     <main className="min-h-screen bg-[#faf7f2] font-sans">

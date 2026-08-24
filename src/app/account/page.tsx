@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -8,7 +8,9 @@ import {
   ChevronRight, Package, Loader2, Edit2, Trash2, Plus,
   CheckCircle2, AlertCircle
 } from "lucide-react";
-import { logoutAction, updateCustomerAction, createAddressAction, updateAddressAction, deleteAddressAction, setDefaultAddressAction } from "@/app/actions/auth";
+import { logoutAction, updateCustomerAction } from "@/app/actions/auth";
+import { getOrdersAction } from "@/app/actions/orders";
+import { formatINR } from "@/lib/products";
 
 type Tab = "orders" | "addresses" | "profile";
 
@@ -117,11 +119,19 @@ export default function AccountPage() {
   const { customer, isLoading, refreshCustomer } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("orders");
   const [isSigningOut, startSignOut] = useTransition();
-  const [editingAddress, setEditingAddress] = useState<any | null>(null);
-  const [addingAddress, setAddingAddress] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState("");
   const [profileError, setProfileError] = useState("");
   const [isUpdatingProfile, startProfileUpdate] = useTransition();
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(true);
+
+  useEffect(() => {
+    if (!customer) return;
+    getOrdersAction().then(({ orders: data }) => {
+      setOrders(data ?? []);
+      setOrdersLoading(false);
+    });
+  }, [customer]);
 
   if (isLoading) {
     return (
@@ -163,8 +173,14 @@ export default function AccountPage() {
     });
   };
 
-  const orders = customer.orders?.edges ?? [];
-  const addresses = customer.addresses?.edges ?? [];
+  // Collect unique shipping addresses from past orders
+  const addresses = Array.from(
+    new Map(
+      orders
+        .filter((o) => o.shipping_address)
+        .map((o) => [o.shipping_address.streetAddress + o.shipping_address.city, o.shipping_address])
+    ).values()
+  );
 
   const tabButton = (tab: Tab, icon: React.ReactNode, label: string) => (
     <button
@@ -217,7 +233,11 @@ export default function AccountPage() {
         {/* ── Orders Tab ── */}
         {activeTab === "orders" && (
           <div className="space-y-4">
-            {orders.length === 0 ? (
+            {ordersLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-6 h-6 text-indigo-400 animate-spin" />
+              </div>
+            ) : orders.length === 0 ? (
               <div className="text-center py-20">
                 <Package className="w-12 h-12 text-white/20 mx-auto mb-4" />
                 <h3 className="text-white text-lg font-semibold mb-2">No orders yet</h3>
@@ -230,10 +250,8 @@ export default function AccountPage() {
                 </a>
               </div>
             ) : (
-              orders.map(({ node: order }) => {
-                const total = parseFloat(order.currentTotalPrice.amount).toFixed(2);
-                const currency = order.currentTotalPrice.currencyCode;
-                const date = new Date(order.processedAt).toLocaleDateString("en-GB", {
+              orders.map((order) => {
+                const date = new Date(order.placed_at).toLocaleDateString("en-GB", {
                   day: "numeric", month: "long", year: "numeric"
                 });
                 return (
@@ -241,32 +259,20 @@ export default function AccountPage() {
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <div className="flex items-center gap-3 mb-1">
-                          <p className="text-white font-bold">{order.name}</p>
-                          <OrderStatusBadge status={order.fulfillmentStatus} />
+                          <p className="text-white font-bold font-mono">#{order.id}</p>
+                          <OrderStatusBadge status={order.status} />
                         </div>
                         <p className="text-white/40 text-xs">{date}</p>
                       </div>
-                      <p className="text-white font-bold">{currency} {total}</p>
+                      <p className="text-white font-bold">{formatINR(order.total)}</p>
                     </div>
                     <div className="space-y-2">
-                      {order.lineItems.edges.map(({ node: item }) => (
-                        <div key={item.title} className="flex items-center gap-3">
-                          {item.variant?.image && (
-                            <img
-                              src={item.variant.image.url}
-                              alt={item.variant.image.altText ?? item.title}
-                              className="w-12 h-12 object-cover rounded-lg bg-white/5"
-                            />
-                          )}
+                      {(order.items || []).map((item: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-3">
                           <div className="flex-1 min-w-0">
-                            <p className="text-white/80 text-sm truncate">{item.title}</p>
-                            <p className="text-white/40 text-xs">Qty: {item.quantity}</p>
+                            <p className="text-white/80 text-sm truncate">{item.title || item.name || `Item #${item.productId}`}</p>
+                            <p className="text-white/40 text-xs">Qty: {item.quantity} {item.size ? `· ${item.size}` : ""} {item.color ? `· ${item.color}` : ""}</p>
                           </div>
-                          {item.variant?.price && (
-                            <p className="text-white/60 text-sm">
-                              {item.variant.price.currencyCode} {parseFloat(item.variant.price.amount).toFixed(2)}
-                            </p>
-                          )}
                         </div>
                       ))}
                     </div>
@@ -280,96 +286,23 @@ export default function AccountPage() {
         {/* ── Addresses Tab ── */}
         {activeTab === "addresses" && (
           <div className="space-y-4">
-            <div className="flex justify-between items-center mb-2">
-              <h2 className="text-white font-semibold">Saved Addresses</h2>
-              <button
-                onClick={() => { setAddingAddress(true); setEditingAddress(null); }}
-                className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-                Add Address
-              </button>
-            </div>
-
-            {addingAddress && (
-              <AddressForm
-                onSave={async (fd) => {
-                  const result = await createAddressAction(null, fd);
-                  if (result.error) throw new Error(result.error);
-                  setAddingAddress(false);
-                  await refreshCustomer();
-                }}
-                onCancel={() => setAddingAddress(false)}
-              />
-            )}
-
-            {addresses.length === 0 && !addingAddress && (
+            <h2 className="text-white font-semibold mb-2">Shipping Addresses</h2>
+            <p className="text-white/40 text-xs mb-4">Addresses used in your past orders appear here. You can set your delivery address at checkout.</p>
+            {addresses.length === 0 ? (
               <div className="text-center py-16">
                 <MapPin className="w-10 h-10 text-white/20 mx-auto mb-4" />
-                <p className="text-white/40 text-sm">No saved addresses.</p>
+                <p className="text-white/40 text-sm">No saved addresses from past orders.</p>
               </div>
-            )}
-
-            {addresses.map(({ node: addr }) => {
-              const isDefault = customer.defaultAddress?.id === addr.id;
-              return editingAddress?.id === addr.id ? (
-                <AddressForm
-                  key={addr.id}
-                  initial={addr}
-                  onSave={async (fd) => {
-                    const result = await updateAddressAction(null, fd);
-                    if (result.error) throw new Error(result.error);
-                    setEditingAddress(null);
-                    await refreshCustomer();
-                  }}
-                  onCancel={() => setEditingAddress(null)}
-                />
-              ) : (
-                <div key={addr.id} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-5 relative">
-                  {isDefault && (
-                    <span className="absolute top-4 right-4 text-[10px] font-bold text-indigo-400 border border-indigo-500/30 bg-indigo-500/10 px-2.5 py-1 rounded-full">
-                      Default
-                    </span>
-                  )}
-                  <p className="text-white font-semibold mb-1">{addr.address1}</p>
-                  {addr.address2 && <p className="text-white/60 text-sm">{addr.address2}</p>}
-                  <p className="text-white/60 text-sm">{addr.city}{addr.province ? `, ${addr.province}` : ""} {addr.zip}</p>
-                  <p className="text-white/60 text-sm">{addr.country}</p>
+            ) : (
+              addresses.map((addr: any, idx: number) => (
+                <div key={idx} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-5">
+                  <p className="text-white font-semibold mb-1">{addr.fullName}</p>
+                  <p className="text-white/60 text-sm">{addr.streetAddress}</p>
+                  <p className="text-white/60 text-sm">{addr.city}{addr.state ? `, ${addr.state}` : ""} {addr.pincode}</p>
                   {addr.phone && <p className="text-white/40 text-sm mt-1">{addr.phone}</p>}
-                  <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/[0.06]">
-                    <button
-                      onClick={() => setEditingAddress(addr)}
-                      className="flex items-center gap-1.5 text-white/40 hover:text-white/80 text-xs font-medium transition-colors"
-                    >
-                      <Edit2 className="w-3.5 h-3.5" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={async () => {
-                        await deleteAddressAction(addr.id);
-                        await refreshCustomer();
-                      }}
-                      className="flex items-center gap-1.5 text-white/40 hover:text-red-400 text-xs font-medium transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      Delete
-                    </button>
-                    {!isDefault && (
-                      <button
-                        onClick={async () => {
-                          await setDefaultAddressAction(addr.id);
-                          await refreshCustomer();
-                        }}
-                        className="ml-auto flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 text-xs font-medium transition-colors"
-                      >
-                        <CheckCircle2 className="w-3.5 h-3.5" />
-                        Set as Default
-                      </button>
-                    )}
-                  </div>
                 </div>
-              );
-            })}
+              ))
+            )}
           </div>
         )}
 

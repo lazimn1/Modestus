@@ -6,8 +6,6 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag, Trash2, Loader2 } from "lucide-react";
 import { formatINR } from "@/lib/products";
 import { useCommerce, type CartLine } from "@/lib/commerce";
-import { getVariantId } from "@/lib/useProducts";
-import { createShopifyCheckout } from "@/lib/shopify/queries";
 import { useRouter } from "next/navigation";
 
 function QuantityStepper({ line }: { line: CartLine }) {

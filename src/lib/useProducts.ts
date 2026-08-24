@@ -66,9 +66,8 @@ export function useProducts() {
   return { products, loading, refetch: fetchProducts };
 }
 
-// Helper to find the variant ID — now just returns undefined since we no longer
-// use Shopify variant GIDs. The variantId field on cart items will be undefined
-// until a real payment gateway is integrated.
+// Helper to find the variant ID — returns undefined until a real payment gateway
+// is integrated. The variantId field on cart items will be undefined for now.
 export function getVariantId(
   product: Product,
   _size: string,

@@ -3,12 +3,10 @@
 import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Product } from "@/lib/products";
-import { mapShopifyToProduct } from "@/lib/useProducts";
 import { getAdminProductsAction } from "@/app/actions/admin";
 import {
   Search,
   RefreshCw,
-  ExternalLink,
   Package,
   Image as ImageIcon
 } from "lucide-react";
