@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { products as staticProducts, type Product } from "@/lib/products";
+import { type Product } from "@/lib/products";
 import { useProducts } from "./useProducts";
 import { sendGAEvent } from '@next/third-parties/google';
 import { syncWishlistAction, toggleWishlistAction } from "@/app/actions/wishlist";
@@ -173,7 +173,7 @@ export function createOrder(
   items: CartItem[],
   paymentMethod: Order["paymentMethod"],
   shippingData?: ShippingAddress,
-  productsList: Product[] = staticProducts
+  productsList: Product[] = []
 ) {
   const subtotal = items.reduce((sum, item) => {
     const product = productsList.find((candidate) => candidate.id === item.productId);
@@ -199,7 +199,7 @@ export function createOrder(
   return order;
 }
 
-export function getCartLines(cart: CartItem[], productsList: Product[] = staticProducts): CartLine[] {
+export function getCartLines(cart: CartItem[], productsList: Product[] = []): CartLine[] {
   return cart
     .map((item) => {
       const product = productsList.find((candidate) => candidate.id == item.productId);

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Product, products as defaultProducts } from "@/lib/products";
+import { Product } from "@/lib/products";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Map a Supabase products row to the local Product shape
@@ -37,7 +37,7 @@ export function mapSupabaseToProduct(row: any): Product {
 }
 
 export function useProducts() {
-  const [products, setProducts] = useState<Product[]>(defaultProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   const fetchProducts = useCallback(async () => {
@@ -48,10 +48,11 @@ export function useProducts() {
         .select("*, reviews(*)")
         .order("id", { ascending: true });
 
-      if (!error && data && data.length > 0) {
+      if (!error && data) {
         setProducts(data.map(mapSupabaseToProduct));
+      } else if (error) {
+        console.error("Failed to fetch products from Supabase:", error);
       }
-      // Falls back to static defaultProducts already set in state if error/empty
     } catch (e) {
       console.error("Failed to fetch products from Supabase:", e);
     } finally {
