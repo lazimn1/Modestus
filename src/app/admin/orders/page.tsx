@@ -15,10 +15,12 @@ import {
   Mail,
   Phone,
 } from "lucide-react";
-import { formatINR, products } from "@/lib/products";
+import { formatINR } from "@/lib/products";
+import { useProducts } from "@/lib/useProducts";
 import { getAdminOrdersAction, updateOrderStatusAction } from "@/app/actions/admin";
 
 export default function AdminOrdersPage() {
+  const { products } = useProducts();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | number | null>(null);

@@ -3,7 +3,8 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Package, ShoppingBag } from "lucide-react";
-import { formatINR, products as defaultProducts } from "@/lib/products";
+import { formatINR, type Product } from "@/lib/products";
+import { useProducts } from "@/lib/useProducts";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
@@ -24,7 +25,7 @@ function formatDate(value: string) {
   return `${dateString} at ${timeString}`;
 }
 
-function OrderCard({ order }: { order: any }) {
+function OrderCard({ order, allProducts }: { order: any, allProducts: Product[] }) {
   const items = order.items || [];
 
   return (
@@ -52,7 +53,7 @@ function OrderCard({ order }: { order: any }) {
       <div className="py-6 flex flex-col gap-6 border-b border-[#e7e1d4]">
         {items.map((item: any, index: number) => {
           // Look up product to get title/image
-          const product = defaultProducts.find((p) => p.id === item.productId);
+          const product = allProducts.find((p) => p.id === item.productId);
           const title = product?.title || "Unknown Product";
           const imageUrl = product?.images?.[0] || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80";
           const price = product?.price || 0;
@@ -116,6 +117,7 @@ function OrdersContent() {
   const { customer, isLoading: isAuthLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { products: allProducts, loading: loadingAllProducts } = useProducts();
   const [orders, setOrders] = useState<any[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
 
@@ -192,7 +194,7 @@ function OrdersContent() {
           ) : (
             <div className="flex flex-col gap-6">
               {orders.map((order) => (
-                <OrderCard key={order.id} order={order} />
+                <OrderCard key={order.id} order={order} allProducts={allProducts} />
               ))}
             </div>
           )}

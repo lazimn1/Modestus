@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { getProductBySlug, products as defaultProducts, formatINR, Product } from "@/lib/products";
+import { formatINR, Product } from "@/lib/products";
+import { mapSupabaseToProduct } from "@/lib/useProducts";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";
 import ReviewsSection from "@/components/pdp/ReviewsSection";
@@ -16,11 +18,26 @@ export const fetchCache = "force-no-store";
 
 
 async function fetchProduct(slug: string): Promise<Product | undefined> {
-  return defaultProducts.find((p) => p.slug === slug);
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("products")
+    .select("*, reviews(*)")
+    .eq("slug", slug)
+    .single();
+
+  if (!data) return undefined;
+  return mapSupabaseToProduct(data);
 }
 
 async function fetchAllProducts(): Promise<Product[]> {
-  return defaultProducts;
+  const supabase = await createSupabaseServerClient();
+  const { data } = await supabase
+    .from("products")
+    .select("*, reviews(*)")
+    .order("id", { ascending: true });
+
+  if (!data) return [];
+  return data.map(mapSupabaseToProduct);
 }
 
 export async function generateMetadata({

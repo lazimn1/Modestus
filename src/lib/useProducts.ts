@@ -5,7 +5,7 @@ import { Product, products as defaultProducts } from "@/lib/products";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 // Map a Supabase products row to the local Product shape
-function mapSupabaseToProduct(row: any): Product {
+export function mapSupabaseToProduct(row: any): Product {
   return {
     id: row.id,
     slug: row.slug,

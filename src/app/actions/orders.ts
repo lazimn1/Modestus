@@ -1,7 +1,6 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { products as staticProducts } from "@/lib/products";
 
 export type ShippingAddress = {
   fullName: string;
@@ -44,12 +43,20 @@ export async function createOrderAction(
       .in("id", cartItems.map((i) => i.productId));
 
     const priceMap: Record<number, number> = {};
-    (dbProducts ?? []).forEach((p: any) => { priceMap[p.id] = p.price; });
-
-    // Fall back to static products if DB unavailable
-    staticProducts.forEach((p) => {
-      if (!(p.id in priceMap)) priceMap[p.id] = p.price;
+    const missingProducts: number[] = [];
+    
+    cartItems.forEach((item) => {
+      const dbProduct = (dbProducts ?? []).find(p => p.id === item.productId);
+      if (dbProduct) {
+        priceMap[item.productId] = dbProduct.price;
+      } else {
+        missingProducts.push(item.productId);
+      }
     });
+
+    if (missingProducts.length > 0) {
+      return { error: "Some products in your cart are no longer available." };
+    }
 
     const subtotal = cartItems.reduce((sum, item) => {
       return sum + (priceMap[item.productId] ?? 0) * item.quantity;

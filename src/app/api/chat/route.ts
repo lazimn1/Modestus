@@ -1,6 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
-import { products as defaultProducts, formatINR } from "@/lib/products";
+import { formatINR } from "@/lib/products";
+import { mapSupabaseToProduct } from "@/lib/useProducts";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
   try {
@@ -20,21 +22,16 @@ export async function POST(req: Request) {
       );
     }
 
-    // ── SUPABASE DISCONNECTED ── (kept for easy restoration)
-    // let catalog = defaultProducts;
-    // try {
-    //   const cookieStore = await cookies();
-    //   const supabase = createClient(cookieStore);
-    //   const { data } = await supabase.from("products").select("*").order("id", { ascending: true });
-    //   if (data && data.length > 0) {
-    //     catalog = data.map(mapDbToProduct);
-    //   }
-    // } catch (dbError) {
-    //   console.warn("Could not fetch database catalog for AI, falling back to static catalog:", dbError);
-    // }
-
-    // ── PRODUCTS FOR AI ──
-    let catalog: any[] = defaultProducts as any[];
+    let catalog: any[] = [];
+    try {
+      const supabase = await createSupabaseServerClient();
+      const { data } = await supabase.from("products").select("*, reviews(*)").order("id", { ascending: true });
+      if (data && data.length > 0) {
+        catalog = data.map(mapSupabaseToProduct);
+      }
+    } catch (dbError) {
+      console.warn("Could not fetch database catalog for AI", dbError);
+    }
 
     // Build rich product context for Gemini
     const catalogContext = catalog

@@ -12,7 +12,6 @@ import {
   ShoppingCart,
   Palette,
 } from "lucide-react";
-import { products as defaultProducts } from "@/lib/products";
 import { getAdminOrdersAction, getAdminProductsAction } from "@/app/actions/admin";
 
 const quickActions = [
@@ -48,7 +47,7 @@ const quickActions = [
 
 export default function AdminDashboard() {
   const [orders, setOrders] = useState<any[]>([]);
-  const [products, setProducts] = useState<any[]>(defaultProducts);
+  const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("7 Days");
 
@@ -60,16 +59,16 @@ export default function AdminDashboard() {
         getAdminOrdersAction(),
       ]);
 
-      if (dbProducts && dbProducts.length > 0) {
+      if (dbProducts) {
         setProducts(dbProducts);
       } else {
-        setProducts(defaultProducts);
+        setProducts([]);
       }
 
       setOrders(dbOrders || []);
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
-      setProducts(defaultProducts);
+      setProducts([]);
     } finally {
       setLoading(false);
     }
