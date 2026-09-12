@@ -263,6 +263,10 @@ export function useCommerce() {
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
+      if (!customer?.id) {
+        window.location.href = "/login?redirect=" + encodeURIComponent(window.location.pathname);
+        return getCart();
+      }
       const product = dynamicProducts.find(p => p.id === newItem.productId);
       if (product) {
         sendGAEvent('event', 'add_to_cart', {
@@ -273,7 +277,7 @@ export function useCommerce() {
       }
       return addCartItem(newItem);
     },
-    [dynamicProducts]
+    [dynamicProducts, customer?.id]
   );
 
   const handleUpdateQuantity = useCallback(
@@ -303,6 +307,10 @@ export function useCommerce() {
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
+      if (!customer?.id) {
+        window.location.href = "/login?redirect=" + encodeURIComponent(window.location.pathname);
+        return getWishlist();
+      }
       const currentWishlist = getWishlist();
       const isAdding = !currentWishlist.some(item => item.productId == productId);
       const next = toggleWishlistItem(productId);
@@ -316,6 +324,10 @@ export function useCommerce() {
 
   const handleAddToWishlist = useCallback(
     (productId: number) => {
+      if (!customer?.id) {
+        window.location.href = "/login?redirect=" + encodeURIComponent(window.location.pathname);
+        return getWishlist();
+      }
       const currentWishlist = getWishlist();
       const exists = currentWishlist.some(item => item.productId == productId);
       const next = addWishlistItem(productId);
@@ -389,7 +401,7 @@ export function useCommerce() {
     cartCount,
     wishlist,
     wishlistProducts,
-    wishlistCount: wishlist.length,
+    wishlistCount: wishlistProducts.length,
     orders,
     subtotal,
     shipping,
