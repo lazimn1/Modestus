@@ -35,7 +35,7 @@ export async function syncWishlistAction(localWishlistProductIds: number[]) {
     if (missingProductIds.length > 0) {
       const insertData = missingProductIds.map((id) => ({
         user_id: userId,
-        product_id: id.toString(),
+        product_id: id,
       }));
 
       const { error: insertError } = await supabase
@@ -72,7 +72,7 @@ export async function toggleWishlistAction(productId: number, isAdding: boolean)
         .from("wishlists")
         .insert({
           user_id: userId,
-          product_id: productId.toString(),
+          product_id: productId,
         });
 
       if (insertError) {
@@ -84,7 +84,7 @@ export async function toggleWishlistAction(productId: number, isAdding: boolean)
         .from("wishlists")
         .delete()
         .eq("user_id", userId)
-        .eq("product_id", productId.toString());
+        .eq("product_id", productId);
 
       if (deleteError) {
         console.error("Supabase DELETE error:", deleteError.message);
