@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { formatINR, Product } from "@/lib/products";
-import { mapSupabaseToProduct } from "@/lib/useProducts";
+import { formatINR, Product, mapSupabaseToProduct } from "@/lib/products";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import ImageGallery from "@/components/pdp/ImageGallery";
 import ProductInfo from "@/components/pdp/ProductInfo";

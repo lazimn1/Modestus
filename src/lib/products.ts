@@ -7,6 +7,38 @@ export type Review = {
   text: string;
   initials: string;
   avatarColor: string;
+}
+
+// Map a Supabase products row to the local Product shape
+export function mapSupabaseToProduct(row: any): Product {
+  return {
+    id: row.id,
+    slug: row.slug,
+    title: row.title,
+    subtitle: row.subtitle ?? "",
+    price: row.price,
+    originalPrice: row.original_price ?? undefined,
+    images: row.images ?? [],
+    colors: row.colors ?? [],
+    sizes: row.sizes ?? [],
+    badge: row.badge ?? undefined,
+    description: row.description ?? "",
+    fabric: row.fabric ?? "",
+    sizeGuide: row.size_guide ?? "",
+    rating: parseFloat(row.rating ?? "0"),
+    reviewCount: row.review_count ?? 0,
+    aspectClass: row.aspect_class ?? "",
+    reviews: (row.reviews ?? []).map((r: any) => ({
+      id: r.id,
+      author: r.author,
+      location: r.location,
+      rating: r.rating,
+      date: r.date,
+      text: r.text,
+      initials: r.initials,
+      avatarColor: r.avatar_color,
+    })),
+  };
 };
 
 export type Product = {

@@ -1,7 +1,7 @@
 import { GoogleGenAI } from "@google/genai";
 import { NextResponse } from "next/server";
 import { formatINR } from "@/lib/products";
-import { mapSupabaseToProduct } from "@/lib/useProducts";
+import { mapSupabaseToProduct } from "@/lib/products";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function POST(req: Request) {
