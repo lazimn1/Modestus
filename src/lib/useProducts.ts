@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Product, mapSupabaseToProduct } from "@/lib/products";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 export function useProducts() {
   const [products, setProducts] = useState<Product[]>([]);
