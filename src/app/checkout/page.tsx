@@ -159,7 +159,7 @@ function CheckoutContent() {
       setError(res.error);
       setLoading(false);
     } else {
-      if (paymentMethod === "razorpay") {
+      if (paymentMethod === "razorpay" && res.orderId) {
         await handleRazorpayPayment(res.orderId);
       } else {
         clearCart();
