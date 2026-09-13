@@ -214,12 +214,13 @@ export function getCartLines(cart: CartItem[], productsList: Product[] = []): Ca
     .filter((item): item is CartLine => Boolean(item));
 }
 
+let globalSyncComplete = false;
+
 export function useCommerce() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
-  const hasSyncedWishlist = useRef(false);
   const { products: dynamicProducts, loading: productsLoading } = useProducts();
   const { customer } = useAuth();
 
@@ -246,20 +247,20 @@ export function useCommerce() {
 
   // Sync with Supabase on mount / login
   useEffect(() => {
-    if (customer?.id && ready && !productsLoading && !hasSyncedWishlist.current) {
-      hasSyncedWishlist.current = true;
-      const localProductIds = wishlist.map((item) => item.productId);
+    if (customer?.id && ready && !productsLoading && !globalSyncComplete) {
+      globalSyncComplete = true;
+      const localProductIds = wishlist.map((item) => Number(item.productId));
       syncWishlistAction(localProductIds).then((res) => {
         if (res.success && res.productIds) {
           const syncedWishlist = res.productIds.map((id: number) => ({
-            productId: id,
+            productId: Number(id),
             addedAt: new Date().toISOString(),
           }));
           // Only update if different to avoid infinite loops
           if (
             syncedWishlist.length !== wishlist.length ||
             !syncedWishlist.every((s: WishlistItem) =>
-              wishlist.some((w) => w.productId === s.productId)
+              wishlist.some((w) => Number(w.productId) === Number(s.productId))
             )
           ) {
             writeJson(WISHLIST_KEY, syncedWishlist);
@@ -267,7 +268,7 @@ export function useCommerce() {
         }
       });
     }
-  }, [customer?.id, ready, productsLoading, wishlist]); // run when ready, but use ref to prevent multiple runs
+  }, [customer?.id, ready, productsLoading, wishlist]); // run when ready, but use global variable to prevent multiple runs
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
