@@ -54,14 +54,13 @@ export default function AiStylistWidget() {
       if (saved) {
         try {
           const p = JSON.parse(saved);
-          initialX = p.x < window.innerWidth / 2 ? EDGE_MARGIN : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
+          // Always keep on right edge
           initialY = Math.max(TOP_MARGIN, Math.min(p.y, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
         } catch {}
       }
       
       x.set(initialX);
       y.set(initialY);
-      setIsOnLeft(initialX < window.innerWidth / 2);
     }
   }, [x, y]);
 
@@ -84,21 +83,16 @@ export default function AiStylistWidget() {
     const currentX = x.get();
     const currentY = y.get();
 
-    // Check if dropped in the bottom-center hide zone
+    // Check if dragged completely into the right edge to hide
     const centerX = currentX + BTN_SIZE / 2;
-    const centerY = currentY + BTN_SIZE / 2;
-    const isOverHideZone = centerY > window.innerHeight - 120 && centerX > window.innerWidth / 2 - 100 && centerX < window.innerWidth / 2 + 100;
-
-    if (isOverHideZone) {
+    // If they drag it more than halfway off the screen to the right
+    if (centerX > window.innerWidth - 15) {
       setIsHidden(true);
-      return; // Skip snapping logic since it's now hidden
+      return; 
     }
 
-    // Normal snap to left or right edge
-    const snapX = currentX + BTN_SIZE / 2 < window.innerWidth / 2
-      ? EDGE_MARGIN
-      : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
-    
+    // Always snap back to the right edge (vertical movement only)
+    const snapX = window.innerWidth - BTN_SIZE - EDGE_MARGIN;
     const snapY = Math.max(TOP_MARGIN, Math.min(currentY, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
 
     animate(x, snapX, { type: "spring", stiffness: 400, damping: 30 });
@@ -182,12 +176,7 @@ export default function AiStylistWidget() {
         </Link>
       </div>
 
-      {/* Hide Zone indicator when dragging */}
-      {mounted && isDragging && (
-        <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[49] flex flex-col items-center justify-center w-20 h-20 bg-rose-500/20 border border-rose-500/40 rounded-full backdrop-blur-md pointer-events-none animate-in fade-in zoom-in-75 duration-200">
-          <X className="w-8 h-8 text-rose-400" />
-        </div>
-      )}
+      {/* (No hide zone indicator needed anymore) */}
 
       {/* Edge Tab when hidden */}
       {mounted && isHidden && (
@@ -214,6 +203,7 @@ export default function AiStylistWidget() {
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onTap={() => setIsOpen(!isOpen)}
             style={{
               x,
               y,
@@ -227,8 +217,7 @@ export default function AiStylistWidget() {
             }}
           >
             <button
-              onClick={() => setIsOpen(!isOpen)}
-              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95"
+              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95 pointer-events-none"
               aria-label="Open M Chat"
             >
               <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
