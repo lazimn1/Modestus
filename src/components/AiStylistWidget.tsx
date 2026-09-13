@@ -183,12 +183,12 @@ export default function AiStylistWidget() {
         <button
           onClick={() => {
             setIsHidden(false);
-            // Snap back to right edge
+            // Snap back to right edge at the exact same Y position
             const initialX = window.innerWidth - BTN_SIZE - EDGE_MARGIN;
             x.set(initialX);
-            y.set(window.innerHeight * DEFAULT_Y_RATIO);
           }}
-          className="fixed right-0 top-1/2 -translate-y-1/2 z-50 flex items-center justify-center w-8 h-16 bg-[#0d0d0f]/90 backdrop-blur border border-r-0 border-white/10 rounded-l-xl text-white/60 hover:text-white shadow-xl transition-all duration-200 hover:bg-indigo-950/60 hover:w-10 group"
+          style={{ top: y.get() }}
+          className="fixed right-0 z-50 flex items-center justify-center w-8 h-16 bg-[#0d0d0f]/90 backdrop-blur border border-r-0 border-white/10 rounded-l-xl text-white/60 hover:text-white shadow-xl transition-all duration-200 hover:bg-indigo-950/60 hover:w-10 group"
           aria-label="Show M Chat"
         >
           <ChevronLeft className="w-5 h-5 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
