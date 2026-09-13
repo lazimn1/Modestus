@@ -22,7 +22,7 @@ function CheckoutContent() {
   const buyNowSize = searchParams.get("size");
   const buyNowColor = searchParams.get("color");
 
-  const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("stripe");
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "razorpay">("razorpay");
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -52,6 +52,81 @@ function CheckoutContent() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const initializeRazorpay = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleRazorpayPayment = async (orderId: string) => {
+    const res = await initializeRazorpay();
+    if (!res) {
+      setError("Razorpay SDK failed to load. Are you online?");
+      setLoading(false);
+      return;
+    }
+
+    const dataRes = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ orderId }),
+    });
+
+    const orderData = await dataRes.json();
+
+    if (orderData.error) {
+      setError(orderData.error);
+      setLoading(false);
+      return;
+    }
+
+    const options = {
+      key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID || "rzp_test_mock",
+      amount: orderData.amount,
+      currency: orderData.currency,
+      name: "Modestus",
+      description: "Secure Checkout",
+      order_id: orderData.id,
+      handler: async function (response: any) {
+        const verifyRes = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            orderId: orderId,
+          }),
+        });
+        
+        const verifyData = await verifyRes.json();
+        if (verifyData.success) {
+          clearCart();
+          router.push("/orders?success=true");
+        } else {
+          setError("Payment verification failed. Please contact support.");
+          setLoading(false);
+        }
+      },
+      prefill: {
+        name: formData.fullName,
+        email: formData.email,
+        contact: formData.phone,
+      },
+      theme: { color: "#2a2621" },
+      modal: {
+        ondismiss: function() { setLoading(false); }
+      }
+    };
+
+    const paymentObject = new (window as any).Razorpay(options);
+    paymentObject.open();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,8 +159,8 @@ function CheckoutContent() {
       setError(res.error);
       setLoading(false);
     } else {
-      if (paymentMethod === "stripe") {
-        window.location.href = `/api/checkout?orderId=${res.orderId}`;
+      if (paymentMethod === "razorpay") {
+        await handleRazorpayPayment(res.orderId);
       } else {
         clearCart();
         router.push("/orders?success=true");
@@ -148,11 +223,11 @@ function CheckoutContent() {
               <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod("stripe")}
-                  className={`p-4 border-2 rounded-xl flex items-center gap-3 transition-colors text-left ${paymentMethod === "stripe" ? "border-[#2a2621] bg-white" : "border-[#e7e1d4] bg-transparent opacity-60"}`}
+                  onClick={() => setPaymentMethod("razorpay")}
+                  className={`p-4 border-2 rounded-xl flex items-center gap-3 transition-colors text-left ${paymentMethod === "razorpay" ? "border-[#2a2621] bg-white" : "border-[#e7e1d4] bg-transparent opacity-60"}`}
                 >
-                  <div className={`w-4 h-4 rounded-full border-[5px] ${paymentMethod === "stripe" ? "border-[#2a2621]" : "border-[#dad2c2]"}`} />
-                  <span className="font-bold text-[#2a2621]">Pay securely with Card / UPI (Stripe)</span>
+                  <div className={`w-4 h-4 rounded-full border-[5px] ${paymentMethod === "razorpay" ? "border-[#2a2621]" : "border-[#dad2c2]"}`} />
+                  <span className="font-bold text-[#2a2621]">Pay securely with Card / UPI (Razorpay)</span>
                 </button>
                 <button
                   type="button"
@@ -201,7 +276,7 @@ function CheckoutContent() {
                 <span className="flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" /> Processing...
                 </span>
-              ) : paymentMethod === "stripe" ? (
+              ) : paymentMethod === "razorpay" ? (
                 "Proceed to Payment"
               ) : (
                 "Place Order"
