@@ -5,6 +5,8 @@ import { type Product } from "@/lib/products";
 import { useProducts } from "./useProducts";
 import { sendGAEvent } from '@next/third-parties/google';
 import { syncWishlistAction, toggleWishlistAction } from "@/app/actions/wishlist";
+import { updateCartAction, syncCartAction, clearCartAction } from "@/app/actions/cart";
+import { type CartSyncItem } from "@/app/actions/cart";
 import { useAuth } from "@/context/AuthContext";
 
 export type CartItem = {
@@ -215,7 +217,9 @@ export function getCartLines(cart: CartItem[], productsList: Product[] = []): Ca
 }
 
 let globalSyncComplete = false;
+let globalCartSyncComplete = false;
 const pendingWishlistSyncs = new Map<number, ReturnType<typeof setTimeout>>();
+const pendingCartSyncs = new Map<string, ReturnType<typeof setTimeout>>();
 
 export function useCommerce() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -269,7 +273,33 @@ export function useCommerce() {
         }
       });
     }
-  }, [customer?.id, ready, productsLoading, wishlist]); // run when ready, but use global variable to prevent multiple runs
+
+    if (customer?.id && ready && !productsLoading && !globalCartSyncComplete) {
+      globalCartSyncComplete = true;
+      const localCartItems: CartSyncItem[] = cart.map((item) => ({
+        productId: Number(item.productId),
+        quantity: item.quantity,
+        size: item.size,
+        color: item.color,
+      }));
+      syncCartAction(localCartItems).then((res) => {
+        if (res.success && res.cartItems) {
+          // Map backend format to frontend CartItem format
+          const syncedCart: CartItem[] = res.cartItems.map((dbItem: any) => ({
+            productId: dbItem.product_id,
+            quantity: dbItem.quantity,
+            size: dbItem.size,
+            color: dbItem.color,
+            addedAt: dbItem.added_at || new Date().toISOString(),
+          }));
+
+          // Only update if lengths differ or items differ
+          // Just unconditionally update local storage to trust DB as source of truth for cart
+          writeJson(CART_KEY, syncedCart);
+        }
+      });
+    }
+  }, [customer?.id, ready, productsLoading, wishlist, cart]); // run when ready, but use global variable to prevent multiple runs
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
@@ -277,7 +307,7 @@ export function useCommerce() {
         window.location.href = "/login?redirect=" + encodeURIComponent(window.location.pathname);
         return getCart();
       }
-      const product = dynamicProducts.find(p => p.id === newItem.productId);
+      const product = dynamicProducts.find(p => Number(p.id) === Number(newItem.productId));
       if (product) {
         sendGAEvent('event', 'add_to_cart', {
           value: product.price * newItem.quantity,
@@ -285,35 +315,97 @@ export function useCommerce() {
           items: [{ item_id: product.id.toString(), item_name: product.title, price: product.price, quantity: newItem.quantity }]
         });
       }
-      return addCartItem(newItem);
+      
+      const nextCart = addCartItem(newItem);
+      
+      if (customer?.id) {
+        const syncKey = `${newItem.productId}-${newItem.size}-${newItem.color}`;
+        if (pendingCartSyncs.has(syncKey)) {
+          clearTimeout(pendingCartSyncs.get(syncKey));
+        }
+        
+        const timeoutId = setTimeout(() => {
+          const latestCart = getCart();
+          const dbTarget = latestCart.find(i => 
+            Number(i.productId) === Number(newItem.productId) && 
+            i.size === newItem.size && 
+            i.color === newItem.color
+          );
+          
+          if (dbTarget) {
+            updateCartAction(dbTarget.productId, dbTarget.size, dbTarget.color, dbTarget.quantity);
+          } else {
+            // It got added and removed so fast it's no longer in cart
+            updateCartAction(newItem.productId, newItem.size, newItem.color, 0);
+          }
+          pendingCartSyncs.delete(syncKey);
+        }, 500);
+        pendingCartSyncs.set(syncKey, timeoutId);
+      }
+      
+      return nextCart;
     },
     [dynamicProducts, customer?.id]
   );
 
   const handleUpdateQuantity = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">, quantity: number) => {
-      return updateCartItemQuantity(target, quantity);
+      const nextCart = updateCartItemQuantity(target, quantity);
+      
+      if (customer?.id) {
+        const syncKey = `${target.productId}-${target.size}-${target.color}`;
+        if (pendingCartSyncs.has(syncKey)) {
+          clearTimeout(pendingCartSyncs.get(syncKey));
+        }
+        
+        const timeoutId = setTimeout(() => {
+          updateCartAction(target.productId, target.size, target.color, quantity);
+          pendingCartSyncs.delete(syncKey);
+        }, 500);
+        pendingCartSyncs.set(syncKey, timeoutId);
+      }
+      
+      return nextCart;
     },
-    []
+    [customer?.id]
   );
 
   const handleRemoveFromCart = useCallback(
     (target: Pick<CartItem, "productId" | "size" | "color">) => {
-      const product = dynamicProducts.find(p => p.id === target.productId);
+      const product = dynamicProducts.find(p => Number(p.id) === Number(target.productId));
       if (product) {
         sendGAEvent('event', 'remove_from_cart', {
+          value: product.price,
           currency: 'INR',
           items: [{ item_id: product.id.toString(), item_name: product.title, price: product.price, quantity: 1 }]
         });
       }
-      return removeCartItem(target);
+      const nextCart = removeCartItem(target);
+      
+      if (customer?.id) {
+        const syncKey = `${target.productId}-${target.size}-${target.color}`;
+        if (pendingCartSyncs.has(syncKey)) {
+          clearTimeout(pendingCartSyncs.get(syncKey));
+        }
+        
+        const timeoutId = setTimeout(() => {
+          updateCartAction(target.productId, target.size, target.color, 0); // 0 deletes it
+          pendingCartSyncs.delete(syncKey);
+        }, 500);
+        pendingCartSyncs.set(syncKey, timeoutId);
+      }
+      
+      return nextCart;
     },
-    [dynamicProducts]
+    [dynamicProducts, customer?.id]
   );
 
   const handleClearCart = useCallback(() => {
     clearCart();
-  }, []);
+    if (customer?.id) {
+      clearCartAction();
+    }
+  }, [customer?.id]);
 
   const handleToggleWishlist = useCallback(
     (productId: number) => {
