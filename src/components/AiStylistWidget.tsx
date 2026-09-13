@@ -20,7 +20,8 @@ const SUGGESTIONS = [
 ];
 
 const BTN_SIZE = 56;
-const EDGE_MARGIN = 12;
+const EDGE_MARGIN = 20; // Increased for a neater gap from screen edges
+const TOP_MARGIN = 80;  // Prevent overlapping the navbar at the top
 const DEFAULT_Y_RATIO = 0.75;
 
 export default function AiStylistWidget() {
@@ -52,7 +53,7 @@ export default function AiStylistWidget() {
         try {
           const p = JSON.parse(saved);
           initialX = p.x < window.innerWidth / 2 ? EDGE_MARGIN : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
-          initialY = Math.max(EDGE_MARGIN, Math.min(p.y, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
+          initialY = Math.max(TOP_MARGIN, Math.min(p.y, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
         } catch {}
       }
       
@@ -84,8 +85,8 @@ export default function AiStylistWidget() {
       ? EDGE_MARGIN
       : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
     
-    // Clamp Y to screen
-    const snapY = Math.max(EDGE_MARGIN, Math.min(currentY, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
+    // Clamp Y to screen, keeping it below navbar
+    const snapY = Math.max(TOP_MARGIN, Math.min(currentY, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
 
     // Spring animation to the edge (exactly like iOS AssistiveTouch)
     animate(x, snapX, { type: "spring", stiffness: 400, damping: 30 });
