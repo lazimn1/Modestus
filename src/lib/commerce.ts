@@ -142,6 +142,12 @@ export function clearCart() {
   writeJson(CART_KEY, []);
 }
 
+export function clearCommerceState() {
+  writeJson(CART_KEY, []);
+  writeJson(WISHLIST_KEY, []);
+  writeJson(ORDERS_KEY, []);
+}
+
 export function toggleWishlistItem(productId: number) {
   const wishlist = getWishlist();
   const exists = wishlist.some((item) => item.productId === productId);
