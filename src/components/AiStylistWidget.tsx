@@ -33,9 +33,10 @@ export default function AiStylistWidget() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdRef = useRef(100);
 
-  // We track the true position in a ref so drag handlers never have stale closures
+  const [mounted, setMounted] = useState(false);
+
+  // Drag position
   const posRef = useRef({ x: 0, y: 0 });
-  // React state only used to trigger re-renders when needed (snap, open/close)
   const [committedPos, setCommittedPos] = useState({ x: 0, y: 0 });
   const [isSnapping, setIsSnapping] = useState(false);
 
@@ -44,8 +45,9 @@ export default function AiStylistWidget() {
   const hasDragged = useRef(false);
   const dragOffset = useRef({ x: 0, y: 0 });
 
-  // Initialize position
+  // Initialize position after mount (window is available)
   useEffect(() => {
+    setMounted(true);
     let initial = {
       x: window.innerWidth - BTN_SIZE - EDGE_MARGIN,
       y: window.innerHeight * DEFAULT_Y_RATIO,
@@ -208,7 +210,7 @@ export default function AiStylistWidget() {
 
   if (pathname === "/chat" || pathname?.startsWith("/chat")) return null;
 
-  const isOnLeft = committedPos.x < window.innerWidth / 2;
+  const isOnLeft = committedPos.x < (typeof window !== 'undefined' ? window.innerWidth / 2 : 800);
 
   return (
     <>
@@ -222,8 +224,8 @@ export default function AiStylistWidget() {
         </Link>
       </div>
 
-      {/* Desktop floating button — positioned via direct DOM ref */}
-      <div className="hidden sm:block">
+      {/* Desktop floating button — only render after mount (requires window) */}
+      {mounted && (
         <div
           ref={btnWrapperRef}
           style={{
@@ -261,7 +263,7 @@ export default function AiStylistWidget() {
               left: isOnLeft
                 ? committedPos.x + BTN_SIZE + 12
                 : Math.max(8, committedPos.x - 428 - 12),
-              top: Math.max(8, Math.min(committedPos.y - 280, window.innerHeight - 628)),
+              top: Math.max(8, Math.min(committedPos.y - 280, (typeof window !== 'undefined' ? window.innerHeight : 900) - 628)),
               width: 420,
               maxHeight: "min(620px, calc(100vh - 24px))",
               zIndex: 49,
@@ -352,7 +354,7 @@ export default function AiStylistWidget() {
             </div>
           </div>
         )}
-      </div>
+      )}
     </>
   );
 }
