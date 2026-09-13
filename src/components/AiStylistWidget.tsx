@@ -34,6 +34,7 @@ export default function AiStylistWidget() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const msgIdRef = useRef(100);
+  const lastActionTime = useRef(0);
 
   const [mounted, setMounted] = useState(false);
 
@@ -80,6 +81,8 @@ export default function AiStylistWidget() {
 
   const handleDragEnd = (event: any, info: PanInfo) => {
     setIsDragging(false);
+    lastActionTime.current = Date.now();
+    
     const currentX = x.get();
     const currentY = y.get();
 
@@ -168,7 +171,10 @@ export default function AiStylistWidget() {
       {/* Edge Tab when hidden */}
       {mounted && isHidden && (
         <button
-          onClick={() => {
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+            lastActionTime.current = Date.now();
             setIsHidden(false);
             // Snap back to right edge at the exact same Y position
             const initialX = window.innerWidth - BTN_SIZE - EDGE_MARGIN;
@@ -191,6 +197,8 @@ export default function AiStylistWidget() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onTap={() => {
+              if (Date.now() - lastActionTime.current < 400) return; // Ignore ghost taps right after drag/unhide
+              
               if (window.innerWidth < 640) {
                 window.location.href = "/chat";
               } else {
