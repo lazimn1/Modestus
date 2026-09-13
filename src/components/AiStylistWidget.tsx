@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sparkles, Send, X, RefreshCw, Bot, Loader2, ArrowRight } from "lucide-react";
+import { Sparkles, Send, X, RefreshCw, Bot, Loader2, ArrowRight, ChevronLeft, EyeOff } from "lucide-react";
 
 interface Message {
   id: string;
@@ -21,6 +21,7 @@ const SUGGESTIONS = [
 export default function AiStylistWidget() {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
+  const [isHidden, setIsHidden] = useState(false);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome",
@@ -184,12 +185,24 @@ export default function AiStylistWidget() {
       </div>
 
       {/* Desktop Trigger & Modal Drawer */}
-      <div className="fixed bottom-6 right-6 z-50 hidden sm:block">
-        {/* Trigger Button */}
-        {!isOpen && (
+      <div className="fixed bottom-6 right-0 z-50 hidden sm:block">
+        
+        {/* Hidden State Tab (Arrow on the edge) */}
+        {isHidden && !isOpen && (
+          <button
+            onClick={() => setIsHidden(false)}
+            className="absolute right-0 bottom-0 translate-y-[-50%] flex items-center justify-center w-8 h-12 bg-[#0d0d0f]/90 backdrop-blur border border-r-0 border-white/10 rounded-l-xl text-white/60 hover:text-white shadow-xl transition-all duration-200 hover:bg-indigo-950/60 hover:w-10 group"
+            aria-label="Show M Chat"
+          >
+            <ChevronLeft className="w-5 h-5 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
+          </button>
+        )}
+
+        {/* Normal Trigger Button */}
+        {!isOpen && !isHidden && (
           <button
             onClick={() => setIsOpen(true)}
-            className="group relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full shadow-2xl shadow-indigo-500/30 border border-white/20 transition-all duration-300 hover:scale-105"
+            className="absolute right-6 bottom-0 translate-y-[-50%] group relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 hover:from-indigo-500 hover:to-purple-500 text-white rounded-full shadow-2xl shadow-indigo-500/30 border border-white/20 transition-all duration-300 hover:scale-105"
             aria-label="Open M Chat"
           >
             <div className="absolute top-1 right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
@@ -199,7 +212,7 @@ export default function AiStylistWidget() {
 
         {/* Chat Drawer Modal */}
         {isOpen && (
-          <div className="w-[420px] max-h-[620px] h-[80vh] bg-[#0d0d0f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-300">
+          <div className="absolute right-6 bottom-0 translate-y-[20%] w-[420px] max-h-[620px] h-[80vh] bg-[#0d0d0f]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-300 origin-bottom-right">
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-black/60 border-b border-white/10 flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -212,6 +225,16 @@ export default function AiStylistWidget() {
               </div>
 
               <div className="flex items-center gap-1">
+                <button
+                  onClick={() => {
+                    setIsOpen(false);
+                    setIsHidden(true);
+                  }}
+                  title="Hide widget to edge"
+                  className="p-2 text-white/40 hover:text-rose-400 hover:bg-white/5 rounded-lg transition-colors"
+                >
+                  <EyeOff className="w-4 h-4" />
+                </button>
                 <button
                   onClick={resetChat}
                   title="Reset conversation"
