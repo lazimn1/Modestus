@@ -41,6 +41,50 @@ export default function AiStylistWidget() {
   const x = useMotionValue(0);
   const y = useMotionValue(0);
   const [isOnLeft, setIsOnLeft] = useState(false);
+  const [isIdle, setIsIdle] = useState(false);
+  const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // The opacity is also a motion value so we can animate it
+  const opacity = useMotionValue(1);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    if (isOpen) {
+      setIsIdle(false);
+      animate(opacity, 1, { duration: 0.2 });
+      return;
+    }
+    idleTimerRef.current = setTimeout(() => {
+      setIsIdle(true);
+      const currentX = x.get();
+      const isLeft = currentX < window.innerWidth / 2;
+      // Move halfway off-screen
+      const hideX = isLeft ? -(BTN_SIZE * 0.4) : window.innerWidth - (BTN_SIZE * 0.6);
+      
+      animate(x, hideX, { type: "spring", stiffness: 300, damping: 25 });
+      animate(opacity, 0.4, { duration: 0.3 });
+    }, 3000); // Hide after 3 seconds of inactivity
+  }, [isOpen, x, opacity]);
+
+  const wakeUp = useCallback(() => {
+    if (isIdle) {
+      setIsIdle(false);
+      const currentX = x.get();
+      const isLeft = currentX < window.innerWidth / 2;
+      const normalX = isLeft ? EDGE_MARGIN : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
+      
+      animate(x, normalX, { type: "spring", stiffness: 400, damping: 30 });
+      animate(opacity, 1, { duration: 0.2 });
+    }
+    resetIdleTimer();
+  }, [isIdle, x, opacity, resetIdleTimer]);
+
+  useEffect(() => {
+    resetIdleTimer();
+    return () => {
+      if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+    };
+  }, [resetIdleTimer]);
 
   useEffect(() => {
     setMounted(true);
@@ -73,31 +117,30 @@ export default function AiStylistWidget() {
   }, [x]);
 
   const handleDragStart = () => {
-    setIsOpen(false); // Close chat if they start dragging the orb
+    wakeUp();
+    setIsOpen(false);
   };
 
   const handleDragEnd = (event: any, info: PanInfo) => {
     const currentX = x.get();
     const currentY = y.get();
 
-    // Snap to left or right edge
     const snapX = currentX + BTN_SIZE / 2 < window.innerWidth / 2
       ? EDGE_MARGIN
       : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
     
-    // Clamp Y to screen, keeping it below navbar
     const snapY = Math.max(TOP_MARGIN, Math.min(currentY, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
 
-    // Spring animation to the edge (exactly like iOS AssistiveTouch)
     animate(x, snapX, { type: "spring", stiffness: 400, damping: 30 });
     animate(y, snapY, { type: "spring", stiffness: 400, damping: 30 });
 
     sessionStorage.setItem("mchat_pos_v4", JSON.stringify({ x: snapX, y: snapY }));
 
-    // Toggle chat if it was a click (minimal movement)
     if (Math.abs(info.offset.x) < 5 && Math.abs(info.offset.y) < 5) {
       setIsOpen(v => !v);
     }
+    
+    resetIdleTimer();
   };
 
   const getNextId = () => { msgIdRef.current += 1; return msgIdRef.current.toString(); };
@@ -183,9 +226,11 @@ export default function AiStylistWidget() {
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
+            onPointerDown={wakeUp}
             style={{
               x,
               y,
+              opacity,
               position: "fixed",
               top: 0,
               left: 0,
