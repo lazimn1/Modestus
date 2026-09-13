@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { type Product } from "@/lib/products";
 import { useProducts } from "@/lib/useProducts";
 import { sendGAEvent } from '@next/third-parties/google';
