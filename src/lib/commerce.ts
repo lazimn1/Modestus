@@ -150,10 +150,10 @@ export function clearCommerceState() {
 
 export function toggleWishlistItem(productId: number) {
   const wishlist = getWishlist();
-  const exists = wishlist.some((item) => item.productId === productId);
+  const exists = wishlist.some((item) => Number(item.productId) === Number(productId));
   const next = exists
-    ? wishlist.filter((item) => item.productId !== productId)
-    : [{ productId, addedAt: new Date().toISOString() }, ...wishlist];
+    ? wishlist.filter((item) => Number(item.productId) !== Number(productId))
+    : [{ productId: Number(productId), addedAt: new Date().toISOString() }, ...wishlist];
 
   writeJson(WISHLIST_KEY, next);
   return next;
@@ -162,15 +162,15 @@ export function toggleWishlistItem(productId: number) {
 export function addWishlistItem(productId: number) {
   const wishlist = getWishlist();
 
-  if (wishlist.some((item) => item.productId === productId)) return wishlist;
+  if (wishlist.some((item) => Number(item.productId) === Number(productId))) return wishlist;
 
-  const next = [{ productId, addedAt: new Date().toISOString() }, ...wishlist];
+  const next = [{ productId: Number(productId), addedAt: new Date().toISOString() }, ...wishlist];
   writeJson(WISHLIST_KEY, next);
   return next;
 }
 
 export function removeWishlistItem(productId: number) {
-  const next = getWishlist().filter((item) => item.productId !== productId);
+  const next = getWishlist().filter((item) => Number(item.productId) !== Number(productId));
   writeJson(WISHLIST_KEY, next);
   return next;
 }
@@ -320,7 +320,7 @@ export function useCommerce() {
         return getWishlist();
       }
       const currentWishlist = getWishlist();
-      const isAdding = !currentWishlist.some(item => item.productId == productId);
+      const isAdding = !currentWishlist.some(item => Number(item.productId) === Number(productId));
       const next = toggleWishlistItem(productId);
       if (customer?.id) {
         toggleWishlistAction(productId, isAdding);
@@ -337,7 +337,7 @@ export function useCommerce() {
         return getWishlist();
       }
       const currentWishlist = getWishlist();
-      const exists = currentWishlist.some(item => item.productId == productId);
+      const exists = currentWishlist.some(item => Number(item.productId) === Number(productId));
       const next = addWishlistItem(productId);
       if (!exists && customer?.id) {
         toggleWishlistAction(productId, true);
@@ -350,7 +350,7 @@ export function useCommerce() {
   const handleRemoveFromWishlist = useCallback(
     (productId: number) => {
       const currentWishlist = getWishlist();
-      const exists = currentWishlist.some(item => item.productId == productId);
+      const exists = currentWishlist.some(item => Number(item.productId) === Number(productId));
       const next = removeWishlistItem(productId);
       if (exists && customer?.id) {
         toggleWishlistAction(productId, false);
