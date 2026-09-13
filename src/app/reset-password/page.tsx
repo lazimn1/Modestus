@@ -12,15 +12,31 @@ export default function ResetPasswordPage() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
 
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [isValidSession, setIsValidSession] = useState(false);
+
   useEffect(() => {
-    // When the user lands on this page via the email link, Supabase will parse the URL hash
-    // and establish a session. We can just wait for it.
     const supabase = createSupabaseBrowserClient();
-    supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "PASSWORD_RECOVERY") {
-        console.log("Password recovery flow initiated");
+    
+    // Check initial session in case they are already logged in or the hash was processed fast
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsValidSession(true);
+        setIsVerifying(false);
+      } else {
+        setIsVerifying(false);
       }
     });
+
+    // Listen for the recovery event or login event
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setIsValidSession(true);
+        setIsVerifying(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -57,8 +73,29 @@ export default function ResetPasswordPage() {
           <p className="text-white/40 text-sm font-medium tracking-[0.15em] uppercase">Set New Password</p>
         </div>
 
-        <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-8 shadow-2xl">
-          {done ? (
+        <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.08] rounded-2xl p-8 shadow-2xl min-h-[300px] flex flex-col justify-center">
+          {isVerifying ? (
+            <div className="flex flex-col items-center justify-center space-y-4 text-white/50">
+              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
+              <p className="text-sm">Verifying secure link...</p>
+            </div>
+          ) : !isValidSession ? (
+            <div className="text-center space-y-4">
+              <div className="w-14 h-14 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-2">
+                <Lock className="w-6 h-6 text-red-400" />
+              </div>
+              <h2 className="text-white text-xl font-bold">Invalid or Expired Link</h2>
+              <p className="text-white/50 text-sm leading-relaxed">
+                This password reset link is invalid or has already been used. Please request a new one.
+              </p>
+              <button
+                onClick={() => router.push("/forgot-password")}
+                className="inline-block mt-4 text-indigo-400 hover:text-indigo-300 text-sm font-medium transition-colors"
+              >
+                Request new link
+              </button>
+            </div>
+          ) : done ? (
             <div className="text-center space-y-4 py-4">
               <CheckCircle2 className="w-14 h-14 text-green-400 mx-auto" />
               <h2 className="text-white text-xl font-bold">Password Updated</h2>
