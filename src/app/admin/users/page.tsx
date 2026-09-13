@@ -1,5 +1,5 @@
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { format } from "date-fns";
+import LocalTime from "@/components/LocalTime";
 import { User, Calendar, Clock } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -84,14 +84,14 @@ export default async function AdminUsersPage() {
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-1.5 text-gray-600">
                         <Calendar className="w-4 h-4 text-gray-400" />
-                        {format(new Date(user.created_at), "MMM d, yyyy")}
+                        <LocalTime dateStr={user.created_at} formatStr="MMM d, yyyy" />
                       </div>
                     </td>
                     <td className="px-6 py-4">
                       {user.last_sign_in_at ? (
                         <div className="flex items-center gap-1.5 text-gray-600">
                           <Clock className="w-4 h-4 text-gray-400" />
-                          {format(new Date(user.last_sign_in_at), "MMM d, yyyy • h:mm a")}
+                          <LocalTime dateStr={user.last_sign_in_at} />
                         </div>
                       ) : (
                         <span className="text-gray-400 italic">Never</span>
