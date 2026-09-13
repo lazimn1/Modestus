@@ -57,7 +57,7 @@ Guidelines:
 
     const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
-      model: "gemma-4-31b-it",
+      model: "gemini-2.5-flash",
       contents: messages,
       config: {
         systemInstruction,
