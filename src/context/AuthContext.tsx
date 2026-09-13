@@ -60,7 +60,14 @@ export function AuthProvider({
   useEffect(() => {
     const supabase = createSupabaseBrowserClient();
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        if (event === 'PASSWORD_RECOVERY') {
+          // If Supabase stripped the redirect_to param and dropped the user on the home page,
+          // this global listener will catch the recovery session and force them to the correct page.
+          window.location.href = '/reset-password';
+          return;
+        }
+
         if (session?.user) {
           const meta = session.user.user_metadata ?? {};
           setCustomer({
