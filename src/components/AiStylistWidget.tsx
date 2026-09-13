@@ -48,13 +48,13 @@ export default function AiStylistWidget() {
     setMounted(true);
     if (typeof window !== "undefined") {
       let initialX = window.innerWidth - BTN_SIZE - EDGE_MARGIN;
+      // Fixed Y position (won't change since drag="x")
       let initialY = window.innerHeight * DEFAULT_Y_RATIO;
       
       const saved = sessionStorage.getItem("mchat_pos_v4");
       if (saved) {
         try {
           const p = JSON.parse(saved);
-          // Always keep on right edge
           initialY = Math.max(TOP_MARGIN, Math.min(p.y, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
         } catch {}
       }
@@ -91,14 +91,13 @@ export default function AiStylistWidget() {
       return; 
     }
 
-    // Always snap back to the right edge (vertical movement only)
+    // Always snap back to the right edge (horizontal only)
     const snapX = window.innerWidth - BTN_SIZE - EDGE_MARGIN;
-    const snapY = Math.max(TOP_MARGIN, Math.min(currentY, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
 
     animate(x, snapX, { type: "spring", stiffness: 400, damping: 30 });
-    animate(y, snapY, { type: "spring", stiffness: 400, damping: 30 });
+    // Y does not animate since it cannot be dragged
 
-    sessionStorage.setItem("mchat_pos_v4", JSON.stringify({ x: snapX, y: snapY }));
+    sessionStorage.setItem("mchat_pos_v4", JSON.stringify({ x: snapX, y: currentY }));
   };
 
   const getNextId = () => { msgIdRef.current += 1; return msgIdRef.current.toString(); };
@@ -199,7 +198,7 @@ export default function AiStylistWidget() {
       {mounted && !isHidden && (
         <>
           <motion.div
-            drag
+            drag="x"
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
