@@ -18,13 +18,13 @@ export type CartSyncItem = {
 export async function syncCartAction(localCart: CartSyncItem[]) {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !session?.user) {
+    if (authError || !user) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     // First, fetch the current DB cart
     const { data: dbCart, error: fetchError } = await supabase
@@ -88,13 +88,13 @@ export async function updateCartAction(
 ) {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !session?.user) {
+    if (authError || !user) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const userId = session.user.id;
+    const userId = user.id;
 
     if (quantity <= 0) {
       const { error } = await supabase
@@ -141,16 +141,16 @@ export async function updateCartAction(
 export async function clearCartAction() {
   try {
     const supabase = await createSupabaseServerClient();
-    const { data: { session }, error: authError } = await supabase.auth.getSession();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    if (authError || !session?.user) {
+    if (authError || !user) {
       return { success: false, error: "Unauthorized" };
     }
 
     const { error } = await supabase
       .from("carts")
       .delete()
-      .eq("user_id", session.user.id);
+      .eq("user_id", user.id);
     
     if (error) {
       console.error("Error clearing cart:", error);
