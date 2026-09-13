@@ -190,7 +190,13 @@ export default function AiStylistWidget() {
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
-            onTap={() => setIsOpen(!isOpen)}
+            onTap={() => {
+              if (window.innerWidth < 640) {
+                window.location.href = "/chat";
+              } else {
+                setIsOpen(!isOpen);
+              }
+            }}
             style={{
               x,
               y,
@@ -204,14 +210,7 @@ export default function AiStylistWidget() {
             }}
           >
             <button
-              onClick={() => {
-                if (window.innerWidth < 640) {
-                  window.location.href = "/chat";
-                } else {
-                  setIsOpen(!isOpen);
-                }
-              }}
-              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95"
+              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95 pointer-events-none"
               aria-label="Open M Chat"
             >
               <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
