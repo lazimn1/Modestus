@@ -77,7 +77,7 @@ export default function Navbar() {
                   aria-label="My Account"
                   className="group relative flex items-center justify-center w-10 h-10 rounded-full border border-purewhite/20 hover:bg-purewhite/5 transition-colors"
                 >
-                  <div className="w-5 h-5 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-[9px] font-bold">
+                  <div className="w-full h-full rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold">
                     {displayName?.[0]?.toUpperCase()}
                   </div>
                   <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 px-2 py-1 bg-purewhite text-pureblack text-[10px] font-medium tracking-widest opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none rounded whitespace-nowrap">
