@@ -2,7 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
-import { clearCommerceState } from "@/lib/commerce";
 
 export interface Customer {
   id: string;
@@ -79,7 +78,6 @@ export function AuthProvider({
           });
         } else {
           setCustomer(null);
-          clearCommerceState();
         }
       }
     );
