@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { type Product } from "@/lib/products";
 import { useProducts } from "./useProducts";
 import { sendGAEvent } from '@next/third-parties/google';
@@ -219,6 +219,7 @@ export function useCommerce() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
   const [ready, setReady] = useState(false);
+  const hasSyncedWishlist = useRef(false);
   const { products: dynamicProducts, loading: productsLoading } = useProducts();
   const { customer } = useAuth();
 
@@ -245,7 +246,8 @@ export function useCommerce() {
 
   // Sync with Supabase on mount / login
   useEffect(() => {
-    if (customer?.id && ready && !productsLoading) {
+    if (customer?.id && ready && !productsLoading && !hasSyncedWishlist.current) {
+      hasSyncedWishlist.current = true;
       const localProductIds = wishlist.map((item) => item.productId);
       syncWishlistAction(localProductIds).then((res) => {
         if (res.success && res.productIds) {
@@ -265,7 +267,7 @@ export function useCommerce() {
         }
       });
     }
-  }, [customer?.id, ready, productsLoading, wishlist.length]); // include wishlist.length to ensure sync if local storage was empty before load
+  }, [customer?.id, ready, productsLoading, wishlist]); // run when ready, but use ref to prevent multiple runs
 
   const handleAddToCart = useCallback(
     (newItem: Omit<CartItem, "addedAt">) => {
