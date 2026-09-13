@@ -44,6 +44,7 @@ export default function AiStylistWidget() {
   const [isOnLeft, setIsOnLeft] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [isHidden, setIsHidden] = useState(false);
+  const [dragLimits, setDragLimits] = useState({ left: 0, right: 0 });
 
   useEffect(() => {
     setMounted(true);
@@ -59,9 +60,9 @@ export default function AiStylistWidget() {
           initialY = Math.max(TOP_MARGIN, Math.min(p.y, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
         } catch {}
       }
-      
       x.set(initialX);
       y.set(initialY);
+      setDragLimits({ left: initialX, right: window.innerWidth });
     }
   }, [x, y]);
 
@@ -193,6 +194,8 @@ export default function AiStylistWidget() {
         <>
           <motion.div
             drag="x"
+            dragConstraints={dragLimits}
+            dragElastic={0}
             dragMomentum={false}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
