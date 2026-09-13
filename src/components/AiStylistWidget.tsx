@@ -177,7 +177,9 @@ export default function AiStylistWidget() {
 
       {/* (No hide zone indicator needed anymore) */}
 
-      {/* Edge Tab when hidden */}
+      {/* Desktop only wrapper */}
+      <div className="hidden sm:block">
+        {/* Edge Tab when hidden */}
       {mounted && isHidden && (
         <button
           onClick={() => {
@@ -331,6 +333,7 @@ export default function AiStylistWidget() {
           )}
         </>
       )}
+      </div>
     </>
   );
 }
