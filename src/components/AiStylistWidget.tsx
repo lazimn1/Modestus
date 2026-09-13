@@ -226,6 +226,7 @@ export default function AiStylistWidget() {
 
       {/* Desktop floating button — only render after mount (requires window) */}
       {mounted && (
+        <>
         <div
           ref={btnWrapperRef}
           style={{
@@ -354,6 +355,7 @@ export default function AiStylistWidget() {
             </div>
           </div>
         )}
+        </>
       )}
     </>
   );
