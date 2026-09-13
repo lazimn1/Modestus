@@ -215,6 +215,7 @@ export function getCartLines(cart: CartItem[], productsList: Product[] = []): Ca
 }
 
 let globalSyncComplete = false;
+const pendingWishlistSyncs = new Map<number, ReturnType<typeof setTimeout>>();
 
 export function useCommerce() {
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -323,8 +324,18 @@ export function useCommerce() {
       const currentWishlist = getWishlist();
       const isAdding = !currentWishlist.some(item => Number(item.productId) === Number(productId));
       const next = toggleWishlistItem(productId);
+      
       if (customer?.id) {
-        toggleWishlistAction(productId, isAdding);
+        if (pendingWishlistSyncs.has(productId)) {
+          clearTimeout(pendingWishlistSyncs.get(productId));
+        }
+        const timeoutId = setTimeout(() => {
+          const latestWishlist = getWishlist();
+          const stillExists = latestWishlist.some(item => Number(item.productId) === Number(productId));
+          toggleWishlistAction(productId, stillExists);
+          pendingWishlistSyncs.delete(productId);
+        }, 500);
+        pendingWishlistSyncs.set(productId, timeoutId);
       }
       return next;
     },
@@ -340,8 +351,18 @@ export function useCommerce() {
       const currentWishlist = getWishlist();
       const exists = currentWishlist.some(item => Number(item.productId) === Number(productId));
       const next = addWishlistItem(productId);
+      
       if (!exists && customer?.id) {
-        toggleWishlistAction(productId, true);
+        if (pendingWishlistSyncs.has(productId)) {
+          clearTimeout(pendingWishlistSyncs.get(productId));
+        }
+        const timeoutId = setTimeout(() => {
+          const latestWishlist = getWishlist();
+          const stillExists = latestWishlist.some(item => Number(item.productId) === Number(productId));
+          if (stillExists) toggleWishlistAction(productId, true);
+          pendingWishlistSyncs.delete(productId);
+        }, 500);
+        pendingWishlistSyncs.set(productId, timeoutId);
       }
       return next;
     },
@@ -353,8 +374,18 @@ export function useCommerce() {
       const currentWishlist = getWishlist();
       const exists = currentWishlist.some(item => Number(item.productId) === Number(productId));
       const next = removeWishlistItem(productId);
+      
       if (exists && customer?.id) {
-        toggleWishlistAction(productId, false);
+        if (pendingWishlistSyncs.has(productId)) {
+          clearTimeout(pendingWishlistSyncs.get(productId));
+        }
+        const timeoutId = setTimeout(() => {
+          const latestWishlist = getWishlist();
+          const stillExists = latestWishlist.some(item => Number(item.productId) === Number(productId));
+          if (!stillExists) toggleWishlistAction(productId, false);
+          pendingWishlistSyncs.delete(productId);
+        }, 500);
+        pendingWishlistSyncs.set(productId, timeoutId);
       }
       return next;
     },
