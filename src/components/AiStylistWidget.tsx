@@ -165,21 +165,7 @@ export default function AiStylistWidget() {
 
   return (
     <>
-      {/* Mobile */}
-      <div className="fixed bottom-5 right-5 z-50 block sm:hidden">
-        <Link href="/chat"
-          className="group relative flex items-center justify-center w-14 h-14 bg-gradient-to-r from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/30 border border-white/20 transition-all duration-300 active:scale-95"
-          aria-label="Open M Chat">
-          <div className="absolute top-1 right-1 w-3 h-3 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
-          <Sparkles className="w-6 h-6 text-indigo-200 animate-spin" style={{ animationDuration: "8s" }} />
-        </Link>
-      </div>
-
-      {/* (No hide zone indicator needed anymore) */}
-
-      {/* Desktop only wrapper */}
-      <div className="hidden sm:block">
-        {/* Edge Tab when hidden */}
+      {/* Edge Tab when hidden */}
       {mounted && isHidden && (
         <button
           onClick={() => {
@@ -218,7 +204,14 @@ export default function AiStylistWidget() {
             }}
           >
             <button
-              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95 pointer-events-none"
+              onClick={() => {
+                if (window.innerWidth < 640) {
+                  window.location.href = "/chat";
+                } else {
+                  setIsOpen(!isOpen);
+                }
+              }}
+              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95"
               aria-label="Open M Chat"
             >
               <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
@@ -333,7 +326,6 @@ export default function AiStylistWidget() {
           )}
         </>
       )}
-      </div>
     </>
   );
 }
