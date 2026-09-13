@@ -48,8 +48,8 @@ export default function AiStylistWidget() {
     setMounted(true);
     if (typeof window !== "undefined") {
       let initialX = window.innerWidth - BTN_SIZE - EDGE_MARGIN;
-      // Fixed Y position (won't change since drag="x")
-      let initialY = window.innerHeight * DEFAULT_Y_RATIO;
+      // Fixed Y position pinned to bottom-right corner
+      let initialY = window.innerHeight - BTN_SIZE - EDGE_MARGIN;
       
       const saved = sessionStorage.getItem("mchat_pos_v4");
       if (saved) {
