@@ -182,7 +182,7 @@ export default function AiStylistWidget() {
             x.set(initialX);
           }}
           style={{ top: y.get() }}
-          className="fixed right-0 z-50 flex items-center justify-center w-8 h-16 bg-[#0d0d0f]/90 backdrop-blur border border-r-0 border-white/10 rounded-l-xl text-white/60 hover:text-white shadow-xl transition-all duration-200 hover:bg-indigo-950/60 hover:w-10 group"
+          className="fixed right-0 z-50 flex items-center justify-center w-8 h-16 bg-[#0d0d0f]/30 backdrop-blur-sm border border-r-0 border-white/5 rounded-l-xl text-white/30 shadow-xl transition-all duration-200 hover:bg-[#0d0d0f]/80 hover:border-white/20 hover:text-white hover:w-10 active:bg-indigo-950/80 active:border-white/30 active:text-white active:w-10 group"
           aria-label="Show M Chat"
         >
           <ChevronLeft className="w-5 h-5 text-indigo-400 group-hover:-translate-x-0.5 transition-transform" />
