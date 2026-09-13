@@ -99,19 +99,12 @@ export default function AiStylistWidget() {
       ? EDGE_MARGIN
       : window.innerWidth - BTN_SIZE - EDGE_MARGIN;
     
-    // Clamp Y to screen, keeping it below navbar
     const snapY = Math.max(TOP_MARGIN, Math.min(currentY, window.innerHeight - BTN_SIZE - EDGE_MARGIN));
 
-    // Spring animation to the edge (exactly like iOS AssistiveTouch)
     animate(x, snapX, { type: "spring", stiffness: 400, damping: 30 });
     animate(y, snapY, { type: "spring", stiffness: 400, damping: 30 });
 
     sessionStorage.setItem("mchat_pos_v4", JSON.stringify({ x: snapX, y: snapY }));
-
-    // Toggle chat if it was a click (minimal movement)
-    if (Math.abs(info.offset.x) < 5 && Math.abs(info.offset.y) < 5) {
-      setIsOpen(v => !v);
-    }
   };
 
   const getNextId = () => { msgIdRef.current += 1; return msgIdRef.current.toString(); };
@@ -234,7 +227,8 @@ export default function AiStylistWidget() {
             }}
           >
             <button
-              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95 pointer-events-none"
+              onClick={() => setIsOpen(!isOpen)}
+              className="relative flex items-center justify-center w-full h-full bg-gradient-to-br from-indigo-600 via-purple-600 to-indigo-700 text-white rounded-full shadow-2xl shadow-indigo-500/40 border border-white/20 active:scale-95"
               aria-label="Open M Chat"
             >
               <div className="absolute top-1 right-1 w-2.5 h-2.5 bg-green-400 rounded-full animate-pulse border-2 border-[#0a0a0a]" />
