@@ -13,6 +13,7 @@ import {
   LogOut,
   Search,
   User,
+  Users,
   ArrowLeft,
   Menu,
   X,
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/admin/content", label: "Site Content", icon: FileText },
   { href: "/admin/reviews", label: "Reviews", icon: MessageSquare },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/admin/users", label: "Users", icon: Users },
 ];
 
 export default function AdminLayout({
