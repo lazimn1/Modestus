@@ -22,6 +22,7 @@ function CheckoutContent() {
   const buyNowSize = searchParams.get("size");
   const buyNowColor = searchParams.get("color");
 
+  const [paymentMethod, setPaymentMethod] = useState<"cod" | "stripe">("stripe");
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -77,14 +78,18 @@ function CheckoutContent() {
       color: line.color,
     }));
 
-    const res = await createOrderAction(cartItems, formData, "cod");
+    const res = await createOrderAction(cartItems, formData, paymentMethod);
 
     if (res.error) {
       setError(res.error);
       setLoading(false);
     } else {
-      clearCart();
-      router.push("/orders?success=true");
+      if (paymentMethod === "stripe") {
+        window.location.href = `/api/checkout?orderId=${res.orderId}`;
+      } else {
+        clearCart();
+        router.push("/orders?success=true");
+      }
     }
   };
 
@@ -140,9 +145,23 @@ function CheckoutContent() {
               </div>
 
               <h2 className="text-lg font-bold text-[#2a2621] mt-4 border-t border-[#e7e1d4] pt-6 mb-2">Payment</h2>
-              <div className="p-4 border-2 border-[#2a2621] rounded-xl bg-white flex items-center gap-3">
-                <div className="w-4 h-4 rounded-full border-[5px] border-[#2a2621]" />
-                <span className="font-bold text-[#2a2621]">Cash on Delivery (COD)</span>
+              <div className="flex flex-col gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("stripe")}
+                  className={`p-4 border-2 rounded-xl flex items-center gap-3 transition-colors text-left ${paymentMethod === "stripe" ? "border-[#2a2621] bg-white" : "border-[#e7e1d4] bg-transparent opacity-60"}`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-[5px] ${paymentMethod === "stripe" ? "border-[#2a2621]" : "border-[#dad2c2]"}`} />
+                  <span className="font-bold text-[#2a2621]">Pay securely with Card / UPI (Stripe)</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPaymentMethod("cod")}
+                  className={`p-4 border-2 rounded-xl flex items-center gap-3 transition-colors text-left ${paymentMethod === "cod" ? "border-[#2a2621] bg-white" : "border-[#e7e1d4] bg-transparent opacity-60"}`}
+                >
+                  <div className={`w-4 h-4 rounded-full border-[5px] ${paymentMethod === "cod" ? "border-[#2a2621]" : "border-[#dad2c2]"}`} />
+                  <span className="font-bold text-[#2a2621]">Cash on Delivery (COD)</span>
+                </button>
               </div>
             </form>
           </div>
@@ -175,10 +194,18 @@ function CheckoutContent() {
             <button 
               type="submit"
               form="checkout-form"
-              disabled={loading || cartLines.length === 0}
-              className="w-full bg-[#2a2621] text-[#faf7f2] h-14 rounded-full flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity disabled:opacity-50"
+              disabled={loading}
+              className="w-full h-12 bg-[#2a2621] hover:bg-[#3d3730] text-[#fcfaf7] font-bold tracking-widest uppercase text-xs rounded-xl flex items-center justify-center transition-colors disabled:opacity-50 mt-4"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : "Confirm Order"}
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Processing...
+                </span>
+              ) : paymentMethod === "stripe" ? (
+                "Proceed to Payment"
+              ) : (
+                "Place Order"
+              )}
             </button>
           </aside>
         </div>

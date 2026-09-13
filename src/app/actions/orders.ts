@@ -22,7 +22,7 @@ export type CartItemInput = {
 export async function createOrderAction(
   cartItems: CartItemInput[],
   shippingData: ShippingAddress,
-  paymentMethod: "cod" = "cod"
+  paymentMethod: "cod" | "stripe" = "cod"
 ) {
   try {
     const supabase = await createSupabaseServerClient();
