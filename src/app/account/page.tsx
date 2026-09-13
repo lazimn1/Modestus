@@ -255,26 +255,92 @@ export default function AccountPage() {
                   day: "numeric", month: "long", year: "numeric"
                 });
                 return (
-                  <div key={order.id} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl p-5 hover:border-white/[0.12] transition-all">
-                    <div className="flex items-start justify-between mb-4">
+                  <div key={order.id} className="bg-white/[0.03] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all">
+                    {/* Order Header */}
+                    <div className="bg-white/[0.02] border-b border-white/[0.07] p-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3 mb-1">
-                          <p className="text-white font-bold font-mono">#{order.id}</p>
+                          <p className="text-white font-bold font-mono text-lg">#{order.id}</p>
                           <OrderStatusBadge status={order.status} />
+                          {order.payment_status && (
+                            <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border ${order.payment_status === 'paid' ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/20' : 'bg-yellow-500/15 text-yellow-400 border-yellow-500/20'}`}>
+                              {order.payment_status === 'paid' ? 'Paid' : 'Payment Pending'}
+                            </span>
+                          )}
                         </div>
-                        <p className="text-white/40 text-xs">{date}</p>
+                        <p className="text-white/50 text-sm">Placed on {date}</p>
                       </div>
-                      <p className="text-white font-bold">{formatINR(order.total)}</p>
+                      <div className="text-left sm:text-right">
+                        <p className="text-white/50 text-xs uppercase tracking-wider font-semibold mb-1">Total Amount</p>
+                        <p className="text-white font-bold text-xl">{formatINR(order.total)}</p>
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      {(order.items || []).map((item: any, idx: number) => (
-                        <div key={idx} className="flex items-center gap-3">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-white/80 text-sm truncate">{item.title || item.name || `Item #${item.productId}`}</p>
-                            <p className="text-white/40 text-xs">Qty: {item.quantity} {item.size ? `· ${item.size}` : ""} {item.color ? `· ${item.color}` : ""}</p>
+
+                    {/* Order Details Grid */}
+                    <div className="p-5 sm:px-6 grid grid-cols-1 md:grid-cols-3 gap-6 border-b border-white/[0.07]">
+                      {/* Items List */}
+                      <div className="md:col-span-2 space-y-4">
+                        <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Items Ordered</h3>
+                        {(order.items || []).map((item: any, idx: number) => (
+                          <div key={idx} className="flex gap-4 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+                            {item.image ? (
+                              <div className="w-20 h-24 rounded-lg bg-white/5 overflow-hidden shrink-0">
+                                <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                              </div>
+                            ) : (
+                              <div className="w-20 h-24 rounded-lg bg-white/5 flex items-center justify-center shrink-0">
+                                <ShoppingBag className="w-6 h-6 text-white/20" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0 flex flex-col justify-center">
+                              <p className="text-white font-medium text-sm md:text-base line-clamp-2 leading-snug mb-1">{item.title}</p>
+                              <div className="flex flex-wrap gap-x-3 gap-y-1 text-white/50 text-xs mt-1">
+                                <span>Qty: {item.quantity}</span>
+                                {item.size && <span>Size: {item.size}</span>}
+                                {item.color && <span>Color: {item.color}</span>}
+                              </div>
+                              <p className="text-indigo-400 font-semibold text-sm mt-2">{formatINR(item.price)}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Summary & Shipping */}
+                      <div className="space-y-6">
+                        <div>
+                          <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Order Summary</h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="flex justify-between text-white/70">
+                              <span>Subtotal</span>
+                              <span>{formatINR(order.subtotal)}</span>
+                            </div>
+                            <div className="flex justify-between text-white/70">
+                              <span>Shipping</span>
+                              <span>{order.shipping === 0 ? "Free" : formatINR(order.shipping)}</span>
+                            </div>
+                            <div className="flex justify-between text-white/70">
+                              <span>Payment Method</span>
+                              <span className="capitalize">{order.payment_method === "razorpay" ? "Razorpay Online" : "Cash on Delivery"}</span>
+                            </div>
+                            <div className="pt-2 mt-2 border-t border-white/[0.1] flex justify-between text-white font-semibold">
+                              <span>Total</span>
+                              <span>{formatINR(order.total)}</span>
+                            </div>
                           </div>
                         </div>
-                      ))}
+                        
+                        {order.shipping_address && (
+                          <div>
+                            <h3 className="text-white/50 text-xs font-semibold uppercase tracking-wider mb-3">Shipping Address</h3>
+                            <div className="text-white/70 text-sm leading-relaxed bg-white/[0.02] border border-white/[0.04] p-3 rounded-xl">
+                              <p className="text-white font-medium mb-1">{order.shipping_address.fullName}</p>
+                              <p>{order.shipping_address.streetAddress}</p>
+                              <p>{order.shipping_address.city}{order.shipping_address.state ? `, ${order.shipping_address.state}` : ""} {order.shipping_address.pincode}</p>
+                              {order.shipping_address.phone && <p className="mt-1">{order.shipping_address.phone}</p>}
+                            </div>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );

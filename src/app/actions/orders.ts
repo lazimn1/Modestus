@@ -110,7 +110,41 @@ export async function getOrdersAction() {
 
     if (error) return { error: error.message, orders: [] };
 
-    return { orders: data ?? [] };
+    const orders = data ?? [];
+
+    // Collect all unique product IDs across all orders
+    const productIds = new Set<number>();
+    orders.forEach((o) => {
+      o.items?.forEach((i: any) => productIds.add(i.productId));
+    });
+
+    let dbProducts: any[] = [];
+    if (productIds.size > 0) {
+      const { data: pData } = await supabase
+        .from("products")
+        .select("id, title, price, image")
+        .in("id", Array.from(productIds));
+      if (pData) dbProducts = pData;
+    }
+
+    const productMap = new Map<number, any>();
+    dbProducts.forEach((p) => productMap.set(p.id, p));
+
+    // Enrich order items with product details
+    const enrichedOrders = orders.map((order) => ({
+      ...order,
+      items: order.items?.map((item: any) => {
+        const product = productMap.get(item.productId);
+        return {
+          ...item,
+          title: product?.title || `Product #${item.productId}`,
+          price: product?.price || 0,
+          image: product?.image || "",
+        };
+      }) || [],
+    }));
+
+    return { orders: enrichedOrders };
   } catch {
     return { error: "Failed to fetch orders.", orders: [] };
   }
