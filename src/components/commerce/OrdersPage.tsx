@@ -55,7 +55,7 @@ function OrderCard({ order, allProducts }: { order: any, allProducts: Product[] 
           // Look up product to get title/image
           const product = allProducts.find((p) => p.id === item.productId);
           const title = product?.title || "Unknown Product";
-          const imageUrl = product?.images?.[0] || "https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80";
+          const imageUrl = product?.images?.[0] || "";
           const price = product?.price || 0;
 
           return (
@@ -63,14 +63,18 @@ function OrderCard({ order, allProducts }: { order: any, allProducts: Product[] 
               key={`${order.id}-${index}`}
               className="flex gap-4 sm:gap-6 items-start"
             >
-              <div className="relative w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl overflow-hidden bg-[#e8e2d5] border border-[#dad2c2]/50 shrink-0">
-                <Image
-                  src={imageUrl}
-                  alt={title}
-                  fill
-                  sizes="96px"
-                  className="object-cover"
-                />
+              <div className="relative w-[80px] h-[80px] sm:w-[96px] sm:h-[96px] rounded-xl overflow-hidden bg-[#e8e2d5] border border-[#dad2c2]/50 shrink-0 flex items-center justify-center">
+                {imageUrl ? (
+                  <Image
+                    src={imageUrl}
+                    alt={title}
+                    fill
+                    sizes="96px"
+                    className="object-cover"
+                  />
+                ) : (
+                  <span className="text-[10px] sm:text-xs text-[#dad2c2] font-medium text-center px-1">No Image</span>
+                )}
               </div>
               <div className="flex-1 min-w-0 flex flex-col pt-1">
                 <div className="flex justify-between items-start gap-2">

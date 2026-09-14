@@ -11,7 +11,7 @@ interface ImageGalleryProps {
 }
 
 export default function ImageGallery({ images, title }: ImageGalleryProps) {
-  const safeImages = (images && images.length > 0) ? images : ["https://images.unsplash.com/photo-1594938298603-c8148c4dae35?w=900&q=80"];
+  const safeImages = images || [];
   const [activeIndex, setActiveIndex] = useState(0);
   const mainRef = useRef<HTMLDivElement>(null);
 
@@ -45,23 +45,29 @@ export default function ImageGallery({ images, title }: ImageGalleryProps) {
         onTouchEnd={handleTouchEnd}
       >
         <AnimatePresence mode="wait">
-          <motion.div
-            key={activeIndex}
-            className="absolute inset-0"
-            initial={{ opacity: 0, scale: 1.03 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-          >
-            <Image
-              src={safeImages[activeIndex]}
-              alt={`${title} — view ${activeIndex + 1}`}
-              fill
-              priority={activeIndex === 0}
-              sizes="(max-width: 768px) 100vw, 50vw"
-              className="object-cover transition-transform duration-300 ease-out"
-            />
-          </motion.div>
+          {safeImages.length > 0 ? (
+            <motion.div
+              key={activeIndex}
+              className="absolute inset-0"
+              initial={{ opacity: 0, scale: 1.03 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+            >
+              <Image
+                src={safeImages[activeIndex]}
+                alt={`${title} — view ${activeIndex + 1}`}
+                fill
+                priority={activeIndex === 0}
+                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover transition-transform duration-300 ease-out"
+              />
+            </motion.div>
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center text-[#dad2c2]">
+              <span className="text-sm font-medium">No image available</span>
+            </div>
+          )}
         </AnimatePresence>
 
         {/* Nav Arrows (mobile) */}
