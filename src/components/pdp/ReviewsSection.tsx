@@ -1,11 +1,11 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Star, Loader2, AlertCircle } from "lucide-react";
+import { Star, Loader2, AlertCircle, Trash2 } from "lucide-react";
 import { type Review } from "@/app/actions/reviews";
 import { useState, useTransition, FormEvent } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { submitProductReview } from "@/app/actions/reviews";
+import { submitProductReview, deleteProductReview } from "@/app/actions/reviews";
 import Link from "next/link";
 
 interface ReviewsSectionProps {
@@ -61,6 +61,7 @@ export default function ReviewsSection({
   const [formRating, setFormRating] = useState(5);
   const [formText, setFormText] = useState("");
   const [visibleCount, setVisibleCount] = useState(3);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const reviewCount = reviews.length;
   const rating = reviewCount > 0 
@@ -94,6 +95,20 @@ export default function ReviewsSection({
         setFormRating(5);
       }
     });
+  };
+
+  const handleDelete = async (reviewId: number) => {
+    setDeletingId(reviewId);
+    try {
+      const result = await deleteProductReview(reviewId, productId);
+      if (result.success && result.reviews) {
+        setReviews(result.reviews);
+      } else {
+        console.error(result.error);
+      }
+    } finally {
+      setDeletingId(null);
+    }
   };
 
   return (
@@ -245,7 +260,19 @@ export default function ReviewsSection({
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1.5 shrink-0">
-                    <StarRating rating={review.rating} />
+                    <div className="flex items-center gap-2">
+                      <StarRating rating={review.rating} />
+                      {customer?.id === review.user_id && (
+                        <button 
+                          onClick={() => handleDelete(review.id)}
+                          disabled={deletingId === review.id}
+                          className="text-[#78716c] hover:text-red-500 transition-colors disabled:opacity-50"
+                          title="Delete Review"
+                        >
+                          {deletingId === review.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                        </button>
+                      )}
+                    </div>
                     <p className="text-[9px] sm:text-[10px] text-[#78716c] font-medium">{review.date}</p>
                   </div>
                 </div>

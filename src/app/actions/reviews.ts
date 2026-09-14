@@ -14,6 +14,7 @@ export type Review = {
   text: string;
   initials: string;
   avatarColor: string;
+  user_id?: string;
 };
 
 const AVATAR_COLORS = [
@@ -32,7 +33,7 @@ function getRandomColor() {
 export async function getProductReviews(productId: string | number): Promise<Review[]> {
   try {
     const res = await fetch(
-      `${SUPABASE_URL}/rest/v1/reviews?product_id=eq.${productId}&select=*&order=id.desc`,
+      `${SUPABASE_URL}/rest/v1/reviews?product_id=eq.${productId}&is_deleted=eq.false&select=*&order=id.desc`,
       {
         headers: {
           apikey: SUPABASE_KEY!,
@@ -57,6 +58,7 @@ export async function getProductReviews(productId: string | number): Promise<Rev
       text: row.text,
       initials: row.initials,
       avatarColor: row.avatar_color,
+      user_id: row.user_id,
     }));
   } catch (error) {
     console.error("Failed to get product reviews:", error);
@@ -87,6 +89,7 @@ export async function submitProductReview(
 
     const newReview = {
       product_id: Number(productId),
+      user_id: user.id,
       author: authorName,
       location: "Verified Buyer",
       rating,
@@ -111,6 +114,33 @@ export async function submitProductReview(
     return { success: true, reviews: updatedReviews };
   } catch (error) {
     console.error("Submit review error:", error);
+    return { error: "An unexpected error occurred." };
+  }
+}
+
+export async function deleteProductReview(reviewId: number, productId: string | number) {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { error: "You must be signed in to delete a review." };
+    }
+
+    const { error: updateError } = await supabase
+      .from("reviews")
+      .update({ is_deleted: true })
+      .eq("id", reviewId)
+      .eq("user_id", user.id);
+
+    if (updateError) {
+      console.error("Supabase delete error:", updateError);
+      return { error: "Failed to delete review." };
+    }
+
+    const updatedReviews = await getProductReviews(productId);
+    return { success: true, reviews: updatedReviews };
+  } catch (error) {
+    console.error("Delete review error:", error);
     return { error: "An unexpected error occurred." };
   }
 }
