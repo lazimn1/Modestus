@@ -107,41 +107,6 @@ export default function AdminDashboard() {
     };
   }, [fetchDashboardData]);
 
-  const outOfStockItems = products.filter(
-    (p) => p.in_stock === false || p.stock === 0 || p.quantity === 0
-  ).length;
-
-  const statCards = [
-    {
-      label: "Total Revenue",
-      value: `₹${totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      icon: IndianRupee,
-      iconBg: "bg-green-50",
-      iconColor: "text-green-500",
-    },
-    {
-      label: "Total Orders",
-      value: `${totalOrders}`,
-      icon: ClipboardList,
-      iconBg: "bg-blue-50",
-      iconColor: "text-blue-500",
-    },
-    {
-      label: "Average Order Value",
-      value: `₹${averageOrderValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
-      icon: TrendingUp,
-      iconBg: "bg-emerald-50",
-      iconColor: "text-emerald-500",
-    },
-    {
-      label: "Out of Stock Items",
-      value: `${outOfStockItems}`,
-      icon: AlertCircle,
-      iconBg: "bg-red-50",
-      iconColor: "text-red-500",
-    },
-  ];
-
   // Strictly compute actual chronological sales buckets from original orders
   const getChartBuckets = () => {
     const now = new Date();
@@ -241,6 +206,41 @@ export default function AdminDashboard() {
   const totalRevenue = chartBuckets.reduce((sum, b) => sum + b.value, 0);
   const totalOrders = chartBuckets.reduce((sum, b) => sum + b.ordersCount, 0);
   const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+  const outOfStockItems = products.filter(
+    (p) => p.in_stock === false || p.stock === 0 || p.quantity === 0
+  ).length;
+
+  const statCards = [
+    {
+      label: "Total Revenue",
+      value: `₹${totalRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: IndianRupee,
+      iconBg: "bg-green-50",
+      iconColor: "text-green-500",
+    },
+    {
+      label: "Total Orders",
+      value: `${totalOrders}`,
+      icon: ClipboardList,
+      iconBg: "bg-blue-50",
+      iconColor: "text-blue-500",
+    },
+    {
+      label: "Average Order Value",
+      value: `₹${averageOrderValue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      icon: TrendingUp,
+      iconBg: "bg-emerald-50",
+      iconColor: "text-emerald-500",
+    },
+    {
+      label: "Out of Stock Items",
+      value: `${outOfStockItems}`,
+      icon: AlertCircle,
+      iconBg: "bg-red-50",
+      iconColor: "text-red-500",
+    },
+  ];
 
 
 
