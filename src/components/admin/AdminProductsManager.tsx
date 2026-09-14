@@ -105,6 +105,31 @@ function ProductForm({
     }
   };
 
+  const convertToWebp = (file: File): Promise<Blob> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new window.Image();
+        img.onload = () => {
+          const canvas = document.createElement("canvas");
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("Failed to get canvas context"));
+          ctx.drawImage(img, 0, 0);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error("WebP conversion failed"));
+          }, "image/webp", 0.8);
+        };
+        img.onerror = reject;
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
@@ -117,13 +142,28 @@ function ProductForm({
     try {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
-        const fileExt = file.name.split('.').pop();
+        
+        let fileToUpload: File | Blob = file;
+        let fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+        
+        // Convert to webp if it's an image
+        if (file.type.startsWith('image/') && fileExt !== 'webp') {
+          try {
+            fileToUpload = await convertToWebp(file);
+            fileExt = 'webp';
+          } catch (e) {
+            console.error("WebP conversion failed, falling back to original", e);
+          }
+        }
+
         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
         const filePath = `${fileName}`;
 
         const { error: uploadError } = await supabase.storage
           .from("products")
-          .upload(filePath, file);
+          .upload(filePath, fileToUpload, {
+            contentType: fileExt === 'webp' ? 'image/webp' : file.type
+          });
 
         if (uploadError) {
           throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
@@ -195,21 +235,31 @@ function ProductForm({
       </div>
 
       <div>
-        <div className="flex items-center justify-between mb-1.5">
-          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Image URLs (one per line)</label>
-          <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition-colors">
-            {uploadingImages ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
-            {uploadingImages ? "Uploading..." : "Upload from Device"}
+        <label className={labelCls}>Product Images</label>
+        <div className="flex flex-wrap gap-4 mt-2">
+          {imagesRaw.split("\n").map(s => s.trim()).filter(Boolean).map((url, i) => (
+            <div key={i} className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-gray-200 overflow-hidden group bg-gray-50">
+              <Image src={url} alt={`product ${i}`} fill className="object-cover" />
+              <button 
+                type="button" 
+                onClick={() => {
+                  const arr = imagesRaw.split("\n").map(s => s.trim()).filter(Boolean);
+                  arr.splice(i, 1);
+                  setImagesRaw(arr.join("\n"));
+                }} 
+                className="absolute top-1.5 right-1.5 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          ))}
+          
+          <label className="cursor-pointer w-24 h-24 sm:w-28 sm:h-28 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-500 hover:text-indigo-600 hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
+            {uploadingImages ? <RefreshCw className="w-6 h-6 animate-spin mb-1.5" /> : <Plus className="w-7 h-7 mb-1" />}
+            <span className="text-[11px] font-semibold">{uploadingImages ? "Uploading..." : "Add Image"}</span>
             <input type="file" className="hidden" multiple accept="image/*" onChange={handleImageUpload} disabled={uploadingImages} />
           </label>
         </div>
-        <textarea
-          className={`${inputCls} resize-none`}
-          rows={3}
-          value={imagesRaw}
-          onChange={(e) => setImagesRaw(e.target.value)}
-          placeholder="/images/product.webp"
-        />
       </div>
 
       <div>
