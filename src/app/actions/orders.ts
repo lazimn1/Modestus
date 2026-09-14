@@ -19,6 +19,31 @@ export type CartItemInput = {
   color: string;
 };
 
+export async function calculateShippingFeeAction(pincode: string): Promise<number> {
+  if (!pincode) return 150;
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { data: zones } = await supabase.from("shipping_zones").select("*");
+    
+    if (!zones || zones.length === 0) return 150;
+
+    const sortedZones = zones.sort((a, b) => b.pincode_prefix.length - a.pincode_prefix.length);
+
+    for (const zone of sortedZones) {
+      if (zone.pincode_prefix === "*") continue;
+      if (pincode.startsWith(zone.pincode_prefix)) {
+        return zone.fee;
+      }
+    }
+
+    const defaultZone = sortedZones.find(z => z.pincode_prefix === "*");
+    return defaultZone ? defaultZone.fee : 150;
+  } catch (error) {
+    console.error("Failed to calculate shipping fee", error);
+    return 150;
+  }
+}
+
 export async function createOrderAction(
   cartItems: CartItemInput[],
   shippingData: ShippingAddress,
@@ -62,7 +87,11 @@ export async function createOrderAction(
       return sum + (priceMap[item.productId] ?? 0) * item.quantity;
     }, 0);
 
-    const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 149;
+    let shipping = 0;
+    if (subtotal < 999 && subtotal > 0) {
+      shipping = await calculateShippingFeeAction(shippingData.pincode);
+    }
+    
     const total = subtotal + shipping;
     const orderId = `MOD-${Date.now().toString().slice(-6)}`;
 

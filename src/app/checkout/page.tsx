@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCommerce } from "@/lib/commerce";
 import { useAuth } from "@/context/AuthContext";
-import { createOrderAction } from "@/app/actions/orders";
+import { createOrderAction, calculateShippingFeeAction } from "@/app/actions/orders";
 import { formatINR } from "@/lib/products";
 import { Loader2 } from "lucide-react";
 
@@ -16,6 +16,9 @@ function CheckoutContent() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const [dynamicShipping, setDynamicShipping] = useState<number | null>(null);
+  const [isCalculatingShipping, setIsCalculatingShipping] = useState(false);
 
   // If redirected from PDP 'Buy Now'
   const buyNowProductId = searchParams.get("productId");
@@ -49,6 +52,35 @@ function CheckoutContent() {
       router.push("/account/login?callbackUrl=/checkout");
     }
   }, [customer, isAuthLoading, router]);
+
+  useEffect(() => {
+    let active = true;
+    async function fetchShipping() {
+      const pin = formData.pincode.trim();
+      if (pin.length >= 2 && subtotal > 0 && subtotal < 999) {
+        setIsCalculatingShipping(true);
+        try {
+          const fee = await calculateShippingFeeAction(pin);
+          if (active) setDynamicShipping(fee);
+        } catch (e) {
+          if (active) setDynamicShipping(150);
+        } finally {
+          if (active) setIsCalculatingShipping(false);
+        }
+      } else {
+        setDynamicShipping(null);
+      }
+    }
+    
+    const timeout = setTimeout(fetchShipping, 600);
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [formData.pincode, subtotal]);
+
+  const finalShipping = subtotal >= 999 || subtotal === 0 ? 0 : (dynamicShipping !== null ? dynamicShipping : 149);
+  const finalTotal = subtotal + finalShipping;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -258,9 +290,17 @@ function CheckoutContent() {
             
             <div className="flex flex-col gap-3 text-sm text-[#78716c] border-t border-[#e7e1d4] pt-6 mb-6">
               <div className="flex justify-between"><span>Subtotal</span><span>{formatINR(subtotal)}</span></div>
-              <div className="flex justify-between"><span>Shipping</span><span>{shipping === 0 ? "Free" : formatINR(shipping)}</span></div>
+              <div className="flex justify-between items-center">
+                <span className="flex items-center gap-2">
+                  Shipping 
+                  {isCalculatingShipping && <Loader2 className="w-3 h-3 animate-spin text-[#2a2621]" />}
+                </span>
+                <span>
+                  {finalShipping === 0 ? "Free" : formatINR(finalShipping)}
+                </span>
+              </div>
               <div className="flex justify-between font-bold text-[#2a2621] text-lg mt-2 pt-2 border-t border-[#e7e1d4]">
-                <span>Total</span><span>{formatINR(total)}</span>
+                <span>Total</span><span>{formatINR(finalTotal)}</span>
               </div>
             </div>
 
