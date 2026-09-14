@@ -11,8 +11,11 @@ import { sendGAEvent } from '@next/third-parties/google';
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
+import { type Review } from "@/app/actions/reviews";
+
 interface ProductInfoProps {
   product: Product;
+  initialReviews?: Review[];
 }
 
 function StarRating({ rating, size = "sm" }: { rating: number; size?: "sm" | "md" }) {
@@ -75,7 +78,7 @@ function AccordionItem({
   );
 }
 
-export default function ProductInfo({ product }: ProductInfoProps) {
+export default function ProductInfo({ product, initialReviews }: ProductInfoProps) {
   const [selectedColor, setSelectedColor] = useState(product.colors?.[0]?.name || "Standard Black");
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -99,6 +102,11 @@ export default function ProductInfo({ product }: ProductInfoProps) {
   }, [product]);
 
   const router = useRouter();
+
+  const reviewCount = initialReviews ? initialReviews.length : product.reviewCount;
+  const computedRating = initialReviews && initialReviews.length > 0
+    ? (initialReviews.reduce((acc, curr) => acc + curr.rating, 0) / initialReviews.length).toFixed(1)
+    : product.rating;
 
   const handleAddToCart = () => {
     if (!selectedSize && product.sizes.length > 1) {
@@ -210,10 +218,10 @@ export default function ProductInfo({ product }: ProductInfoProps) {
         className="flex items-center gap-2 group w-fit"
         aria-label="Jump to reviews"
       >
-        <StarRating rating={product.rating} />
-        <span className="text-sm sm:text-base font-bold text-[#2a2621]">{product.rating}</span>
+        <StarRating rating={Number(computedRating)} />
+        <span className="text-sm sm:text-base font-bold text-[#2a2621]">{computedRating}</span>
         <span className="text-xs sm:text-sm text-[#78716c] font-medium group-hover:text-[#2a2621] transition-colors underline underline-offset-2">
-          ({product.reviewCount} reviews)
+          ({reviewCount} reviews)
         </span>
       </a>
 

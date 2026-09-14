@@ -98,7 +98,7 @@ export default async function ProductDetailPage({
           <ImageGallery images={product.images} title={product.title} />
 
           {/* Right: Product Info */}
-          <ProductInfo product={product} />
+          <ProductInfo product={product} initialReviews={initialReviews} />
         </div>
       </div>
 
