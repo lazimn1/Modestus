@@ -20,8 +20,10 @@ import {
   X,
   Check,
   AlertCircle,
+  Upload,
 } from "lucide-react";
 import { formatINR } from "@/lib/products";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface AdminProductsManagerProps {
   initialProducts: Product[];
@@ -59,6 +61,7 @@ function ProductForm({
   const [imagesRaw, setImagesRaw] = useState(
     (initial?.images ?? []).join("\n")
   );
+  const [uploadingImages, setUploadingImages] = useState(false);
 
   const slugify = (s: string) =>
     s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -99,6 +102,50 @@ function ProductForm({
     if (result?.error) {
       setError(result.error);
       setSaving(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingImages(true);
+    setError("");
+    const supabase = createSupabaseBrowserClient();
+    const newUrls: string[] = [];
+
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("products")
+          .upload(filePath, file);
+
+        if (uploadError) {
+          throw new Error(`Failed to upload ${file.name}: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("products")
+          .getPublicUrl(filePath);
+
+        newUrls.push(publicUrl);
+      }
+
+      setImagesRaw((prev) => {
+        const existing = prev.split("\n").map(s => s.trim()).filter(Boolean);
+        return [...existing, ...newUrls].join("\n");
+      });
+    } catch (err: any) {
+      setError(err.message || "Failed to upload images");
+    } finally {
+      setUploadingImages(false);
+      // reset file input
+      e.target.value = '';
     }
   };
 
@@ -148,7 +195,14 @@ function ProductForm({
       </div>
 
       <div>
-        <label className={labelCls}>Image URLs (one per line)</label>
+        <div className="flex items-center justify-between mb-1.5">
+          <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider">Image URLs (one per line)</label>
+          <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg text-xs font-semibold transition-colors">
+            {uploadingImages ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Upload className="w-3.5 h-3.5" />}
+            {uploadingImages ? "Uploading..." : "Upload from Device"}
+            <input type="file" className="hidden" multiple accept="image/*" onChange={handleImageUpload} disabled={uploadingImages} />
+          </label>
+        </div>
         <textarea
           className={`${inputCls} resize-none`}
           rows={3}
