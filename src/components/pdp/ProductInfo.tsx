@@ -319,7 +319,7 @@ export default function ProductInfo({ product, initialReviews }: ProductInfoProp
       {/* Trust Badges */}
       <div className="grid grid-cols-3 gap-2 py-5 sm:py-6 border-y border-[#e7e1d4] mt-2">
         {[
-          { icon: Truck, label: "Free Delivery", sub: "Orders above ₹999" },
+          { icon: Truck, label: "Fast Delivery", sub: "Calculated at checkout" },
           { icon: RotateCcw, label: "Easy Returns", sub: "15-day return policy" },
           { icon: Shield, label: "Genuine", sub: "100% authentic" },
         ].map(({ icon: Icon, label, sub }) => (

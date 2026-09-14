@@ -59,7 +59,7 @@ export function createOrder(
   shippingData?: ShippingAddress
 ) {
   const subtotal = items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
-  const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 149;
+  const shipping = subtotal === 0 ? 0 : 150;
   
   const order = {
     id: `MOD-${Date.now().toString().slice(-6)}`,
@@ -120,7 +120,7 @@ export function useCommerce() {
     0
   );
   
-  const shipping = subtotal >= 999 || subtotal === 0 ? 0 : 149;
+  const shipping = subtotal === 0 ? 0 : 150;
   const total = subtotal + shipping;
 
   return {

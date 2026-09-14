@@ -57,7 +57,7 @@ function CheckoutContent() {
     let active = true;
     async function fetchShipping() {
       const pin = formData.pincode.trim();
-      if (pin.length >= 2 && subtotal > 0 && subtotal < 999) {
+      if (pin.length >= 2 && subtotal > 0) {
         setIsCalculatingShipping(true);
         try {
           const fee = await calculateShippingFeeAction(pin);
@@ -79,7 +79,7 @@ function CheckoutContent() {
     };
   }, [formData.pincode, subtotal]);
 
-  const finalShipping = subtotal >= 999 || subtotal === 0 ? 0 : (dynamicShipping !== null ? dynamicShipping : 149);
+  const finalShipping = subtotal === 0 ? 0 : (dynamicShipping !== null ? dynamicShipping : 150);
   const finalTotal = subtotal + finalShipping;
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

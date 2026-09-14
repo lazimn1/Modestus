@@ -182,7 +182,7 @@ export default function CartPage() {
                   )}
                 </button>
                 <p className="text-[9px] sm:text-[10px] text-[#78716c] text-center mt-4 font-medium px-4">
-                  Free delivery above Rs. 999. Returns accepted within 15 days.
+                  Fast delivery across India. Returns accepted within 15 days.
                 </p>
               </aside>
             </div>

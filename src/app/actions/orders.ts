@@ -88,7 +88,7 @@ export async function createOrderAction(
     }, 0);
 
     let shipping = 0;
-    if (subtotal < 999 && subtotal > 0) {
+    if (subtotal > 0) {
       shipping = await calculateShippingFeeAction(shippingData.pincode);
     }
     
