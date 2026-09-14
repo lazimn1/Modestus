@@ -60,6 +60,7 @@ export default function ReviewsSection({
   const [error, setError] = useState("");
   const [formRating, setFormRating] = useState(5);
   const [formText, setFormText] = useState("");
+  const [visibleCount, setVisibleCount] = useState(3);
 
   const reviewCount = reviews.length;
   const rating = reviewCount > 0 
@@ -222,14 +223,14 @@ export default function ReviewsSection({
 
           {/* Review Cards */}
           <div className="flex flex-col gap-4 sm:gap-5">
-            {reviews.map((review, i) => (
+            {reviews.slice(0, visibleCount).map((review, i) => (
               <motion.div
                 key={review.id}
                 className="bg-[#fcfaf7] rounded-xl sm:rounded-2xl p-5 sm:p-7 border border-[#e7e1d4] shadow-[0_4px_20px_rgba(0,0,0,0.02)]"
                 initial={{ opacity: 0, y: 24 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-40px" }}
-                transition={{ duration: 0.55, delay: i * 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+                transition={{ duration: 0.55, delay: (i % 3) * 0.1, ease: [0.25, 0.1, 0.25, 1] }}
               >
                 <div className="flex items-start justify-between mb-4 gap-3">
                   <div className="flex items-center gap-3">
@@ -275,15 +276,16 @@ export default function ReviewsSection({
               </div>
             )}
 
-            {/* Load More (Disabled for now as we load all) */}
-            {reviewCount > reviews.length && (
+            {/* Load More */}
+            {reviewCount > visibleCount && (
               <motion.button
+                onClick={() => setVisibleCount((prev) => prev + 3)}
                 className="w-full py-3.5 sm:py-4 rounded-full border border-[#dad2c2] text-[#78716c] text-[9px] sm:text-[10px] font-bold uppercase tracking-widest hover:border-[#2a2621] hover:text-[#2a2621] transition-colors"
                 initial={{ opacity: 0 }}
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
               >
-                Load {reviewCount - reviews.length} More Reviews
+                Load {reviewCount - visibleCount} More Reviews
               </motion.button>
             )}
           </div>
