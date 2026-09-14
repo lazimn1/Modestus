@@ -13,6 +13,15 @@ import {
   Palette,
 } from "lucide-react";
 import { getAdminOrdersAction, getAdminProductsAction } from "@/app/actions/admin";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 const quickActions = [
   {
@@ -98,20 +107,6 @@ export default function AdminDashboard() {
     };
   }, [fetchDashboardData]);
 
-  // Strictly calculate live metrics from genuine order records
-  const totalRevenue = orders.reduce((sum, ord) => {
-    const amount =
-      ord.total !== undefined && ord.total !== null
-        ? Number(ord.total)
-        : ord.subtotal !== undefined && ord.subtotal !== null
-        ? Number(ord.subtotal)
-        : 0;
-    return sum + (isNaN(amount) ? 0 : amount);
-  }, 0);
-
-  const totalOrders = orders.length;
-  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-
   const outOfStockItems = products.filter(
     (p) => p.in_stock === false || p.stock === 0 || p.quantity === 0
   ).length;
@@ -151,7 +146,7 @@ export default function AdminDashboard() {
   const getChartBuckets = () => {
     const now = new Date();
     if (selectedPeriod === "7 Days") {
-      const days: { label: string; value: number }[] = [];
+      const days: { label: string; value: number; ordersCount: number }[] = [];
       for (let i = 6; i >= 0; i--) {
         const d = new Date(now);
         d.setDate(now.getDate() - i);
@@ -173,7 +168,7 @@ export default function AdminDashboard() {
           return sum + (isNaN(amt) ? 0 : amt);
         }, 0);
 
-        days.push({ label, value: dayRevenue });
+        days.push({ label, value: dayRevenue, ordersCount: dayOrders.length });
       }
       return days;
     } else if (selectedPeriod === "12 Months") {
@@ -192,11 +187,11 @@ export default function AdminDashboard() {
               : 0;
           return sum + (isNaN(amt) ? 0 : amt);
         }, 0);
-        return { label, value: monthRevenue };
+        return { label, value: monthRevenue, ordersCount: monthOrders.length };
       });
     } else if (selectedPeriod === "5 Years") {
       const currentYear = now.getFullYear();
-      const years: { label: string; value: number }[] = [];
+      const years: { label: string; value: number; ordersCount: number }[] = [];
       for (let y = currentYear - 3; y <= currentYear; y++) {
         const yearOrders = orders.filter((ord) => {
           const ordDate = ord.placed_at || ord.created_at;
@@ -211,12 +206,12 @@ export default function AdminDashboard() {
               : 0;
           return sum + (isNaN(amt) ? 0 : amt);
         }, 0);
-        years.push({ label: String(y), value: yearRevenue });
+        years.push({ label: String(y), value: yearRevenue, ordersCount: yearOrders.length });
       }
       return years;
     } else {
       // 4 Weeks (default)
-      const weeks: { label: string; value: number }[] = [];
+      const weeks: { label: string; value: number; ordersCount: number }[] = [];
       for (let i = 3; i >= 0; i--) {
         const label = `Week ${4 - i}`;
         const weekOrders = orders.filter((ord) => {
@@ -234,14 +229,18 @@ export default function AdminDashboard() {
               : 0;
           return sum + (isNaN(amt) ? 0 : amt);
         }, 0);
-        weeks.push({ label, value: weekRevenue });
+        weeks.push({ label, value: weekRevenue, ordersCount: weekOrders.length });
       }
       return weeks;
     }
   };
 
   const chartBuckets = getChartBuckets();
-  const maxBucketVal = Math.max(...chartBuckets.map((b) => b.value), 1000);
+  
+  // Now strictly calculate live metrics from the active chart buckets to ensure 100% synchronization
+  const totalRevenue = chartBuckets.reduce((sum, b) => sum + b.value, 0);
+  const totalOrders = chartBuckets.reduce((sum, b) => sum + b.ordersCount, 0);
+  const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
 
 
@@ -316,179 +315,59 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Accurate SVG Chart — all elements share one coordinate system */}
-        <div className="w-full overflow-x-auto">
-          <svg
-            viewBox="0 0 900 340"
-            className="w-full min-w-125"
-            style={{ maxHeight: 360 }}
-          >
-            <defs>
-              <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#6366f1" />
-                <stop offset="100%" stopColor="#4f46e5" />
-              </linearGradient>
-              <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stopColor="#6366f1" stopOpacity="0.15" />
-                <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-
-            {/* ---- Y-axis title ---- */}
-            <text
-              x="12"
-              y="155"
-              textAnchor="middle"
-              fontSize="11"
-              fill="#9ca3af"
-              fontWeight="600"
-              transform="rotate(-90, 12, 155)"
-            >
-              Revenue (₹)
-            </text>
-
-            {/* ---- Grid lines + Y-axis tick labels ---- */}
-            {/* Chart plot area: x 100→850, y 30→270  (height 240) */}
-            {[0, 0.25, 0.5, 0.75, 1].map((frac, idx) => {
-              const y = 30 + frac * 240; // 30, 90, 150, 210, 270
-              const val = Math.round(maxBucketVal * (1 - frac));
-              return (
-                <g key={idx}>
-                  <line x1="100" y1={y} x2="850" y2={y} stroke="#f3f4f6" strokeWidth="1" strokeDasharray="6 4" />
-                  <text x="90" y={y + 4} textAnchor="end" fontSize="11" fill="#9ca3af">
-                    {`₹${val.toLocaleString("en-IN")}`}
-                  </text>
-                </g>
-              );
-            })}
-
-            {/* ---- Data curve ---- */}
-            {(() => {
-              const plotLeft = 100;
-              const plotRight = 850;
-              const plotTop = 30;
-              const plotBottom = 270;
-              const plotW = plotRight - plotLeft;
-              const plotH = plotBottom - plotTop;
-              const n = chartBuckets.length;
-
-              const pts = chartBuckets.map((b, i) => ({
-                x: n > 1 ? plotLeft + (i / (n - 1)) * plotW : (plotLeft + plotRight) / 2,
-                y: maxBucketVal > 0 ? plotBottom - (b.value / maxBucketVal) * plotH : plotBottom,
-                value: b.value,
-                label: b.label,
-              }));
-
-              // Build smooth cubic bezier path
-              let linePath = "";
-              if (pts.length > 0) {
-                linePath = `M${pts[0].x},${pts[0].y}`;
-                for (let i = 1; i < pts.length; i++) {
-                  const prev = pts[i - 1];
-                  const curr = pts[i];
-                  const dx = (curr.x - prev.x) * 0.35;
-                  linePath += ` C${prev.x + dx},${prev.y} ${curr.x - dx},${curr.y} ${curr.x},${curr.y}`;
-                }
-              }
-              const areaPath = pts.length > 0
-                ? `${linePath} L${pts[pts.length - 1].x},${plotBottom} L${pts[0].x},${plotBottom} Z`
-                : "";
-
-              // Find peak
-              let peakPt = pts[0] || { x: 475, y: plotBottom, value: 0 };
-              for (const p of pts) {
-                if (p.value > peakPt.value) peakPt = p;
-              }
-
-              return (
-                <>
-                  {/* Area fill */}
-                  {totalOrders > 0 && areaPath && <path d={areaPath} fill="url(#areaGradient)" />}
-
-                  {/* Line */}
-                  {linePath && (
-                    <path
-                      d={linePath}
-                      fill="none"
-                      stroke="url(#lineGradient)"
-                      strokeWidth="3"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    />
-                  )}
-
-                  {/* Data point dots + hover tooltips */}
-                  {pts.map((pt, i) => (
-                    <g key={i} className="group" style={{ cursor: "default" }}>
-                      {/* Invisible larger hit area */}
-                      <circle cx={pt.x} cy={pt.y} r="16" fill="transparent" />
-                      {/* Visible dot */}
-                      <circle
-                        cx={pt.x}
-                        cy={pt.y}
-                        r={pt === peakPt && totalOrders > 0 ? 6 : 4}
-                        fill="white"
-                        stroke="#6366f1"
-                        strokeWidth={pt === peakPt && totalOrders > 0 ? 3 : 2}
-                      />
-                      {/* Tooltip background */}
-                      <rect
-                        x={pt.x - 52}
-                        y={pt.y - 38}
-                        width="104"
-                        height="26"
-                        rx="6"
-                        fill="#1e1b4b"
-                        opacity="0"
-                        className="transition-opacity duration-150"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        <set attributeName="opacity" to="0.95" begin={`dot${i}.mouseenter`} end={`dot${i}.mouseleave`} />
-                      </rect>
-                      {/* Tooltip text */}
-                      <text
-                        x={pt.x}
-                        y={pt.y - 21}
-                        textAnchor="middle"
-                        fontSize="11"
-                        fontWeight="600"
-                        fill="white"
-                        opacity="0"
-                        style={{ pointerEvents: "none" }}
-                      >
-                        <set attributeName="opacity" to="1" begin={`dot${i}.mouseenter`} end={`dot${i}.mouseleave`} />
-                        {`₹${pt.value.toLocaleString("en-IN")}`}
-                      </text>
-                      {/* Invisible trigger circle with id for hover */}
-                      <circle id={`dot${i}`} cx={pt.x} cy={pt.y} r="16" fill="transparent" style={{ cursor: "pointer" }} />
-                    </g>
-                  ))}
-                </>
-              );
-            })()}
-
-            {/* ---- X-axis tick labels ---- */}
-            {chartBuckets.map((bucket, idx) => {
-              const n = chartBuckets.length;
-              const x = n > 1 ? 100 + (idx / (n - 1)) * 750 : 475;
-              return (
-                <text key={idx} x={x} y="295" textAnchor="middle" fontSize="11" fill="#9ca3af">
-                  {bucket.label}
-                </text>
-              );
-            })}
-
-            {/* ---- X-axis title ---- */}
-            <text x="475" y="320" textAnchor="middle" fontSize="11" fill="#9ca3af" fontWeight="600">
-              {selectedPeriod === "7 Days"
-                ? "Day of Week"
-                : selectedPeriod === "4 Weeks"
-                ? "Week"
-                : selectedPeriod === "12 Months"
-                ? "Month"
-                : "Year"}
-            </text>
-          </svg>
+        <div className="h-[340px] w-full mt-4">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={chartBuckets} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <defs>
+                <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                  <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
+              <XAxis 
+                dataKey="label" 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#9ca3af' }} 
+                dy={10} 
+              />
+              <YAxis 
+                axisLine={false} 
+                tickLine={false} 
+                tick={{ fontSize: 12, fill: '#9ca3af' }}
+                tickFormatter={(val) => `₹${val.toLocaleString('en-IN')}`}
+                dx={-10}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-[#1e1b4b] text-white p-3 rounded-xl shadow-lg border border-indigo-900/50">
+                        <p className="text-xs font-semibold text-indigo-200 mb-1">{label}</p>
+                        <p className="text-lg font-bold">
+                          ₹{Number(payload[0].value).toLocaleString("en-IN")}
+                        </p>
+                        <p className="text-xs text-indigo-300 mt-1">
+                          {payload[0].payload.ordersCount} order{payload[0].payload.ordersCount !== 1 ? "s" : ""}
+                        </p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Area 
+                type="monotone" 
+                dataKey="value" 
+                stroke="#6366f1" 
+                strokeWidth={3}
+                fillOpacity={1} 
+                fill="url(#colorValue)" 
+                activeDot={{ r: 6, strokeWidth: 0, fill: '#6366f1' }}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
         </div>
 
         <p className="text-center text-[12px] text-gray-400 mt-4">
