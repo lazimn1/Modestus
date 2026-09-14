@@ -236,7 +236,7 @@ function ProductForm({
 
       <div>
         <label className={labelCls}>Product Images</label>
-        <div className="flex flex-wrap gap-4 mt-2">
+        <div className="flex flex-wrap gap-4 mt-2 mb-4">
           {imagesRaw.split("\n").map(s => s.trim()).filter(Boolean).map((url, i) => (
             <div key={i} className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-xl border border-gray-200 overflow-hidden group bg-gray-50">
               <Image src={url} alt={`product ${i}`} fill className="object-cover" />
@@ -260,6 +260,15 @@ function ProductForm({
             <input type="file" className="hidden" multiple accept="image/*" onChange={handleImageUpload} disabled={uploadingImages} />
           </label>
         </div>
+
+        <label className={labelCls}>Or Paste Image URLs (one per line)</label>
+        <textarea
+          className={`${inputCls} resize-none`}
+          rows={3}
+          value={imagesRaw}
+          onChange={(e) => setImagesRaw(e.target.value)}
+          placeholder="https://example.com/image.webp"
+        />
       </div>
 
       <div>
