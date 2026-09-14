@@ -319,6 +319,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const showToast = (message: string, type: "success" | "error" = "success") => {
     setToast({ message, type });
@@ -361,6 +362,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
     setDeletingId(id);
     const result = await deleteProductAction(id);
     setDeletingId(null);
+    setConfirmDeleteId(null);
     if (result.error) { showToast(result.error, "error"); return; }
     showToast("Product deleted.");
     setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -415,6 +417,40 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
         }`}>
           {toast.type === "success" ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
           {toast.message}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmDeleteId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-full bg-red-50 flex items-center justify-center mb-4">
+                <Trash2 className="w-6 h-6 text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Delete Product?</h3>
+              <p className="text-sm text-gray-500">
+                This action cannot be undone. This product will be permanently removed from your store.
+              </p>
+            </div>
+            <div className="bg-gray-50 px-6 py-4 flex items-center gap-3 justify-end">
+              <button
+                onClick={() => setConfirmDeleteId(null)}
+                disabled={deletingId !== null}
+                className="px-4 py-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => handleDelete(confirmDeleteId)}
+                disabled={deletingId !== null}
+                className="flex items-center gap-2 px-5 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold rounded-xl transition-colors disabled:opacity-70"
+              >
+                {deletingId === confirmDeleteId ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {deletingId === confirmDeleteId ? "Deleting..." : "Yes, Delete"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -513,7 +549,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
                     Edit
                   </button>
                   <button
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => setConfirmDeleteId(product.id)}
                     disabled={deletingId === product.id}
                     className="flex items-center gap-1.5 px-4 py-2 bg-red-500 text-white rounded-full text-xs font-bold hover:bg-red-600 transition-colors disabled:opacity-60"
                   >
@@ -556,7 +592,7 @@ export default function AdminProductsManager({ initialProducts }: AdminProductsM
                   </button>
                   <div className="w-px h-4 bg-gray-200" />
                   <button
-                    onClick={() => handleDelete(product.id)}
+                    onClick={() => setConfirmDeleteId(product.id)}
                     disabled={deletingId === product.id}
                     className="flex-1 flex items-center justify-center gap-1.5 py-1.5 text-xs font-semibold text-red-500 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                   >
